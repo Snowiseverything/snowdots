@@ -13,3 +13,7 @@ output_path = '/home/snow/.cache/matugen/colors-kitty.conf'
 [templates.fuzzel]
 input_path = '/home/snow/Dotfiles/matugen/.config/matugen/templates/fuzzel-colors.ini'
 output_path = '/home/snow/.cache/matugen/fuzzel-colors.ini'
+
+[post_processing]
+command = "/home/snow/.local/bin/wall-sync.sh %path%"
+run_on_change = true

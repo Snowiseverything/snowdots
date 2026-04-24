@@ -10,34 +10,36 @@ if test -f ~/.config/starship-palette.toml
     set -x STARSHIP_CONFIG /tmp/starship-merged.toml
 end
 
-# ── LOAD ALIASES ── (CRITICAL)
-if test -f ~/.config/fish/aliases.fish
-    source ~/.config/fish/aliases.fish
-end
+# ── Dotfiles Management ───────────────────────
+alias dotfiles='git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
+alias dotpush='cd ~/.dotfiles && git add . && git commit -m "update" && git push'
 
-# ── Edit Configs ──────────────────────────────
+# ── Edit Configs (Source-Direct) ──────────────
 function edit-fish
-    nano ~/Dotfiles/fish/.config/fish/config.fish
-    and source ~/.config/fish/config.fish
+    nano ~/.dotfiles/fish/config.fish
+    and source ~/.dotfiles/fish/config.fish
+    and echo "󰈺 Fish config reloaded!"
 end
 
-function edit-alias
-    nano ~/Dotfiles/fish/.config/fish/aliases.fish
-    and source ~/.config/fish/config.fish
+function edit-starship
+    nano ~/.dotfiles/starship.toml
 end
 
 function edit-hypr
-    nano ~/Dotfiles/hypr/.config/hypr/hyprland.conf
+    nano /home/snow/Sync/Dotfiles/hypr/.config/hypr/hyprland.conf
 end
 
 function edit-kitty
-    # UPDATED to point to your new ~/Dotfiles path
-    nano ~/Dotfiles/kitty/.config/kitty/kitty.conf
+    # Note: Using the .config/kitty path inside your dotfiles
+    nano ~/.dotfiles/.config/kitty/kitty.conf
+end
+
+function edit-ssh
+    nano ~/.ssh/config
 end
 
 # ── Personal Overrides ────────────────────────
 if status is-interactive
-    # Removes the default 'ff' so your 'fastfetch' alias works
     abbr --erase ff 2>/dev/null
     abbr -a ff fastfetch
 end

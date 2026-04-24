@@ -56,6 +56,7 @@ abbr -a fdh 'fd --hidden'
 abbr -a f "find . | grep "
 
 #Life Easy
+alias cd='z'
 abbr -a vim nvim
 abbr -a nd 'npm run dev'
 abbr -a n nvim
@@ -96,7 +97,6 @@ abbr -a folders 'du -h --max-depth=1'
 abbr -a gits 'git status'
 abbr -a ghs 'streaker vyrx-dev'
 abbr -a ghp 'gh repo create --public $(basename "$PWD") --source=. --description="desc" --push'
-alias dotsync="git push backup main; and git push origin main"
 
 # Grub Update
 abbr -a update-grub 'sudo grub-mkconfig -o /boot/grub/grub.cfg'
@@ -108,10 +108,3 @@ abbr -a sdu 'sudo btrfs filesystem du -s /.snapshots/*'
 abbr -a sdelr 'sudo snapper -c root delete'
 abbr -a sdelh 'sudo snapper -c home delete --sync' #eg  --sync 1 or 2-4
 abbr -a sbdel 'sudo btrfs subvolume delete' #eg  sudo btrfs subvolume delete /.snapshots/5/snapshot
-
-# Correct Dotfiles Sync (since you moved to ~/Dotfiles)
-alias dotsync="git push backup main; and git push origin main"
-
-# Quick Dotfiles Navigation
-abbr -a cdot 'cd ~/Dotfiles'
-

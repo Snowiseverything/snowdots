@@ -1,0 +1,280 @@
+########################################################################################
+# HyprSnow - v0.9.6 (Restored Rules & Professional Headers)
+########################################################################################
+
+# Move variables to the absolute top to prevent 'Invalid mod' errors
+$mainMod = SUPER
+
+################
+##  MONITOR   ##
+################
+monitor = , 2560x1440@180, auto, 1
+
+###########################
+##  NVIDIA & ENVIRONMENT ##
+###########################
+env = LIBVA_DRIVER_NAME,nvidia
+env = __GLX_VENDOR_LIBRARY_NAME,nvidia
+env = GBM_BACKEND,nvidia-drm
+env = cursor:no_hardware_cursors,true
+env = NVD_BACKEND,direct
+env = __GL_GSYNC_ALLOWED,1
+env = __GL_VRR_ALLOWED,1
+env = CLUTTER_BACKEND,wayland
+env = __GL_MaxFramesAllowed,1
+
+# SOURCE PYWAL COLORS
+source = ~/.cache/wal/hyprland-colors.conf
+
+###################
+##  AUTO START   ##
+###################
+exec-once = waypaper --restore
+exec-once = hyprctl setcursor Adwaita 24
+exec-once = ~/.local/bin/hypr-watch
+exec-once = clipse -listen
+exec-once = hypridle
+exec-once = coolercontrol --hide-window
+
+exec-once = sleep 0.5 && ~/.config/hypr/scripts/sync-caelestia-wallpaper.sh
+exec-once = sleep 0.5 && caelestia shell -d                                     
+
+exec-once = sleep 2 && hyprctl dispatch workspace 1
+exec-once = sleep 8 && openrgb --profile Blue && sleep 2 && openrgb --device 0 --mode static --color 0000FF
+
+# Apps
+exec-once = brave
+exec-once = sleep 3 && trayscale --hide-window
+exec-once = sleep 4 && vesktop --use-gl=desktop
+exec-once = sleep 5 && forkgram -startintray
+exec-once = sleep 8 && steam -silent
+
+##############
+##  INPUT   ##
+##############
+input {
+    kb_layout = us, iq(ku_ara), ara
+    kb_options = grp:alt_shift_toggle
+    numlock_by_default = false
+    follow_mouse = 1
+    mouse_refocus = false
+}
+
+cursor {
+    no_break_fs_vrr = 0
+}   
+
+####################
+##  LOOK & FEEL   ##
+####################
+general {
+    gaps_in = 5
+    gaps_out = 10
+    border_size = 4
+    col.active_border = $pywal_color4 $pywal_color2 $pywal_foreground 45deg
+    col.inactive_border = $pywal_background
+    resize_on_border = false
+    allow_tearing = true
+    layout = dwindle
+}
+
+decoration {
+    rounding = 10
+    active_opacity = 0.985
+    inactive_opacity = 0.85
+    blur {
+        enabled = true
+        size = 3
+        passes = 2
+    }
+    shadow {
+        enabled = false
+    }
+}
+
+animations {
+    enabled = true
+    bezier = snappy, 0.2, 0.1, 0.2, 1
+    animation = windows, 1, 2.5, snappy
+    animation = fade, 1, 2.5, snappy
+    animation = workspaces, 1, 2, default, slidefade 20%
+    animation = border, 1, 1, default
+    animation = borderangle, 0, 1, default
+}
+
+dwindle {
+    pseudotile = true
+    preserve_split = true
+    smart_split = false
+    force_split= 0
+}
+
+misc {
+    vfr = true
+    vrr = 1
+    disable_hyprland_logo = true
+    disable_splash_rendering = true
+    force_default_wallpaper = 0
+    enable_swallow = true
+    swallow_regex = ^(kitty)$
+    swallow_exception_regex = ^(wev)$
+    initial_workspace_tracking = 0
+    focus_on_activate = true
+    allow_session_lock_restore = true
+    always_follow_on_dnd = true
+    layers_hog_keyboard_focus = true
+    animate_manual_resizes = false  
+}
+
+#####################
+##  WINDOW RULES   ##
+#####################
+windowrule = workspace 2 silent, match:class ^(vesktop|io.github.forkgram.tdesktop)$
+windowrule = workspace 3 silent, match:class ^(steam)$
+windowrule = workspace silent, match:class ^(dev.deedles.Trayscale)$
+windowrule = no_initial_focus 1, match:class ^(dev.deedles.Trayscale)$
+ 
+windowrule = float 1, match:class ^(clipse|waypaper|dev.deedles.Trayscale|io.github.forkgram.tdesktop|swappy|mpv)$
+windowrule = center 1, match:class ^(clipse|waypaper|dev.deedles.Trayscale|io.github.forkgram.tdesktop|swappy|mpv)$
+
+windowrule = float on, match:class ^(coolercontrol)$
+windowrule = center on, match:class ^(coolercontrol)$
+windowrule = size 1200 800, match:class ^(coolercontrol)$
+
+windowrule = match:class ^(mpv|MPV|Mpv)$, workspace unset
+windowrule = match:class ^(mpv|MPV|Mpv)$, size 1000 600
+windowrule = match:class ^(mpv|MPV|Mpv)$, rounding 10
+
+windowrule = match:class ^(clipse)$, size 622 652
+windowrule = match:class ^(swappy)$, size 1200 800
+windowrule = match:class ^(kitty)$, opacity 0.85
+windowrule = match:class cs2, immediate yes
+
+########################
+##  SYSTEM BINDINGS   ##
+########################
+bind = $mainMod SHIFT, C, exec, hyprctl reload && killall -SIGUSR2 caelestia
+bind = $mainMod SHIFT, M, exit ,
+bind = $mainMod, O, layoutmsg, togglesplit
+bind = $mainMod SHIFT, B, exec, hyprctl keyword decoration:blur:enabled toggle
+bind = $mainMod, N, exec, swaync-client -t -sw
+bind = $mainMod SHIFT, R, exec, killall caelestia; caelestia shell -d
+bind = $mainMod, mouse_up, workspace, e+1
+bind = $mainMod, mouse_down, workspace, e-1
+bind = $mainMod, A, alterzorder, top
+
+#####################
+##  POWER & LOCK   ##
+#####################
+bind = $mainMod, Return, exec, wlogout
+bind = $mainMod, L, exec, ~/.config/hypr/lock-and-deafen.sh
+bind = CTRL ALT, Delete, exec, zenity --question --text="Are you sure you want to reboot?" && systemctl reboot
+
+#######################
+##  APPS & ACTIONS   ##
+#######################
+bind = $mainMod, B, exec, brave
+bind = $mainMod, C, exec, ~/.local/bin/safe-kill.sh
+bind = $mainMod, D, exec, vesktop --use-gl=desktop
+bind = $mainMod, F, exec, thunar
+bind = $mainMod, Q, exec, kitty
+bind = $mainMod, SPACE, global, caelestia:launcher
+bind = $mainMod, S, exec, spotify    
+bind = $mainMod, T, exec, trayscale
+bind = $mainMod, V, exec, kitty --class clipse -e clipse
+bind = $mainMod, W, exec, waypaper
+bind = $mainMod, X, fullscreen, 0
+bind = $mainMod, Z, exec, ~/.local/bin/hypr-float.sh
+bind = CTRL SHIFT, ESCAPE, exec, kitty btop
+
+#######################
+##  HARDWARE & QoL   ##
+#######################
+binde = , XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+binde = , XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+binde = $mainMod, Prior, exec, ddcutil setvcp 10 + 10
+binde = $mainMod, Next, exec, ddcutil setvcp 10 - 10
+bindl = , XF86AudioNext, exec, playerctl next         
+bindl = , XF86AudioPause, exec, playerctl play-pause  
+bindl = , XF86AudioPlay, exec, playerctl play-pause   
+bindl = , XF86AudioPrev, exec, playerctl previous     
+bind = $mainMod SHIFT, S, exec, ~/.local/bin/hypr-snip
+
+#################################
+##  NAVIGATION & WORKSPACES   ##
+#################################
+bind = ALT, left, movefocus, l
+bind = ALT, right, movefocus, r
+bind = ALT, up, movefocus, u
+bind = ALT, down, movefocus, d
+
+bind = $mainMod, left, workspace, r-1
+bind = $mainMod, right, workspace, r+1
+bind = ALT, TAB, cyclenext            
+bind = $mainMod, TAB, workspace, previous
+
+bind = ALT CTRL, left, resizeactive, -50 0 
+bind = ALT CTRL, right, resizeactive, 50 0
+bind = ALT CTRL, up, resizeactive, 0 -50
+bind = ALT CTRL, down, resizeactive, 0 50   
+
+bind = ALT SHIFT, left, movewindow, l 
+bind = ALT SHIFT, right, movewindow, r
+bind = ALT SHIFT, up, movewindow, u   
+bind = ALT SHIFT, down, movewindow, d
+
+# Change workspace [1-0]
+bind = $mainMod, 1, workspace, 1
+bind = $mainMod, 2, workspace, 2
+bind = $mainMod, 3, workspace, 3
+bind = $mainMod, 4, workspace, 4
+bind = $mainMod, 5, workspace, 5
+bind = $mainMod, 6, workspace, 6
+bind = $mainMod, 7, workspace, 7
+bind = $mainMod, 8, workspace, 8
+bind = $mainMod, 9, workspace, 9
+bind = $mainMod, 0, workspace, 10
+
+# Move & Follow (Super + Shift + [0-9] and Arrows)
+bind = $mainMod SHIFT, 1, movetoworkspace, 1
+bind = $mainMod SHIFT, 2, movetoworkspace, 2
+bind = $mainMod SHIFT, 3, movetoworkspace, 3
+bind = $mainMod SHIFT, 4, movetoworkspace, 4
+bind = $mainMod SHIFT, 5, movetoworkspace, 5
+bind = $mainMod SHIFT, 6, movetoworkspace, 6
+bind = $mainMod SHIFT, 7, movetoworkspace, 7
+bind = $mainMod SHIFT, 8, movetoworkspace, 8
+bind = $mainMod SHIFT, 9, movetoworkspace, 9
+bind = $mainMod SHIFT, 0, movetoworkspace, 10  
+bind = $mainMod SHIFT, left, movetoworkspace, r-1
+bind = $mainMod SHIFT, right, movetoworkspace, r+1
+
+# Move Silently (Super + Ctrl + [0-9] and Arrows)
+bind = $mainMod CTRL, 1, movetoworkspacesilent, 1
+bind = $mainMod CTRL, 2, movetoworkspacesilent, 2
+bind = $mainMod CTRL, 3, movetoworkspacesilent, 3
+bind = $mainMod CTRL, 4, movetoworkspacesilent, 4
+bind = $mainMod CTRL, 5, movetoworkspacesilent, 5
+bind = $mainMod CTRL, 6, movetoworkspacesilent, 6
+bind = $mainMod CTRL, 7, movetoworkspacesilent, 7
+bind = $mainMod CTRL, 8, movetoworkspacesilent, 8
+bind = $mainMod CTRL, 9, movetoworkspacesilent, 9
+bind = $mainMod CTRL, 0, movetoworkspacesilent, 10
+bind = $mainMod CTRL, left, movetoworkspacesilent, r-1
+bind = $mainMod CTRL, right, movetoworkspacesilent, r+1
+
+bind = $mainMod SHIFT, H, movewindow, l
+bind = $mainMod SHIFT, L, movewindow, r
+bind = $mainMod SHIFT, K, movewindow, u
+bind = $mainMod SHIFT, J, movewindow, d
+
+bind = $mainMod ALT, left, swapwindow, l
+bind = $mainMod ALT, right, swapwindow, r
+bind = $mainMod ALT, up, swapwindow, u
+bind = $mainMod ALT, down, swapwindow, d
+
+##############
+##  MOUSE   ##
+##############
+bindm = $mainMod, mouse:272, movewindow 
+bindm = $mainMod, mouse:273, resizewindow
