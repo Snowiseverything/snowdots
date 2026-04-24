@@ -97,6 +97,7 @@ abbr -a folders 'du -h --max-depth=1'
 abbr -a gits 'git status'
 abbr -a ghs 'streaker vyrx-dev'
 abbr -a ghp 'gh repo create --public $(basename "$PWD") --source=. --description="desc" --push'
+alias dotsync="git push backup main; and git push origin main"
 
 # Grub Update
 abbr -a update-grub 'sudo grub-mkconfig -o /boot/grub/grub.cfg'
