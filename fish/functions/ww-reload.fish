@@ -1,0 +1,1 @@
+/home/snow/Sync/Dotfiles/matugen_hypr_sync/.config/fish/functions/ww-reload.fish

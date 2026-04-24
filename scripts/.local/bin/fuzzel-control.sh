@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# --- CONFIGURATION ---
+DOT_DIR="$HOME/Dotfiles"
+
+# Function for Configuration Submenu
+show_configs() {
+    CONF_OPTIONS="󰘦 Hyprland\n󱁻 Kitty\n󱑖 Skwd Engine\n󰈺 Fish\n󰗊 Waybar\n󱁻 Wall-Sync\n󰕌 Back"
+    CONF_CHOICE=$(echo -e "$CONF_OPTIONS" | fuzzel --dmenu --minimal-lines -p "Edit Configs: ")
+
+    case "$CONF_CHOICE" in
+        *Hyprland)   kitty -e nano "$DOT_DIR/hypr/.config/hypr/hyprland.conf" ;;
+        *Kitty)      kitty -e nano "$DOT_DIR/kitty/.config/kitty/kitty.conf" ;;
+        *Skwd*)      kitty -e nano "$HOME/.config/skwd-wall/config.json" ;;
+        *Fish)       kitty -e nano "$DOT_DIR/fish/.config/fish/config.fish" ;;
+        *Waybar)     kitty -e nano "$DOT_DIR/waybar/.config/waybar/config" ;;
+        *Wall-Sync)  kitty -e nano "$DOT_DIR/fish/.config/fish/functions/ww-reload.fish" ;; # Point to the new logic
+        *Back)       main_menu ;;
+    esac
+}
+
+# Main Control Center
+main_menu() {
+    OPTIONS="󰷛 Lock\n󰏘 Wallpaper (Skwd)\n󰒓 Edit Configs...\n󱊑 Rice Fixer\n󰖔 Night Light\n󰖔 Suspend\n󰈆 Logout\n󰜉 Reboot\n󰐥 Shutdown"
+    CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Control Center: ")
+
+    case "$CHOICE" in
+        *Lock) hyprlock ;;
+        *Wallpaper) skwd wall toggle ;;
+        *"Edit Configs"*) show_configs ;;
+        *Rice*) 
+            # 1. Kill the daemon safely
+            pkill -f skwd-daemon 2>/dev/null
+            
+            # 2. Surgical Cache Clean (No folder nuking)
+            find ~/.cache/skwd-wall/ -type f -delete 2>/dev/null
+            mkdir -p ~/.cache/skwd-wall/
+            touch ~/.cache/skwd-wall/hyprland-colors.conf
+            
+            # 3. Call the Master Engine
+            fish -c "ww-reload"
+            
+            # 4. Restart Daemon
+            skwd-daemon & 
+            
+            notify-send "󱊑 Rice Fixer" "System Synced via ww-reload" ;;
+        *"Night Light"*) "$HOME/.local/bin/sun-schedule.sh" toggle ;;
+        *Suspend) 
+            [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Suspend?") == *"Yes"* ]] && systemctl suspend ;;
+        *Logout) 
+            [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Logout?") == *"Yes"* ]] && hyprctl dispatch exit ;;
+        *Reboot) 
+            [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Reboot?") == *"Yes"* ]] && systemctl reboot ;;
+        *Shutdown) 
+            [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Shutdown?") == *"Yes"* ]] && systemctl poweroff ;;
+    esac
+}
+
+main_menu
