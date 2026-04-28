@@ -46,6 +46,7 @@ color_yellow = '#d79921'
 [os]
 disabled = false
 style = "bg:color_orange fg:color_fg0"
+format = "[$symbol]($style)"
 
 [os.symbols]
 Windows = "󰍲"
@@ -70,6 +71,8 @@ Debian = "󰣚"
 Redhat = "󱄛"
 RedHatEnterprise = "󱄛"
 Pop = ""
+CachyOS = "󰣇" 
+Unknown = "󰣇"  # The ultimate fallback
 
 [username]
 show_always = true
@@ -173,8 +176,8 @@ disabled = false
 
 [character]
 disabled = false
-success_symbol = '[](bold fg:color_green)'
-error_symbol = '[](bold fg:color_red)'
+success_symbol = '[󰣇 ](bold fg:color_green)'
+error_symbol = '[󰣇 ](bold fg:color_red)'
 vimcmd_symbol = '[](bold fg:color_green)'
 vimcmd_replace_one_symbol = '[](bold fg:color_purple)'
 vimcmd_replace_symbol = '[](bold fg:color_purple)'
