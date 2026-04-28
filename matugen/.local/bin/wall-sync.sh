@@ -17,5 +17,6 @@ hyprctl keyword general:col.inactive_border "$C_INACTIVE"
 
 # 5. UI Refresh
 pkill -USR1 kitty
-swaync-client -rs 2>/dev/null
+swaync-client -rs 
+
 killall -SIGUSR2 caelestia 2>/dev/null

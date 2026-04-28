@@ -14,6 +14,10 @@ output_path = '/home/snow/.cache/skwd-wall/colors-kitty.conf'
 input_path = '/home/snow/Dotfiles/matugen/.config/matugen/templates/fuzzel-colors.ini'
 output_path = '/home/snow/.cache/skwd-wall/fuzzel-colors.ini'
 
+[templates.swaync]
+input_path = '/home/snow/Dotfiles/matugen/.config/matugen/templates/swaync.css'
+output_path = '/home/snow/.cache/matugen/swaync.css'
+
 [post_processing]
 command = "/home/snow/.local/bin/wall-sync.sh %path%"
 run_on_change = true
