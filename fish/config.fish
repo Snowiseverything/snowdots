@@ -1,50 +1,42 @@
 # ── CachyOS Base ──────────────────────────────
-source /usr/share/cachyos-fish-config/cachyos-config.fish
+source /usr/share/cachyos-fish-config/cachyos-config.fish 2>/dev/null
 
 # ── Shell & Starship ──────────────────────────
+# Hide the Node version (v20.20.2) in prompt
+set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source
 
-# Merge pywal palette into starship
-if test -f ~/.config/starship-palette.toml
-    cat ~/.config/starship.toml ~/.config/starship-palette.toml > /tmp/starship-merged.toml
-    set -x STARSHIP_CONFIG /tmp/starship-merged.toml
+# ── Dotfiles Management ───────────────────────
+alias dotsync='cd ~/Dotfiles && git add . && git commit -m "update $(date +%Y-%m-%d)" && git push backup main && git push origin main'
+alias dotpull='cd ~/Dotfiles && git fetch --all && git reset --hard origin/main'
+
+# ── Host Detection ────────────────────────────
+set MY_HOST (hostname)
+if test "$MY_HOST" = "snowpi"
+    alias ff="fastfetch --logo raspberrypi --logo-color-1 red --logo-color-2 green"
+    if status is-interactive
+        /usr/local/bin/snowpi-banner
+    end
+else
+    alias ff="fastfetch --logo cachyos"
 end
 
-# ── Dotfiles Management ───────────────────────
-alias dotfiles='git --git-dir=$HOME/.dotfiles/ --work-tree=$HOME'
-alias dotpush='cd ~/.dotfiles && git add . && git commit -m "update" && git push'
-
-# ── Edit Configs (Source-Direct) ──────────────
+# ── Edit Functions (Fixed Paths) ──────────────
 function edit-fish
-    nano ~/.dotfiles/fish/config.fish
-    and source ~/.dotfiles/fish/config.fish
+    nano ~/Dotfiles/fish/config.fish # Adjusted to your real structure
+    and source ~/.config/fish/config.fish
     and echo "󰈺 Fish config reloaded!"
 end
 
 function edit-starship
-    nano ~/.dotfiles/starship.toml
+    nano ~/Dotfiles/starship.toml
 end
 
 function edit-hypr
-    nano /home/snow/Sync/Dotfiles/hypr/.config/hypr/hyprland.conf
+    nano ~/Dotfiles/hypr/hyprland.conf
 end
 
-function edit-kitty
-    # Note: Using the .config/kitty path inside your dotfiles
-    nano ~/.dotfiles/.config/kitty/kitty.conf
-end
-
-function edit-ssh
-    nano ~/.ssh/config
-end
-
-# ── Personal Overrides ────────────────────────
-if status is-interactive
-    abbr --erase ff 2>/dev/null
-    abbr -a ff fastfetch
-end
-
-# ── Maptoposter ───────────────────────────────
+# ── Maptoposter (Hawler | هەولێر) ──────────────
 function mapgen
     /usr/bin/uv --directory $HOME/src/maptoposter run python $HOME/src/maptoposter/create_map_poster.py \
         --city "Erbil" --country "Iraq" --display-city "Hawler | هەولێر" --display-country "KRG" \
