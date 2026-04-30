@@ -1,6 +1,7 @@
 # ── CachyOS Base ──────────────────────────────
 # Silently source CachyOS defaults if they exist
 source /usr/share/cachyos-fish-config/cachyos-config.fish 2>/dev/null
+set -g __done_initial_window_id 0
 
 # ── Quick Paths (Stow-Compatible) ─────────────
 set -gx DOTS ~/Dotfiles
@@ -13,7 +14,7 @@ starship init fish | source
 
 # ── Dotfiles Management ───────────────────────
 # Pushes to both backup and origin as per your recent workflow
-alias dotsync='cd $DOTS && git add . && git commit -m "update $(date +%Y-%m-%d)" && git push backup main && git push origin main'
+alias dotsync='cd $DOTS && git add . && git commit -m "update $(date +%Y-%m-%d)" && git push snowpi main && git push origin main'
 alias dotpull='cd $DOTS && git fetch --all && git reset --hard origin/main'
 
 # ── Host Detection ────────────────────────────
