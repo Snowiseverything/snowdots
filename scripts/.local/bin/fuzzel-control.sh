@@ -25,7 +25,7 @@ main_menu() {
     CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Control Center: ")
 
     case "$CHOICE" in
-        *Lock) hyprlock ;;
+        *Lock) loginctl lock-session ;;
         *Wallpaper) skwd wall toggle ;;
         *"Edit Configs"*) show_configs ;;
 	*Rice*) 

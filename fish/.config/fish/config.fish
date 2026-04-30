@@ -12,6 +12,11 @@ set -gx FISHCONF $DOTS/fish/.config/fish/config.fish
 set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source
 
+# ── Script Execution ──
+alias check='$DOTS/bin/check-dots.fish'
+alias fixme='$DOTS/bin/fix-me.sh'
+alias rice-fixer='$DOTS/fuzzel/bin/rice-fixer'
+
 # ── Dotfiles Management ───────────────────────
 # Pushes to both backup and origin as per your recent workflow
 alias dotsync='cd $DOTS && git add . && git commit -m "update $(date +%Y-%m-%d)" && git push snowpi main && git push origin main'
