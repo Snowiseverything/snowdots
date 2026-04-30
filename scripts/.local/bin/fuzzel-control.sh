@@ -28,22 +28,27 @@ main_menu() {
         *Lock) hyprlock ;;
         *Wallpaper) skwd wall toggle ;;
         *"Edit Configs"*) show_configs ;;
-        *Rice*) 
-            # 1. Kill the daemon safely
-            pkill -f skwd-daemon 2>/dev/null
+	*Rice*) 
+            # 1. Safely restart the daemon
+            killall skwd-daemon 2>/dev/null
             
-            # 2. Surgical Cache Clean (No folder nuking)
-            find ~/.cache/skwd-wall/ -type f -delete 2>/dev/null
+            # 2. Prevent the "File Not Found" error
+            # DO NOT DELETE the file, just ensure the directory exists
             mkdir -p ~/.cache/skwd-wall/
-            touch ~/.cache/skwd-wall/hyprland-colors.conf
+            if [ ! -f ~/.cache/skwd-wall/hyprland-colors.conf ]; then
+                printf "\$color1 = rgba(baeaffff)\n\$color4 = rgba(89d0edff)\n\$inactive = rgba(0a0f11aa)\n" > ~/.cache/skwd-wall/hyprland-colors.conf
+            fi
             
             # 3. Call the Master Engine
+            # This triggers wall-sync.sh via your watcher
             fish -c "ww-reload"
             
-            # 4. Restart Daemon
+            # 4. Restart Daemon and reload Hyprland to clear errors
             skwd-daemon & 
+            sleep 0.2
+            hyprctl reload
             
-            notify-send "󱊑 Rice Fixer" "System Synced via ww-reload" ;;
+            notify-send "󱊑 Rice Fixer" "System Synced & Errors Cleared" ;;
         *"Night Light"*) "$HOME/.local/bin/sun-schedule.sh" toggle ;;
         *Suspend) 
             [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Suspend?") == *"Yes"* ]] && systemctl suspend ;;

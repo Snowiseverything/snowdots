@@ -25,18 +25,20 @@ sleep 0.2
 # 4. Pull colors with a fallback
 CONF="$HOME/.cache/skwd-wall/hyprland-colors.conf"
 
-# Use 'sed' instead of 'grep|awk' for cleaner parsing
-C1=$(sed -n 's/.*color1 = //p' "$CONF" | tr -d '[:space:]')
-C4=$(sed -n 's/.*color4 = //p' "$CONF" | tr -d '[:space:]')
-C_INACTIVE=$(sed -n 's/.*inactive = //p' "$CONF" | tr -d '[:space:]')
+# 29-31: Fixed sed patterns to include the '$' and allow for different spacing
+C1=$(sed -n 's/.*\$color1 = //p' "$CONF" | tr -d '[:space:]')
+C4=$(sed -n 's/.*\$color4 = //p' "$CONF" | tr -d '[:space:]')
+C_INACTIVE=$(sed -n 's/.*\$inactive = //p' "$CONF" | tr -d '[:space:]')
 
-# 5. Inject into Hyprland (Check if variables are empty before applying)
-if [ -n "$C1" ] && [ -n "$C4" ]; then
-    hyprctl keyword general:col.active_border "$C4 $C1 45deg"
-    hyprctl keyword general:col.inactive_border "$C_INACTIVE"
-else
-    notify-send "wall-sync" "Color pull failed, keeping current"
-fi
+# 33-39: Enhanced Fallbacks & Application
+# This ensures that if the 'sed' fails, it uses your preferred palette instead of breaking
+[ -z "$C1" ] && C1="rgba(baeaffff)"
+[ -z "$C4" ] && C4="rgba(89d0edff)"
+[ -z "$C_INACTIVE" ] && C_INACTIVE="rgba(0a0f11aa)"
+
+# Apply directly to Hyprland
+hyprctl keyword general:col.active_border "$C4 $C1 45deg"
+hyprctl keyword general:col.inactive_border "$C_INACTIVE"
 
 # 6. UI Refresh
 pkill -USR1 kitty

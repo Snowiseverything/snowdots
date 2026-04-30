@@ -1,8 +1,7 @@
-function ww-reload --wraps='killall wall-watcher.sh; sh ~/.local/bin/wall-watcher.sh &'
-    # Kill every instance of the watcher, even if it's hiding under 'sh'
-        pkill -f wall-watcher.sh
-        # Wait a second for them to actually die
-        sleep 0.5
-        # Start the new one
-        sh /home/snow/.local/bin/wall-watcher.sh &
+function ww-reload
+    pkill -f wall-watcher.sh
+    # Use disown to let the shell exit while the watcher runs
+    sh ~/Dotfiles/matugen/.local/bin/wall-watcher.sh > /dev/null 2>&1 &
+    disown
+    echo "󰈺 Watcher restarted and detached!"
 end
