@@ -1,4 +1,4 @@
-########################################################################
+G#######################################################################
 ##  HyprSnow — v1.0.5                              Edited: 2026-04-29 ##
 ########################################################################
 
@@ -221,10 +221,10 @@ bind = $mainMod, W, exec, ~/.local/bin/skwd-safe.sh wall toggle && sleep 1 && ~/
 bind = $mainMod SHIFT, W, exec, ~/.local/bin/skwd-safe.sh wall apply "$(jq -r '.path' ~/.cache/skwd-wall/wallpaper/current.json)"
 
 # ── System ────────────────────────────────────────────────────────────
+bind = $mainMod SHIFT, C,      exec, ~/.local/bin/safe-kill.sh
 bind = $mainMod SHIFT, M,      exit,
 bind = $mainMod SHIFT, R,      exec, killall caelestia; caelestia shell -d
 bind = $mainMod SHIFT, B,      exec, hyprctl keyword decoration:blur:enabled toggle
-bind = $mainMod,       C,      exec, $HOME/.local/bin/safe-kill.sh
 bind = $mainMod,       O,      layoutmsg, togglesplit
 bind = $mainMod,       A,      alterzorder, top
 bind = $mainMod,       N,      exec, swaync-client -t -sw
@@ -237,6 +237,7 @@ bind = CTRL ALT,  Delete,    exec, zenity --question --text="Are you sure you wa
 
 # ── Apps ──────────────────────────────────────────────────────────────
 bind = $mainMod, B,      exec, brave --ozone-platform-hint=auto --enable-features=WaylandWindowDecorations
+bind = $mainMod, C,      exec, ~/.local/bin/safe-kill.sh
 bind = $mainMod, D,      exec, discord
 bind = $mainMod, F,      exec, thunar
 bind = $mainMod, Q,      exec, kitty
@@ -244,7 +245,7 @@ bind = $mainMod, S,      exec, spotify
 bind = $mainMod, T,      exec, trayscale
 bind = $mainMod, V,      exec, kitty --class clipse -e clipse
 bind = $mainMod, X,      fullscreen, 0
-bind = $mainMod, Z,      exec, $HOME/.local/bin/hypr-float.sh
+bind = $mainMod, Z,      exec, ~/.local/bin/hypr-float.sh
 bind = CTRL SHIFT, ESCAPE, exec, kitty btop
 
 # ── Hardware & media ──────────────────────────────────────────────────
