@@ -17,10 +17,6 @@ alias check='$DOTS/bin/check-dots.fish'
 alias fixme='$DOTS/bin/fix-me.sh'
 alias rice-fixer='$DOTS/fuzzel/bin/rice-fixer'
 
-# ── Dotfiles Management ───────────────────────
-# Pushes to both backup and origin as per your recent workflow
-alias dotpull='cd $DOTS && git fetch --all && git reset --hard origin/main'
-
 # ── Host Detection ────────────────────────────
 set MY_HOST (hostname)
 if test "$MY_HOST" = "snowpi"
