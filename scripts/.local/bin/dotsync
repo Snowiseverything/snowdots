@@ -1,0 +1,28 @@
+#!/bin/bash
+# dotsync: Standardized sync for CachyOS
+# Pushes to both SnowPi (local hub) and GitLab (origin)
+
+DOTS="$HOME/Dotfiles"
+
+echo "🚀 Starting Dotfile Sync..."
+
+if [ -d "$DOTS" ]; then
+    cd "$DOTS"
+    
+    # Stage and commit with today's date
+    git add .
+    git commit -m "update $(date +%Y-%m-%d)"
+    
+    # Push to SnowPi (Your local hub)
+    echo "📡 Pushing to SnowPi..."
+    git push snowpi main
+    
+    # Push to GitLab (Origin)
+    echo "🌐 Pushing to GitLab..."
+    git push origin main
+    
+    echo "✅ All sync targets updated!"
+else
+    echo "❌ Error: $DOTS directory not found."
+    exit 1
+fi
