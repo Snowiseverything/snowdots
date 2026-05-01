@@ -1,0 +1,29 @@
+#!/bin/bash
+# Smart Dotfile Sync
+
+if ! git rev-parse --is-inside-work-tree > /dev/null 2>&1; then
+    echo "❌ Error: Not inside a Git repository."
+    exit 1
+fi
+
+REPO_NAME=$(basename $(git rev-parse --show-toplevel))
+echo "🚀 Starting Dotfile Sync for [$REPO_NAME]..."
+
+echo "📦 Staging changes..."
+git add .
+
+if git diff-index --quiet HEAD --; then
+    echo "✨ No changes to sync in $REPO_NAME."
+else
+    echo "📝 Committing update..."
+    git commit -m "update $(date +%Y-%m-%d)"
+    
+    # This will push to whatever remotes you have (origin, snowpi, gitlab, etc.)
+    for remote in $(git remote); do
+        echo "📡 Pushing to $remote..."
+        git push $remote main
+    done
+fi
+
+echo "✅ $REPO_NAME sync complete!"
+notify-send -i software-update-available "Dotfiles" "Remote repositories updated successfully."

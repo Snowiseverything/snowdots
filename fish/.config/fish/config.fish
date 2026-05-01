@@ -5,6 +5,7 @@ set -g __done_initial_window_id 0
 
 # ── Quick Paths (Stow-Compatible) ─────────────
 set -gx DOTS ~/Dotfiles
+set -gx SCRIPT_DIR $DOTS/scripts
 set -gx HYPR $DOTS/hypr/.config/hypr/hyprland.conf
 set -gx FISHCONF $DOTS/fish/.config/fish/config.fish
 
@@ -13,9 +14,11 @@ set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source
 
 # ── Script Execution ──
-alias check='$DOTS/bin/check-dots.fish'
-alias fixme='$DOTS/bin/fix-me.sh'
-alias rice-fixer='$DOTS/fuzzel/bin/rice-fixer'
+alias dotsync="bash $SCRIPT_DIR/dotsync"
+alias dotpull="bash $SCRIPT_DIR/dotpull"
+alias check="fish $DOTS/bin/check-dots.fish"  # Keep this if bin is separate, or move it too
+alias fixme="bash $SCRIPT_DIR/fix-me.sh"
+alias sun-toggle="bash $SCRIPT_DIR/sun-schedule.sh toggle"
 
 # ── Host Detection ────────────────────────────
 set MY_HOST (hostname)
