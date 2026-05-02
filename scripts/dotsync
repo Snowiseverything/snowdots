@@ -2,8 +2,9 @@
 # --------------------------------------------------------------------------
 # SNOWSYNC v11.0 — The "Indestructible" Edition
 # --------------------------------------------------------------------------
+
 # Define potential repos; script only acts if the folder exists locally
-POTENTIAL_REPOS=("$HOME/SnowPi-Dotfiles" "$HOME/Dotfiles")
+POTENTIAL_REPOS=("$HOME/Dotfiles" "$HOME/SnowPi-Dotfiles")
 REPOS=()
 
 for R in "${POTENTIAL_REPOS[@]}"; do
@@ -18,10 +19,12 @@ for REPO in "${REPOS[@]}"; do
     echo "❄️  SnowSync: Harmonizing [$(basename "$REPO")]"
     cd "$REPO" || continue
 
-    # STEP 1: Always pull first. This prevents 99% of Git breakages.
+	# STEP 1: Smart Pull. Stash local edits, pull, then bring edits back.
     echo "📥 Checking for remote updates..."
+    git stash # Temporarily hide your script edits
     git pull origin main --no-rebase
-
+    git stash pop 2>/dev/null # Bring your edits back
+    
     # STEP 2: Stage all changes
     git add .
 
