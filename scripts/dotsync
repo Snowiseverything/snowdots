@@ -1,55 +1,51 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SNOWSYNC v9.2 — The "Safe Push" Edition
+# SNOWSYNC v9.5 — The "Dual-System" Edition
 # --------------------------------------------------------------------------
-REPOS=("$HOME/Dotfiles" "$HOME/SnowPi-Dotfiles")
+POTENTIAL_REPOS=("$HOME/SnowPi-Dotfiles" "$HOME/Dotfiles")
+REPOS=()
+
+# Only sync repos that actually exist on this machine
+for R in "${POTENTIAL_REPOS[@]}"; do
+    if [ -d "$R" ]; then
+        REPOS+=("$R")
+    fi
+done
+
 START_DIR=$(pwd)
 HOSTNAME=$(hostname)
-TODAY=$(date +%Y-%m-%d)
 
 auto_heal() {
-    echo "🔧 Auto-Healing Symlinks..."
-    mkdir -p ~/.config/hypr ~/.config/fish
-    ln -sf "$HOME/Dotfiles/hypr/hyprland.conf" "$HOME/.config/hypr/hyprland.conf"
-    ln -sf "$HOME/Dotfiles/hypr/hypridle.conf" "$HOME/.config/hypr/hypridle.conf"
-    if [ ! -L "$HOME/.config/fish" ]; then
-        rm -rf "$HOME/.config/fish"
-        ln -s "$HOME/Dotfiles/fish" "$HOME/.config/fish"
+    echo "🔧 Auto-Healing Symlinks for $HOSTNAME..."
+    # Core rule: Never use windowrulev2 as it is deprecated
+    
+    if [[ "$HOSTNAME" == "snowpi" ]]; then
+        # SnowPi specific links
+        ln -sf "$HOME/SnowPi-Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
+        ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotpush"
+    else
+        # CachyOS specific links
+        ln -sf "$HOME/Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
+        ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotpush"
     fi
-    hyprctl reload &>/dev/null
 }
 
 for REPO in "${REPOS[@]}"; do
-    if [ -d "$REPO" ]; then
-        REPO_NAME=$(basename "$REPO")
-        echo "---------------------------------------------------"
-        echo "❄️  SnowSync: Harmonizing [$REPO_NAME]"
-        cd "$REPO" || continue
+    echo "---------------------------------------------------"
+    echo "❄️  SnowSync: Harmonizing [$(basename "$REPO")]"
+    cd "$REPO" || continue
 
-        # 1. Smart Stamping
-        CHANGED_FILES=$(git ls-files -m -o --exclude-standard)
-        for FILE in $CHANGED_FILES; do
-            if [ -f "$FILE" ] && grep -q "SnowDots —" "$FILE"; then
-                echo "📍 Stamping: $FILE"
-                sed -i "s/Last Edited: [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/Last Edited: $TODAY/" "$FILE"
-            fi
-        done
+    # Pull first to prevent "non-fast-forward" errors
+    git pull origin main --no-rebase
 
-        # 2. Commit & Push Phase
-        git add .
-        CHANGES=$(git status --porcelain | sed 's/^...//' | tr '\n' ',' | sed 's/,$//')
-        if [ ! -z "$CHANGES" ]; then
-            FIRST_FILE=$(echo "$CHANGES" | cut -d, -f1)
-            VERSION=$(grep -o "v[0-9]\+\.[0-9]\+\.[0-9]\+" "$FIRST_FILE" | head -1 || echo "v1.0.0")
-            git commit -m "sync $VERSION | $HOSTNAME | Files: $CHANGES"
-            
-            for remote in $(git remote); do
-                echo "📡 Pushing to $remote..."
-                git push "$remote" main
-            done
-        else
-            echo "✨ No changes to push."
-        fi
+    git add .
+    CHANGES=$(git status --porcelain | sed 's/^...//' | tr '\n' ',' | sed 's/,$//')
+    
+    if [ ! -z "$CHANGES" ]; then
+        git commit -m "sync | $HOSTNAME | Files: $CHANGES"
+        git push origin main
+    else
+        echo "✨ Everything up to date."
     fi
 done
 
