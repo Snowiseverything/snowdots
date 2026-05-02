@@ -17,13 +17,25 @@ if git diff-index --quiet HEAD --; then
 else
     echo "📝 Committing update..."
     git commit -m "update $(date +%Y-%m-%d)"
-    
-    # This will push to whatever remotes you have (origin, snowpi, gitlab, etc.)
+
+    # Push to all remotes with a connectivity check
     for remote in $(git remote); do
+        URL=$(git remote get-url "$remote")
+        
+        # Check if the remote is your workstation IP
+        if [[ "$URL" == *"100.87.27.79"* ]]; then
+            if ! ping -c 1 -W 1 100.87.27.79 > /dev/null 2>&1; then
+                echo "⏭️  Skipping $remote: Workstation is offline (Freezer)."
+                continue
+            fi
+        fi
+
         echo "📡 Pushing to $remote..."
-        git push $remote main
+        git push "$remote" main
     done
 fi
 
 echo "✅ $REPO_NAME sync complete!"
-notify-send -i software-update-available "Dotfiles" "Remote repositories updated successfully."
+
+# Only notify if notify-send exists (prevents errors on headless SnowPi)
+command -v notify-send >/dev/null && notify-send -i software-update-available "Dotfiles" "Remote repositories updated successfully."
