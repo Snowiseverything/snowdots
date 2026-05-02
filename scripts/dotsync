@@ -49,13 +49,12 @@ done
 # --- Auto-Heal Symlinks (Hostname Specific) ---
 # Prevents icon/config conflicts between CachyOS and Raspbian
 if [[ "$HOSTNAME" == "snowpi" ]]; then
-    # Raspberry Pi Paths
-    ln -sf "$HOME/SnowPi-Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
     ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+    ln -sf "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh" "$HOME/.local/bin/audit-dots"
 else
-    # CachyOS (freezer) Paths
-    ln -sf "$HOME/Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
+    # On freezer, we use the main Dotfiles repo
     ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+    ln -sf "$HOME/Dotfiles/scripts/audit-dots.sh" "$HOME/.local/bin/audit-dots"
 fi
 
 cd "$START_DIR"
