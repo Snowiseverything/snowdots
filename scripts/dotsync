@@ -25,16 +25,19 @@ for REPO in "${REPOS[@]}"; do
     # STEP 2: Stage all changes
     git add .
 
-    # STEP 3: Check if there's actually anything to commit
-    CHANGES=$(git status --porcelain | sed 's/^...//' | tr '\n' ',' | sed 's/,$//')
+	# STEP 3: Detect changes and push
+    CHANGES=$(git status --porcelain)
     
     if [ ! -z "$CHANGES" ]; then
-        echo "📤 Pushing local changes: $CHANGES"
-        git commit -m "sync | $HOSTNAME | $(date +%Y-%m-%d) | Files: $CHANGES"
-        git push origin main
-    else
-        echo "✨ Everything is already matched."
+        echo "📤 Committing local changes..."
+        git add .
+        git commit -m "sync | $HOSTNAME | $(date +%Y-%m-%d)"
     fi
+
+    # Always attempt a push to sync commits made earlier
+    echo "🚀 Syncing commits to remote..."
+    git push origin main
+   
 done
 
 # --- Auto-Heal Symlinks (Hostname Specific) ---
