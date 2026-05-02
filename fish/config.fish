@@ -63,3 +63,14 @@ function mapgen
         --city "Erbil" --country "Iraq" --display-city "Hawler | هەولێر" --display-country "KRG" \
         --distance 8000 --theme "cyber_game" --width 16 --height 16 --font-family "Noto Sans Arabic" $argv
 end
+
+# Start ssh-agent if not running
+if not set -q SSH_AUTH_SOCK
+    eval (ssh-agent -c) > /dev/null
+end
+
+# Add the key quietly if it's not already there
+ssh-add -l > /dev/null 2>&1
+if test $status -eq 1
+    ssh-add ~/.ssh/id_ed25519 > /dev/null 2>&1
+end
