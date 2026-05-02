@@ -1,9 +1,9 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SNOWSYNC v11.0 — The "Indestructible" Edition
+# SNOWSYNC v11.2 — The "One File to Rule Them All" Edition
 # --------------------------------------------------------------------------
 
-# Define potential repos; script only acts if the folder exists locally
+# Order: Check CachyOS Dotfiles first, then SnowPi secondary
 POTENTIAL_REPOS=("$HOME/Dotfiles" "$HOME/SnowPi-Dotfiles")
 REPOS=()
 
@@ -19,36 +19,41 @@ for REPO in "${REPOS[@]}"; do
     echo "❄️  SnowSync: Harmonizing [$(basename "$REPO")]"
     cd "$REPO" || continue
 
-	# STEP 1: Smart Pull. Stash local edits, pull, then bring edits back.
+    # STEP 1: Smart Pull (Safety Stash)
     echo "📥 Checking for remote updates..."
-    git stash # Temporarily hide your script edits
+    git stash >/dev/null 2>&1
     git pull origin main --no-rebase
-    git stash pop 2>/dev/null # Bring your edits back
+    git stash pop >/dev/null 2>&1
     
-    # STEP 2: Stage all changes
+    # STEP 2: Detect Changes
     git add .
-
-	# STEP 3: Detect changes and push
     CHANGES=$(git status --porcelain)
-    
+
+    # STEP 3: Smart Commit
     if [ ! -z "$CHANGES" ]; then
-        echo "📤 Committing local changes..."
-        git add .
-        git commit -m "sync | $HOSTNAME | $(date +%Y-%m-%d)"
+        # Detect the most modified file
+        MAJOR_CHANGE=$(git diff --name-only | head -n 1)
+        if [ -z "$MAJOR_CHANGE" ]; then MAJOR_CHANGE="new files"; fi
+        
+        MSG="sync | $HOSTNAME | updated $MAJOR_CHANGE"
+        
+        echo "📤 Committing: $MSG"
+        git commit -m "$MSG"
     fi
 
-    # Always attempt a push to sync commits made earlier
+    # STEP 4: Sync to GitLab
     echo "🚀 Syncing commits to remote..."
     git push origin main
-   
 done
 
 # --- Auto-Heal Symlinks (Hostname Specific) ---
-# Ensures your Raspberry Pi icon (f315) or Arch icon remains system-appropriate
+# Prevents icon/config conflicts between CachyOS and Raspbian
 if [[ "$HOSTNAME" == "snowpi" ]]; then
+    # Raspberry Pi Paths
     ln -sf "$HOME/SnowPi-Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
     ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
 else
+    # CachyOS (freezer) Paths
     ln -sf "$HOME/Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
     ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
 fi
