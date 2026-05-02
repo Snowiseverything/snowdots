@@ -1,53 +1,50 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SNOWSYNC v9.5 — The "Dual-System" Edition
+# SNOWSYNC v11.0 — The "Indestructible" Edition
 # --------------------------------------------------------------------------
+# Define potential repos; script only acts if the folder exists locally
 POTENTIAL_REPOS=("$HOME/SnowPi-Dotfiles" "$HOME/Dotfiles")
 REPOS=()
 
-# Only sync repos that actually exist on this machine
 for R in "${POTENTIAL_REPOS[@]}"; do
-    if [ -d "$R" ]; then
-        REPOS+=("$R")
-    fi
+    if [ -d "$R" ]; then REPOS+=("$R"); fi
 done
 
 START_DIR=$(pwd)
 HOSTNAME=$(hostname)
-
-auto_heal() {
-    echo "🔧 Auto-Healing Symlinks for $HOSTNAME..."
-    # Core rule: Never use windowrulev2 as it is deprecated
-    
-    if [[ "$HOSTNAME" == "snowpi" ]]; then
-        # SnowPi specific links
-        ln -sf "$HOME/SnowPi-Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
-        ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotpush"
-    else
-        # CachyOS specific links
-        ln -sf "$HOME/Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
-        ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotpush"
-    fi
-}
 
 for REPO in "${REPOS[@]}"; do
     echo "---------------------------------------------------"
     echo "❄️  SnowSync: Harmonizing [$(basename "$REPO")]"
     cd "$REPO" || continue
 
-    # Pull first to prevent "non-fast-forward" errors
+    # STEP 1: Always pull first. This prevents 99% of Git breakages.
+    echo "📥 Checking for remote updates..."
     git pull origin main --no-rebase
 
+    # STEP 2: Stage all changes
     git add .
+
+    # STEP 3: Check if there's actually anything to commit
     CHANGES=$(git status --porcelain | sed 's/^...//' | tr '\n' ',' | sed 's/,$//')
     
     if [ ! -z "$CHANGES" ]; then
-        git commit -m "sync | $HOSTNAME | Files: $CHANGES"
+        echo "📤 Pushing local changes: $CHANGES"
+        git commit -m "sync | $HOSTNAME | $(date +%Y-%m-%d) | Files: $CHANGES"
         git push origin main
     else
-        echo "✨ Everything up to date."
+        echo "✨ Everything is already matched."
     fi
 done
 
-auto_heal
+# --- Auto-Heal Symlinks (Hostname Specific) ---
+# Ensures your Raspberry Pi icon (f315) or Arch icon remains system-appropriate
+if [[ "$HOSTNAME" == "snowpi" ]]; then
+    ln -sf "$HOME/SnowPi-Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
+    ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+else
+    ln -sf "$HOME/Dotfiles/starship/starship.toml" "$HOME/.config/starship.toml"
+    ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+fi
+
 cd "$START_DIR"
