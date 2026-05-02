@@ -1,6 +1,6 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SNOWSYNC v8.7 — The "Teleport" Subshell Edition
+# SNOWSYNC v8.9 — The "Universal Anywhere" Edition
 # --------------------------------------------------------------------------
 REPOS=("$HOME/Dotfiles" "$HOME/SnowPi-Dotfiles")
 START_DIR=$(pwd)
@@ -13,62 +13,58 @@ for REPO in "${REPOS[@]}"; do
         echo "---------------------------------------------------"
         echo "❄️  SnowSync: Harmonizing [$REPO_NAME]"
         
-        # Using a subshell ensures we never get stuck in the wrong directory
-        (
-            cd "$REPO" || exit
-            
-            # 1. Pull updates
-            git fetch origin main &>/dev/null
-            if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main 2>/dev/null)" ]; then
-                echo "📥 Pulling remote updates..."
-                git pull --rebase origin main
-            fi
+        # Move into repo
+        cd "$REPO" || continue
 
-            # 2. Smart Stamping (Includes both staged and unstaged changes)
-            CHANGED_FILES=$(git ls-files -m -o --exclude-standard)
-            for FILE in $CHANGED_FILES; do
-                if [ -f "$FILE" ] && grep -q "SnowDots —" "$FILE"; then
-                    echo "📍 Stamping: $FILE"
-                    sed -i "s/Last Edited: [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/Last Edited: $TODAY/" "$FILE"
+        # 1. Handshake (Pull)
+        git fetch origin main &>/dev/null
+        if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main 2>/dev/null)" ]; then
+            echo "📥 Pulling remote updates..."
+            git pull --rebase origin main
+        fi
+
+        # 2. Smart Stamping
+        CHANGED_FILES=$(git ls-files -m -o --exclude-standard)
+        for FILE in $CHANGED_FILES; do
+            if [ -f "$FILE" ] && grep -q "SnowDots —" "$FILE"; then
+                echo "📍 Stamping: $FILE"
+                sed -i "s/Last Edited: [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/Last Edited: $TODAY/" "$FILE"
+            fi
+        done
+
+        # 3. Commit Phase
+        git add .
+        CHANGES=$(git status --porcelain | sed 's/^...//' | tr '\n' ',' | sed 's/,$//')
+
+        if [ -z "$CHANGES" ]; then
+            echo "✨ $REPO_NAME is already perfectly synced."
+        else
+            FIRST_FILE=$(echo "$CHANGES" | cut -d, -f1)
+            VERSION=$(grep -o "v[0-9]\+\.[0-9]\+\.[0-9]\+" "$FIRST_FILE" | head -1 || echo "v1.0.0")
+            
+            echo "📝 Commit: sync $VERSION | $HOSTNAME"
+            git commit -m "sync $VERSION | $HOSTNAME | Files: $CHANGES"
+
+            # 4. Multicast Push
+            for remote in $(git remote); do
+                URL=$(git remote get-url "$remote")
+                if [[ "$URL" == *"100.87.27.79"* ]]; then
+                    if ping -c 1 -W 1 100.87.27.79 > /dev/null 2>&1; then
+                        echo "🥶 Syncing to Freezer..."
+                        git push "$remote" main
+                    else
+                        echo "⚠️  Freezer Offline. Skipping."
+                    fi
+                else
+                    echo "📡 Syncing to $remote..."
+                    git push "$remote" main
                 fi
             done
-
-            # 3. Commit Phase
-            git add .
-            CHANGES=$(git status --porcelain | sed 's/^...//' | tr '\n' ',' | sed 's/,$//')
-
-            if [ -z "$CHANGES" ]; then
-                echo "✨ $REPO_NAME is already perfectly synced."
-            else
-                # Grab version from the first modified file
-                FIRST_FILE=$(echo "$CHANGES" | cut -d, -f1)
-                VERSION=$(grep -o "v[0-9]\+\.[0-9]\+\.[0-9]\+" "$FIRST_FILE" | head -1 || echo "v1.0.0")
-                
-                echo "📝 Commit: sync $VERSION | $HOSTNAME"
-                git commit -m "sync $VERSION | $HOSTNAME | Files: $CHANGES"
-
-                # 4. Multicast Push
-                for remote in $(git remote); do
-                    URL=$(git remote get-url "$remote")
-                    if [[ "$URL" == *"gitlab.com"* ]]; then
-                        echo "🦊 Syncing to GitLab..."
-                        git push "$remote" main
-                    elif [[ "$URL" == *"100.87.27.79"* ]]; then
-                        if ping -c 1 -W 1 100.87.27.79 > /dev/null 2>&1; then
-                            echo "🥶 Syncing to Freezer..."
-                            git push "$remote" main
-                        else
-                            echo "⚠️  Freezer Offline."
-                        fi
-                    else
-                        echo "📡 Syncing to $remote..."
-                        git push "$remote" main
-                    fi
-                done
-            fi
-        )
+        fi
+        
+        # Return to start to handle next repo
+        cd "$START_DIR" || exit
     fi
 done
 
-# Back to where you were before you ran the command
 cd "$START_DIR"
