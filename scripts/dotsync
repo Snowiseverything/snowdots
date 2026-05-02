@@ -1,29 +1,32 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SNOWSYNC v8.9 — The "Universal Anywhere" Edition
+# SNOWSYNC v9.2 — The "Safe Push" Edition
 # --------------------------------------------------------------------------
 REPOS=("$HOME/Dotfiles" "$HOME/SnowPi-Dotfiles")
 START_DIR=$(pwd)
 HOSTNAME=$(hostname)
 TODAY=$(date +%Y-%m-%d)
 
+auto_heal() {
+    echo "🔧 Auto-Healing Symlinks..."
+    mkdir -p ~/.config/hypr ~/.config/fish
+    ln -sf "$HOME/Dotfiles/hypr/hyprland.conf" "$HOME/.config/hypr/hyprland.conf"
+    ln -sf "$HOME/Dotfiles/hypr/hypridle.conf" "$HOME/.config/hypr/hypridle.conf"
+    if [ ! -L "$HOME/.config/fish" ]; then
+        rm -rf "$HOME/.config/fish"
+        ln -s "$HOME/Dotfiles/fish" "$HOME/.config/fish"
+    fi
+    hyprctl reload &>/dev/null
+}
+
 for REPO in "${REPOS[@]}"; do
     if [ -d "$REPO" ]; then
         REPO_NAME=$(basename "$REPO")
         echo "---------------------------------------------------"
         echo "❄️  SnowSync: Harmonizing [$REPO_NAME]"
-        
-        # Move into repo
         cd "$REPO" || continue
 
-        # 1. Handshake (Pull)
-        git fetch origin main &>/dev/null
-        if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main 2>/dev/null)" ]; then
-            echo "📥 Pulling remote updates..."
-            git pull --rebase origin main
-        fi
-
-        # 2. Smart Stamping
+        # 1. Smart Stamping
         CHANGED_FILES=$(git ls-files -m -o --exclude-standard)
         for FILE in $CHANGED_FILES; do
             if [ -f "$FILE" ] && grep -q "SnowDots —" "$FILE"; then
@@ -32,39 +35,23 @@ for REPO in "${REPOS[@]}"; do
             fi
         done
 
-        # 3. Commit Phase
+        # 2. Commit & Push Phase
         git add .
         CHANGES=$(git status --porcelain | sed 's/^...//' | tr '\n' ',' | sed 's/,$//')
-
-        if [ -z "$CHANGES" ]; then
-            echo "✨ $REPO_NAME is already perfectly synced."
-        else
+        if [ ! -z "$CHANGES" ]; then
             FIRST_FILE=$(echo "$CHANGES" | cut -d, -f1)
             VERSION=$(grep -o "v[0-9]\+\.[0-9]\+\.[0-9]\+" "$FIRST_FILE" | head -1 || echo "v1.0.0")
-            
-            echo "📝 Commit: sync $VERSION | $HOSTNAME"
             git commit -m "sync $VERSION | $HOSTNAME | Files: $CHANGES"
-
-            # 4. Multicast Push
+            
             for remote in $(git remote); do
-                URL=$(git remote get-url "$remote")
-                if [[ "$URL" == *"100.87.27.79"* ]]; then
-                    if ping -c 1 -W 1 100.87.27.79 > /dev/null 2>&1; then
-                        echo "🥶 Syncing to Freezer..."
-                        git push "$remote" main
-                    else
-                        echo "⚠️  Freezer Offline. Skipping."
-                    fi
-                else
-                    echo "📡 Syncing to $remote..."
-                    git push "$remote" main
-                fi
+                echo "📡 Pushing to $remote..."
+                git push "$remote" main
             done
+        else
+            echo "✨ No changes to push."
         fi
-        
-        # Return to start to handle next repo
-        cd "$START_DIR" || exit
     fi
 done
 
+auto_heal
 cd "$START_DIR"
