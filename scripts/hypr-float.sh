@@ -1,3 +1,8 @@
+########################################################################
+##  SnowDots — SnowHyprfloat                             Version: v1.0.0    ##
+##  Last Edited: 2026-05-02                                           ##
+########################################################################
+
 #!/bin/bash
 # Toggles floating and ensures a "wide" default size
 state=$(hyprctl activewindow -j | jq -r ".floating")

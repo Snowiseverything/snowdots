@@ -1,3 +1,8 @@
+########################################################################
+##  SnowDots — SnowYazi                             Version: v1.0.0    ##
+##  Last Edited: 2026-04-29                                           ##
+########################################################################
+
 # yazi shell wrapper(change the current working directory when exiting Yazi)
 function y
     set tmp (mktemp -t "yazi-cwd.XXXXXX")

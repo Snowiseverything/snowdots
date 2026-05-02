@@ -1,3 +1,8 @@
+########################################################################
+##  SnowDots — SnowAi                             Version: v1.0.0    ##
+##  Last Edited: 2026-04-29                                           ##
+########################################################################
+
 function ai --description "Manage Freezer's AI Stack"
     set -l command $argv[1]
 

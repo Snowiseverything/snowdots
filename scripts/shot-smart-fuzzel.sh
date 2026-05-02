@@ -1,3 +1,8 @@
+########################################################################
+##  SnowDots — SnowShotsmartfuzzel                             Version: v1.0.0    ##
+##  Last Edited: 2026-05-02                                           ##
+########################################################################
+
 #!/bin/bash
 SAVE_DIR="$HOME/Pictures/Screenshots"
 mkdir -p "$SAVE_DIR"

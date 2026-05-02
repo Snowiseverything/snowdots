@@ -1,3 +1,8 @@
+########################################################################
+##  SnowDots — SnowNightlightdaemon                             Version: v1.0.0    ##
+##  Last Edited: 2026-05-02                                           ##
+########################################################################
+
 #!/usr/bin/env bash
 
 # Delete the override file on startup so reboots always follow the schedule

@@ -1,3 +1,8 @@
+########################################################################
+##  SnowDots — SnowAliases                             Version: v1.0.0    ##
+##  Last Edited: 2026-04-30                                           ##
+########################################################################
+
 # ┌─────────┐
 # │ Aliases │
 # └─────────┘
@@ -108,3 +113,4 @@ abbr -a sdu 'sudo btrfs filesystem du -s /.snapshots/*'
 abbr -a sdelr 'sudo snapper -c root delete'
 abbr -a sdelh 'sudo snapper -c home delete --sync' #eg  --sync 1 or 2-4
 abbr -a sbdel 'sudo btrfs subvolume delete' #eg  sudo btrfs subvolume delete /.snapshots/5/snapshot
+# refresh

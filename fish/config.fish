@@ -1,3 +1,8 @@
+########################################################################
+##  SnowDots — Snowfish                             Version: v1.0.0    ##
+##  Last Edited: 2026-05-02                                           ##
+########################################################################
+
 # ── CachyOS Base ──────────────────────────────
 # Silently source CachyOS defaults if they exist
 source /usr/share/cachyos-fish-config/cachyos-config.fish 2>/dev/null
