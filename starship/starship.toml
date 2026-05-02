@@ -46,7 +46,7 @@ color_yellow = '#d79921'
 [os]
 disabled = false
 style = "bg:color_orange fg:color_fg0"
-format = "[$symbol]($style)"
+format = "[$STARSHIP_DISTRO]($style)"
 
 [os.symbols]
 Windows = "󰍲"
@@ -67,7 +67,7 @@ Arch = "󰣇"
 Artix = "󰣇"
 EndeavourOS = ""
 CentOS = ""
-Debian = "󰣚"
+Debian = "󰐿"
 Redhat = "󱄛"
 RedHatEnterprise = "󱄛"
 Pop = ""

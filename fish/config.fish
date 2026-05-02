@@ -29,11 +29,13 @@ alias sun-toggle="bash $SCRIPT_DIR/sun-schedule.sh toggle"
 set MY_HOST (hostname)
 if test "$MY_HOST" = "snowpi"
     alias ff="fastfetch --logo raspberrypi --logo-color-1 red --logo-color-2 green"
+    set -gx STARSHIP_DISTRO "󰐿"  # Raspberry Pi Icon
     if status is-interactive
         /usr/local/bin/snowpi-banner
     end
 else
     alias ff="fastfetch --logo cachyos"
+    set -gx STARSHIP_DISTRO "󰣇"  # Arch/CachyOS Icon
 end
 
 # ── Edit Functions ────────────────────────────
