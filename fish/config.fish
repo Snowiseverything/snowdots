@@ -11,8 +11,8 @@ set -g __done_initial_window_id 0
 # ── Quick Paths (Stow-Compatible) ─────────────
 set -gx DOTS ~/Dotfiles
 set -gx SCRIPT_DIR $DOTS/scripts
-set -gx HYPR $DOTS/hypr/.config/hypr/hyprland.conf
-set -gx FISHCONF $DOTS/fish/.config/fish/config.fish
+set -gx HYPR $DOTS/hypr/hyprland.conf
+set -gx FISHCONF $DOTS/fish/config.fish
 
 # ── Shell & Starship ──────────────────────────
 set -x STARSHIP_CONFIG ~/.config/starship.toml
