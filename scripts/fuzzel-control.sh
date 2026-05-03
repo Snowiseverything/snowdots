@@ -1,27 +1,23 @@
 #!/bin/bash
 ########################################################################
-##  SnowDots — SnowFuzzelcontrol                             v1.1.5   ##
+##  SnowDots — SnowFuzzelcontrol                             v1.1.6   ##
 ########################################################################
 
 DOT_DIR="$HOME/Dotfiles"
 SCRIPT_DIR="$DOT_DIR/scripts"
 
-# Ensures all scripts are executable and snapshots the state before editing
+# Ensures all scripts are executable
 ensure_executable() {
     find "$SCRIPT_DIR" -maxdepth 1 -type f \( -name "*.sh" -o ! -name "*.*" \) ! -executable -exec chmod +x {} +
 }
 
 edit_file() {
-    # 1. Create the snapshot
-    notify-send "󰄬 Snapper" "Creating pre-edit snapshot..."
-    sudo snapper -c home create --description "Pre-edit: $(basename "$1")"
-    
-    # 2. Open the file in a new terminal window
-    # We use hyprctl to ensure the window is managed correctly by the compositor
+    # We removed the snapper create command here to avoid hangs.
+    # dotsync will handle the backup to GitLab and the SSD mirror later.
     hyprctl dispatch exec "kitty nano $1"
 }
 
-# --- 1. MAIN MENU ---
+# --- MAIN MENU ---
 main_menu() {
     ensure_executable
     OPTIONS="󰷛 Lock\n󰒓 Edit Configs...\n󱏟 Edit Scripts...\n󱏟 Run Scripts...\n󰅍 Copy Script...\n󰙨 Run Rice Fixer\n󰐥 Power Menu"
