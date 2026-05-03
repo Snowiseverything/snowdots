@@ -1,50 +1,95 @@
 {
-	"$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
-    "logo": {
-        "type": "kitty",
-        "source": "/home/snow/Sync/Dotfiles/fastfetch/sans.png",
-        "width": 28,
-        "height": 12,
-        "padding": {
-            "top": 2,
-            "left": 2
-        }
+  "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "padding": {
+      "top": 2
     },
-    "display": {
-        "separator": " ➜  ",
-        "color": {
-            "keys": "magenta"
-        }
+    "color": {
+      "1": "34" // This forces the logo to use Matugen's primary blue/accent color
+    }
+  },
+  "display": {
+    "separator": " ➜  "
+  },
+  "modules": [
+    "break",
+    {
+      "type": "title",
+      "format": "{user-name-colored}@{host-name-colored}"
     },
-    "modules": [
-        "title",
-        "separator",
-        {
-            "type": "os",
-            "key": "OS   ",
-            "keyColor": "blue"
-        },
-        {
-            "type": "kernel",
-            "key": "KER  ",
-            "keyColor": "blue"
-        },
-        {
-            "type": "shell",
-            "key": "SH   ",
-            "keyColor": "blue"
-        },
-        {
-            "type": "wm",
-            "key": "WM   ",
-            "keyColor": "blue"
-        },
-        {
-            "type": "terminal",
-            "key": "TERM ",
-            "keyColor": "blue"
-        },
-        "break",
-        "colors"
-    ]
+    {
+      "type": "custom",
+      "format": " \u001b[90m─────── Hardware Information ───────"
+    },
+    {
+      "type": "cpu",
+      "key": "󰻠",
+      "keyColor": "34"
+    },
+    {
+      "type": "gpu",
+      "key": "󰍛",
+      "keyColor": "35"
+    },
+    {
+      "type": "command",
+      "key": "󰔄",
+      "keyColor": "31",
+      "text": "if [ -f /sys/class/thermal/thermal_zone0/temp ]; then echo \"$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))°C\"; else vcgencmd measure_temp | sed 's/temp=//'; fi",
+      "shell": "/bin/sh"
+    },
+    {
+      "type": "disk",
+      "key": "󰋊",
+      "keyColor": "32"
+    },
+    {
+      "type": "memory",
+      "key": "󰑭",
+      "keyColor": "33"
+    },
+    {
+      "type": "custom",
+      "format": " \u001b[90m─────── Software Information ───────"
+    },
+    {
+      "type": "os",
+      "key": "󰣇",
+      "keyColor": "34"
+    },
+    {
+      "type": "command",
+      "key": "󰄉",
+      "keyColor": "31",
+      "text": "birth_install=$(stat -c %W / | tr -d '-'); now=$(date +%s); echo $(( (now - birth_install) / 86400 )) days",
+      "shell": "/bin/sh"
+    },
+    {
+      "type": "localip",
+      "key": "󰩟",
+      "keyColor": "33",
+      "compact": true
+    },
+    {
+      "type": "command",
+      "key": "󱖨",
+      "keyColor": "35",
+      "text": "echo $(docker ps --format '{{.Names}}' | wc -l) containers / $(systemctl list-units --type=service --state=running | grep '.service' | wc -l) services",
+      "shell": "/bin/sh"
+    },
+    {
+      "type": "uptime",
+      "key": "󰅐",
+      "keyColor": "32"
+    },
+    {
+      "type": "custom",
+      "format": " \u001b[90m────────────────────────────────────"
+    },
+    "break",
+    {
+      "type": "colors",
+      "symbol": "circle"
+    }
+  ]
 }
