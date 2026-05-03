@@ -32,7 +32,7 @@ main_menu() {
             skwd-daemon & 
             hyprctl reload
             notify-send "󰙨 Rice Fixer" "System UI Refreshed" ;;
-	*"Night Light"*) "$HOME/Dotfiles/scripts/night-light.sh" ;;
+		*"Night Light"*) "$HOME/Dotfiles/scripts/night-light.sh" ;;
         *Suspend) [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Suspend?") == *"Yes"* ]] && systemctl suspend ;;
         *Logout) [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Logout?") == *"Yes"* ]] && hyprctl dispatch exit ;;
         *Reboot) [[ $(echo -e "󰄬 Yes\n󰏐 No" | fuzzel --dmenu --minimal-lines -p "Reboot?") == *"Yes"* ]] && systemctl reboot ;;
@@ -79,21 +79,28 @@ show_scripts() {
 
 # --- SUBMENU: RUN SCRIPTS ---
 run_scripts() {
-    # ... (options remains the same)
-    case "$CHOICE" in
-        *"Sync"*) 
-            notify-send "🚀 Dotfiles" "Starting Sync..."
-            kitty -e bash -c "$SCRIPT_DIR/dotsync; echo; echo 'Done. Press any key...'; read -n 1" ;;
-        *"Pull"*) 
-            notify-send "📡 Dotfiles" "Starting Pull..."
-            kitty -e bash -c "$SCRIPT_DIR/dotpull; echo; echo 'Done. Press any key...'; read -n 1" ;;
-        *"Fix-Me"*) 
-            notify-send "🛠️ System" "Running Fix-Me..."
-            kitty -e bash -c "$SCRIPT_DIR/fix-me.sh; echo; echo 'Done. Press any key...'; read -n 1" ;;
-        *"Sun Schedule"*) 
-            "$SCRIPT_DIR/sun-schedule.sh" toggle 
-            notify-send "󰖔 System" "Toggled Sun Schedule" ;;
-        # ...
+    # Define your list with icons manually to keep the SnowDots look
+    # Format: "Icon Name|filename"
+    LIST="󰚰 Sync Dotfiles|dotsync\n󰚮 Pull Dotfiles|dotpull\n Fix-Me System|fix-me.sh\n󰖔 Sun Schedule|sun-schedule.sh\n󰖔 Night Light|night-light.sh\n󰕌 Back|"
+    
+    # Show the "Icon Name" to the user
+    CHOICE=$(echo -e "$LIST" | cut -d'|' -f1 | fuzzel --dmenu --minimal-lines -p "Run Script: ")
+
+    # Exit if Back or nothing is selected
+    [[ "$CHOICE" == *"Back"* || -z "$CHOICE" ]] && main_menu
+
+    # Find the corresponding filename for the chosen icon
+    FILE=$(echo -e "$LIST" | grep "$CHOICE" | cut -d'|' -f2)
+
+    case "$FILE" in
+        "dotsync"|"dotpull"|"fix-me.sh")
+            notify-send "🚀 SnowDots" "Executing $FILE..."
+            kitty -e bash -c "$SCRIPT_DIR/$FILE; echo; echo 'Task Complete. Press any key...'; read -n 1" ;;
+        "night-light.sh")
+            bash "$SCRIPT_DIR/$FILE" ;;
+        *)
+            bash "$SCRIPT_DIR/$FILE" &
+            notify-send "󱆃 SnowDots" "Running $FILE" ;;
     esac
 }
 

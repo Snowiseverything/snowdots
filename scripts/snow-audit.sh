@@ -80,7 +80,7 @@ check_version "skwd" "skwd status | jq -r '.version'"
 check_version "Matugen" "matugen --version"
 
 # Symlink check
-BROKEN=$(find ~/.config -xtype l -maxdepth 2 2>/dev/null)
+BROKEN=$(find ~/.config -maxdepth 2 -xtype l ! -path "*discord*" 2>/dev/null)
 [ -z "$BROKEN" ] && echo -e "  Symlinks    : ${GREEN}Valid${NC}" || echo -e "  Symlinks    : ${RED}Broken Links Found!${NC}"
 
 # 5. PROCESS HEALTH
