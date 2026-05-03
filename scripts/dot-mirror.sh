@@ -1,19 +1,22 @@
 #!/bin/bash
-# SnowDots — Local Mirror Automation
-DEST="/mnt/backups/Dotfiles-Mirror"
+########################################################################
+##  SnowDots — System Mirror                                 v1.0.1   ##
+########################################################################
 
-# Ensure the destination exists and is writable
+DEST="/mnt/backups/System-Mirror"
+
+# Ensure backup directory ownership
 if [ ! -d "$DEST" ]; then
-    mkdir -p "$DEST"
+    sudo mkdir -p "$DEST"
+    sudo chown -R $USER:$USER /mnt/backups
 fi
 
-echo "💾 Mirroring Dotfiles to Local Storage: $DEST"
+echo "💾 Mirroring Critical System & Dotfiles to /mnt/backups..."
 
-# -a: archive (keeps permissions), -v: verbose, --delete: stays identical to source
-rsync -av --delete --exclude '.git' "$HOME/Dotfiles/" "$DEST/"
+# 1. Mirror Dotfiles (Home)
+rsync -av --delete --exclude '.git' "$HOME/Dotfiles/" "$DEST/home-dots/"
 
-if [ $? -eq 0 ]; then
-    notify-send "󰸉 Local Sync" "Mirror successful to /mnt/backups"
-else
-    notify-send "󱇧 Local Sync" "Mirror failed! Check permissions."
-fi
+# 2. Mirror Critical Root Configs (The Life-Support Files)
+sudo rsync -av --delete /etc/fstab /etc/default/grub /etc/mkinitcpio.conf /etc/pacman.conf "$DEST/root-configs/"
+
+notify-send "󰸉 Mirror Complete" "System & Dotfiles synced to /mnt/backups"
