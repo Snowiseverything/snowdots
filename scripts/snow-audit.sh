@@ -28,8 +28,8 @@ echo -e "${YELLOW}☁️  GitLab Sync Status [$PRIMARY_REPO]${NC}"
 if [ -d "$PRIMARY_REPO" ]; then
     cd "$PRIMARY_REPO" || exit
     git fetch origin >/dev/null 2>&1
-    BEHIND=$(git rev-list HEAD..origin/main --count)
-    AHEAD=$(git rev-list origin/main..HEAD --count)
+    BEHIND=$(git rev-list HEAD..gitlab/main --count)
+    AHEAD=$(git rev-list gitlab/main..HEAD --count)
 
     if [ "$AHEAD" -eq 0 ] && [ "$BEHIND" -eq 0 ]; then
         echo -e "  GitLab      : ${GREEN}Synced${NC}"
