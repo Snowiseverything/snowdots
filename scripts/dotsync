@@ -1,9 +1,8 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SNOWSYNC v11.2 — The "One File to Rule Them All" Edition
+# SNOWSYNC v11.6 — The "Named Nodes" Edition
 # --------------------------------------------------------------------------
 
-# Order: Check CachyOS Dotfiles first, then SnowPi secondary
 POTENTIAL_REPOS=("$HOME/Dotfiles" "$HOME/SnowPi-Dotfiles")
 REPOS=()
 
@@ -19,10 +18,11 @@ for REPO in "${REPOS[@]}"; do
     echo "❄️  SnowSync: Harmonizing [$(basename "$REPO")]"
     cd "$REPO" || continue
 
-    # STEP 1: Smart Pull (Safety Stash)
+    # STEP 1: Smart Pull from GitLab
     echo "📥 Checking for remote updates..."
     git stash >/dev/null 2>&1
-    git pull origin main --no-rebase
+    # Changed 'origin' to 'gitlab'
+    git pull gitlab main --no-rebase
     git stash pop >/dev/null 2>&1
     
     # STEP 2: Detect Changes
@@ -31,34 +31,36 @@ for REPO in "${REPOS[@]}"; do
 
     # STEP 3: Smart Commit
     if [ ! -z "$CHANGES" ]; then
-        # Detect the most modified file
         MAJOR_CHANGE=$(git diff --name-only | head -n 1)
         if [ -z "$MAJOR_CHANGE" ]; then MAJOR_CHANGE="new files"; fi
-        
         MSG="sync | $HOSTNAME | updated $MAJOR_CHANGE"
-        
         echo "📤 Committing: $MSG"
         git commit -m "$MSG"
     fi
 
-    # STEP 4: Sync to GitLab
-    echo "🚀 Syncing commits to remote..."
-    git push origin main
+    # STEP 4: Triple-Node Sync
+    echo "🚀 Syncing commits to all nodes..."
+    
+    # 1. Push to GitLab (Cloud)
+    git push gitlab main
+    
+    # 2. Push to SSD Backup (Local Path or Network)
+    git push snowpi main
+    
+    # 3. Push to Peer Machine (If on Pi, push to Freezer)
+    if [[ "$HOSTNAME" == "snowpi" ]]; then
+        git push freezer main 2>/dev/null
+    fi
 done
 
-# --- Auto-Heal Symlinks (Hostname Specific) ---
-# Prevents icon/config conflicts between CachyOS and Raspbian
+# --- Auto-Heal Symlinks & Mirroring ---
 if [[ "$HOSTNAME" == "snowpi" ]]; then
     ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
-    ln -sf "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh" "$HOME/.local/bin/audit-dots"
 else
-    # On freezer, we use the main Dotfiles repo
     ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
-    ln -sf "$HOME/Dotfiles/scripts/audit-dots.sh" "$HOME/.local/bin/audit-dots"
 fi
 
 cd "$START_DIR"
-
-bash "$HOME/Dotfiles/scripts/dot-mirror.sh"
-
-~/Dotfiles/scripts/snow-audit.sh
+# Only run mirror if the directory exists (prevents errors on Pi if not mounted)
+[ -d "$HOME/Dotfiles" ] && bash "$HOME/Dotfiles/scripts/dot-mirror.sh"
+[ -f "$HOME/Dotfiles/scripts/snow-audit.sh" ] && ~/Dotfiles/scripts/snow-audit.sh
