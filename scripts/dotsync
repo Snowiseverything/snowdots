@@ -58,3 +58,5 @@ else
 fi
 
 cd "$START_DIR"
+
+~/Dotfiles/scripts/snow-audit.sh
