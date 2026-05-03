@@ -6,13 +6,24 @@
 DOT_DIR="$HOME/Dotfiles"
 SCRIPT_DIR="$DOT_DIR/scripts"
 
+# Ensures all scripts in the directory are executable
+ensure_executable() {
+    # Find all .sh files that are NOT executable and fix them
+    find "$SCRIPT_DIR" -maxdepth 1 -type f -name "*.sh" ! -executable -exec chmod +x {} +
+    # Also handle extensionless scripts like 'dotsync'
+    find "$SCRIPT_DIR" -maxdepth 1 -type f ! -name "*.*" ! -executable -exec chmod +x {} +
+}
+
 # Opens a file in a new kitty terminal using nano
 edit_file() {
     kitty -e nano "$1"
 }
 
+
 # --- 1. MAIN MENU ---
 main_menu() {
+    ensure_executable
+
     OPTIONS="󰷛 Lock\n󰒓 Edit Configs...\n󱏟 Edit Scripts...\n󱏟 Run Scripts...\n󰅍 Copy Script...\n󰙨 Run Rice Fixer\n󰐥 Power Menu"
     CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Control Center: ")
 
