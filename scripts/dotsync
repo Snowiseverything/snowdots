@@ -59,4 +59,6 @@ fi
 
 cd "$START_DIR"
 
+bash "$HOME/Dotfiles/scripts/dot-mirror.sh"
+
 ~/Dotfiles/scripts/snow-audit.sh
