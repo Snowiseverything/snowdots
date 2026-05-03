@@ -32,12 +32,12 @@
       "keyColor": "35"
     },
     {
-      "type": "command",
-      "key": "󰔄",
-      "keyColor": "31",
-      "text": "if [ -f /sys/class/thermal/thermal_zone0/temp ]; then echo \"$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))°C\"; else vcgencmd measure_temp | sed 's/temp=//'; fi",
-      "shell": "/bin/sh"
-    },
+	"type": "command",
+  	"key": "󰔄",
+  	"keyColor": "31",
+  	"text": "if [ -f /sys/class/thermal/thermal_zone0/temp ]; then echo \"$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))°C\"; else vcgencmd measure_temp | sed 's/temp=//'; fi",
+ 	 "shell": "/bin/sh" 
+},
     {
       "type": "disk",
       "key": "󰋊",
