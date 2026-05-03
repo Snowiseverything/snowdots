@@ -12,15 +12,13 @@ ensure_executable() {
 }
 
 edit_file() {
-    # 1. Create the snapshot. 
-    # If this hangs, make sure you've entered your sudo password recently or use 'sudo -v'
+    # 1. Create the snapshot
     notify-send "󰄬 Snapper" "Creating pre-edit snapshot..."
     sudo snapper -c home create --description "Pre-edit: $(basename "$1")"
     
-    # 2. Open the file. 
-    # We use the absolute path for kitty and pass the nano command clearly.
-    # Added 'nano' explicitly to ensure it doesn't try to execute the config file.
-    /usr/bin/kitty -e /usr/bin/nano "$1"
+    # 2. Open the file in a new terminal window
+    # We use hyprctl to ensure the window is managed correctly by the compositor
+    hyprctl dispatch exec "kitty nano $1"
 }
 
 # --- 1. MAIN MENU ---
