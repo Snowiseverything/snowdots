@@ -1,6 +1,6 @@
 #!/bin/bash
 ########################################################################
-##  SnowDots — Master Audit                              Version: v3.1.5  ##
+##  SnowDots — Master Audit                              Version: v3.3.0  ##
 ########################################################################
 
 HOSTNAME=$(hostname); GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
@@ -11,7 +11,7 @@ HOSTNAME=$(hostname); GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m';
 echo -e "${BLUE}❄️  SnowDots Master Audit | Host: $HOSTNAME${NC}"
 echo "---------------------------------------------------"
 
-# 2. GIT CHANGE TRACKER (Added/Removed/Modified)
+# 2. GIT CHANGE TRACKER
 echo -e "${YELLOW}☁️  GitLab Sync Status & File Changes${NC}"
 for REPO in "$PRIMARY_REPO" "$SECONDARY_REPO"; do
     if [ -d "$REPO" ]; then
@@ -24,7 +24,6 @@ for REPO in "$PRIMARY_REPO" "$SECONDARY_REPO"; do
             git status --short | while read -r line; do
                 MODE=$(echo "$line" | awk '{print $1}')
                 FILE=$(echo "$line" | awk '{print $2}')
-                # Get size of new/modified files
                 SIZE=$([ -f "$FILE" ] && du -sh "$FILE" | awk '{print $1}' || echo "N/A")
                 case $MODE in
                     M) echo -e "    ${YELLOW}󰏫 Mod:${NC} $FILE ($SIZE)" ;;
@@ -36,16 +35,19 @@ for REPO in "$PRIMARY_REPO" "$SECONDARY_REPO"; do
     fi
 done
 
-# 3. COMPREHENSIVE STORAGE MAP
-echo -e "\n${YELLOW}󱛟 Storage Map (All Mounts)${NC}"
-df -h | grep -E '^/dev/|/mnt/' | grep -v 'loop' | while read -r line; do
+# 3. FILTERED STORAGE MAP (No redundant Btrfs subvolumes)
+echo -e "\n${YELLOW}󱛟 Storage Map${NC}"
+df -h -x tmpfs -x devtmpfs -x efivarfs | grep -E '^/dev/|/mnt/' | awk '!seen[$2]++' | while read -r line; do
     MOUNT=$(echo "$line" | awk '{print $6}')
     PERC=$(echo "$line" | awk '{print $5}')
     USED=$(echo "$line" | awk '{print $3}')
     SIZE=$(echo "$line" | awk '{print $2}')
     
-    VAL=${PERC%?}; [[ "$VAL" -gt 90 ]] && COLOR=$RED || [[ "$VAL" -gt 70 ]] && COLOR=$YELLOW || COLOR=$GREEN
-    printf "  %-12s: ${COLOR}%s/%s (%s)${NC} @ %s\n" "$(basename "$MOUNT" | sed 's/^$/root/')" "$USED" "$SIZE" "$PERC" "$MOUNT"
+    # Logic: Only show the "main" mounts to avoid Btrfs spam
+    if [[ "$MOUNT" == "/" || "$MOUNT" == "/home" || "$MOUNT" == /mnt/* || "$MOUNT" == "/boot" ]]; then
+        VAL=${PERC%?}; [[ "$VAL" -gt 90 ]] && COLOR=$RED || COLOR=$GREEN
+        printf "  %-12s: ${COLOR}%s/%s (%s)${NC} @ %s\n" "$(basename "$MOUNT" | sed 's/^$/root/')" "$USED" "$SIZE" "$PERC" "$MOUNT"
+    fi
 done
 
 # 4. ENGINE STATUS
@@ -62,11 +64,6 @@ else
         echo -e "  $name : ${GREEN}RUNNING${NC}"
     done
 fi
-
-# 5. INTEGRITY
-echo -e "\n${YELLOW}󰏖 Symlink Integrity${NC}"
-BROKEN=$(find ~/.config -maxdepth 2 -xtype l ! -path "*discord*" 2>/dev/null)
-[ -z "$BROKEN" ] && echo -e "  Symlinks    : ${GREEN}Valid${NC}" || echo -e "  Symlinks    : ${RED}Broken Found!${NC}"
 
 echo "---------------------------------------------------"
 echo -e "${BLUE}Audit Complete.${NC}"
