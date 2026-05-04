@@ -1,0 +1,25 @@
+# ~/Dotfiles/matugen/config.toml
+
+[config]
+reload_apps = true
+source_color_index = 0
+
+[templates.hyprland]
+input_path = '/home/snow/Dotfiles/matugen/templates/hyprland-colors.conf'
+output_path = '/home/snow/.cache/skwd-wall/hyprland-colors.conf'
+
+[templates.kitty]
+input_path = '/home/snow/Dotfiles/matugen/templates/kitty-colors.conf'
+output_path = '/home/snow/.cache/skwd-wall/colors-kitty.conf'
+
+[templates.fuzzel]
+input_path = '/home/snow/Dotfiles/matugen/templates/fuzzel-colors.ini'
+output_path = '/home/snow/.cache/skwd-wall/fuzzel-colors.ini'
+
+[templates.swaync]
+input_path = '/home/snow/Dotfiles/matugen/templates/swaync.css'
+output_path = '/home/snow/.cache/skwd-wall/swaync.css'
+
+[post_processing]
+command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
+run_on_change = true
