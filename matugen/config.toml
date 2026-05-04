@@ -16,6 +16,10 @@ output_path = '/home/snow/.cache/skwd-wall/colors-kitty.conf'
 input_path = '/home/snow/Dotfiles/matugen/templates/fuzzel-colors.ini'
 output_path = '/home/snow/.cache/skwd-wall/fuzzel-colors.ini'
 
+[templates.skwd]
+input_path = '/home/snow/Dotfiles/matugen/templates/skwd-colors.json'
+output_path = '/home/snow/.config/skwd-wall/colors.json'
+
 [templates.swaync]
 input_path = '/home/snow/Dotfiles/matugen/templates/swaync.css'
 output_path = '/home/snow/.cache/skwd-wall/swaync.css'
