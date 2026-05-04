@@ -19,7 +19,7 @@ set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source
 
 # ── Script Execution ──
-alias dotsync="bash $SCRIPT_DIR/dotsync"
+alias dotsync="bash $SCRIPT_DIR/dotsync --sync"
 alias dotpull="bash $SCRIPT_DIR/dotpull"
 alias check="fish $DOTS/bin/check-dots.fish"  # Keep this if bin is separate, or move it too
 alias fixme="bash $SCRIPT_DIR/fix-me.sh"

@@ -1,6 +1,6 @@
 #!/bin/bash
 ########################################################################
-##  SnowDots — Master Audit                              Version: v3.3.0  ##
+##  SnowDots — Master Audit                              Version: v3.5.0  ##
 ########################################################################
 
 HOSTNAME=$(hostname); GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
@@ -35,33 +35,35 @@ for REPO in "$PRIMARY_REPO" "$SECONDARY_REPO"; do
     fi
 done
 
-# 3. FILTERED STORAGE MAP (No redundant Btrfs subvolumes)
+# 3. STORAGE MAP (Audit vs Sync Modes)
 echo -e "\n${YELLOW}󱛟 Storage Map${NC}"
-df -h -x tmpfs -x devtmpfs -x efivarfs | grep -E '^/dev/|/mnt/' | awk '!seen[$2]++' | while read -r line; do
+df -h -x tmpfs -x devtmpfs | grep -E '^/dev/|/mnt/' | awk '!seen[$2]++' | while read -r line; do
     MOUNT=$(echo "$line" | awk '{print $6}')
     PERC=$(echo "$line" | awk '{print $5}')
     USED=$(echo "$line" | awk '{print $3}')
     SIZE=$(echo "$line" | awk '{print $2}')
-    
-    # Logic: Only show the "main" mounts to avoid Btrfs spam
-    if [[ "$MOUNT" == "/" || "$MOUNT" == "/home" || "$MOUNT" == /mnt/* || "$MOUNT" == "/boot" ]]; then
-        VAL=${PERC%?}; [[ "$VAL" -gt 90 ]] && COLOR=$RED || COLOR=$GREEN
-        printf "  %-12s: ${COLOR}%s/%s (%s)${NC} @ %s\n" "$(basename "$MOUNT" | sed 's/^$/root/')" "$USED" "$SIZE" "$PERC" "$MOUNT"
+    VAL=${PERC%?}; [[ "$VAL" -gt 90 ]] && COLOR=$RED || COLOR=$GREEN
+
+    # LOGIC: If run with --sync, only show drives > 70% or root
+    if [[ "$1" == "--sync" ]]; then
+        if [[ "$VAL" -gt 70 || "$MOUNT" == "/" ]]; then
+            printf "  %-12s: ${COLOR}%s/%s (%s)${NC} @ %s\n" "$(basename "$MOUNT" | sed 's/^$/root/')" "$USED" "$SIZE" "$PERC" "$MOUNT"
+        fi
+    else
+        # FULL AUDIT: Show all physical mounts
+        if [[ "$MOUNT" == "/" || "$MOUNT" == "/home" || "$MOUNT" == /mnt/* || "$MOUNT" == "/boot" ]]; then
+            printf "  %-12s: ${COLOR}%s/%s (%s)${NC} @ %s\n" "$(basename "$MOUNT" | sed 's/^$/root/')" "$USED" "$SIZE" "$PERC" "$MOUNT"
+        fi
     fi
 done
 
-# 4. ENGINE STATUS
-if [[ "$HOSTNAME" != "snowpi" ]]; then
+# 4. VISUAL ENGINE (Skip in Sync mode to save space)
+if [[ "$1" != "--sync" ]]; then
     echo -e "\n${YELLOW}󰸉 Visual Engine Status${NC}"
     LIVE_WALL=$(awww query 2>/dev/null | grep -oP 'image: \K.*')
     echo -e "  Wallpaper   : ${GREEN}$(basename "${LIVE_WALL:-None}")${NC}"
     for p in awww-daemon skwd-daemon swaync; do
         pgrep -x "$p" > /dev/null && printf "  %-12s: ${GREEN}RUNNING${NC}\n" "$p" || printf "  %-12s: ${RED}STOPPED${NC}\n" "$p"
-    done
-else
-    echo -e "\n${YELLOW}󱚧 IoT & Docker Containers${NC}"
-    docker ps --format '{{.Names}}' | grep -E "homeassistant|pihole" | while read -r name; do
-        echo -e "  $name : ${GREEN}RUNNING${NC}"
     done
 fi
 
