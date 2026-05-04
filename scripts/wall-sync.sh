@@ -60,6 +60,6 @@ swaync-client -rs
 
 # 6. Notification
 WALL_NAME=$(basename "$WALLPAPER")
-notify-send -i "$WALLPAPER" "Wallpaper Changed" "Applied: $WALL_NAME"
+notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")"
 
 echo "Sync successful: $WALL_NAME"
