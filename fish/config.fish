@@ -24,6 +24,7 @@ alias dotpull="bash $SCRIPT_DIR/dotpull"
 alias check="fish $DOTS/bin/check-dots.fish"  # Keep this if bin is separate, or move it too
 alias fixme="bash $SCRIPT_DIR/fix-me.sh"
 alias sun-toggle="bash $SCRIPT_DIR/sun-schedule.sh toggle"
+alias ai='env GEMINI_SYSTEM_MD=~/GEMINI.md gemini'
 
 # ── Host Detection ────────────────────────────
 set MY_HOST (hostname)
