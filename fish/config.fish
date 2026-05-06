@@ -77,3 +77,10 @@ ssh-add -l > /dev/null 2>&1
 if test $status -eq 1
     ssh-add ~/.ssh/id_ed25519 > /dev/null 2>&1
 end
+
+# pnpm
+set -gx PNPM_HOME "/home/snow/.local/share/pnpm"
+if not string match -q -- $PNPM_HOME $PATH
+  set -gx PATH "$PNPM_HOME" $PATH
+end
+# pnpm end
