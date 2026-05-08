@@ -133,5 +133,96 @@ if command -v notify-send &> /dev/null; then
     notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
 fi
 
+# 7. Update Fastfetch Colors
+update_ff_colors() {
+    local KITTY_CACHE="$HOME/.cache/skwd-wall/colors-kitty.conf"
+    local FF_CONFIG="$HOME/Dotfiles/fastfetch/config.jsonc"
+
+    if [ ! -f "$KITTY_CACHE" ]; then
+        log "Skipping fastfetch color update (missing kitcache)"
+        return
+    fi
+
+    # Extract colors
+    local C1=$(grep -E "^color1\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    local C2=$(grep -E "^color2\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    local C4=$(grep -E "^color4\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    local C9=$(grep -E "^color9\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    local C8=$(grep -E "^color8\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+
+    [ -z "$C1" ] && C1="#b7d084"
+    [ -z "$C2" ] && C2="#a0d0c8"
+    [ -z "$C4" ] && C4="#3a4d10"
+    [ -z "$C9" ] && C9="#d3ec9e"
+    [ -z "$C8" ] && C8="#909284"
+
+    # Map hex to color names for better compatibility
+map_color() {
+    local hex="$1"
+    hex="${hex//#/}"
+    local r=$((16#${hex:0:2}))
+    local g=$((16#${hex:2:2}))
+    local b=$((16#${hex:4:2}))
+    
+    # Simple color mapping based on dominant channel
+    if [ $g -gt $r ] && [ $g -gt $b ]; then
+        echo "green"
+    elif [ $b -gt $r ] && [ $b -gt $g ]; then
+        echo "blue"
+    elif [ $r -gt 150 ] && [ $b -gt 100 ]; then
+        echo "magenta"
+    elif [ $r -gt 150 ] && [ $g -gt 100 ]; then
+        echo "yellow"
+    elif [ $r -gt 150 ]; then
+        echo "red"
+    elif [ $b -gt 100 ]; then
+        echo "cyan"
+    else
+        echo "white"
+    fi
+}
+
+C1_NAME=$(map_color "$C1")
+C2_NAME=$(map_color "$C2")
+C4_NAME=$(map_color "$C4")
+C9_NAME=$(map_color "$C9")
+C8_NAME=$(map_color "$C8")
+
+cat > "$FF_CONFIG" << EOF
+{
+  "\$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+  "logo": {
+    "padding": { "top": 2 },
+    "color": { "1": "$C1", "2": "$C4" }
+  },
+  "display": { "separator": " ➜  " },
+  "modules": [
+    "break",
+    { "type": "title", "format": "{user-name-colored}@{host-name-colored}" },
+    { "type": "custom", "format": " \u001b[90m─────── Software ───────" },
+    { "type": "os", "key": "󰣇", "keyColor": "$C1" },
+    { "type": "command", "key": "󰄉", "keyColor": "$C9", "text": "birth_install=\$(stat -c %W / | tr -d '-'); now=\$(date +%s); echo \$(( (now - birth_install) / 86400 )) days", "shell": "/bin/sh" },
+    { "type": "localip", "key": "󰩟", "keyColor": "$C2", "compact": true },
+    { "type": "command", "key": "󱖨", "keyColor": "$C4", "text": "echo \$(docker ps --format '{{.Names}}' | wc -l) containers / \$(systemctl list-units --type=service --state=running | grep '.service' | wc -l) services", "shell": "/bin/sh" },
+    { "type": "uptime", "key": "󰅐", "keyColor": "$C8" },
+    { "type": "custom", "format": " \u001b[90m─────── Hardware ───────" },
+    { "type": "cpu", "key": "󰻠", "keyColor": "$C1" },
+    { "type": "gpu", "key": "󰍛", "keyColor": "$C9" },
+    { "type": "disk", "key": "Root", "keyColor": "$C9", "folders": ["/"] },
+    { "type": "disk", "key": "Home", "keyColor": "$C4", "folders": ["/home"] },
+    { "type": "memory", "key": "󰑭", "keyColor": "$C8" },
+    { "type": "custom", "format": " \u001b[90m────────────────────────────────────" },
+    "break",
+    { "type": "colors", "symbol": "circle" },
+    { "type": "wallpaper", "key": "󰌨" }
+  ]
+}
+EOF
+
+    log "Fastfetch colors updated: $C1 $C2 $C4 $C9 $C8"
+}
+
+update_ff_colors
+
 echo "Sync successful: $WALL_NAME"
 log "=== Wall-sync completed successfully ==="
