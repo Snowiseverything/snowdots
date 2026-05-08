@@ -33,9 +33,17 @@
 - Simple config, no post_processing (handled by skwd-wall)
 
 ### Known Issues / Limitations
-1. First-time wallpapers may need 1-2 changes for colors to fully apply
+1. Sometimes colors may need a moment to apply - normal operation
 2. If colors get stuck, Super+Shift+W usually fixes it
-3. matugen runs twice (once in skwd-wall integration, once in wall-sync) - this is fine, the second run ensures colors are applied
+
+### How it Works
+- skwd-wall runs matugen automatically when wallpaper changes
+- Color files generated:
+  - `~/.cache/skwd-wall/hyprland-colors.conf` → hyprland borders
+  - `~/.cache/skwd-wall/colors-kitty.conf` → kitty terminal
+  - `~/.config/skwd/skwd-colors.json` → skwd GUI
+- Each integration has its own reload command (hyprctl, pkill, or auto-reload)
+- wall-sync.sh then applies hyprland borders and signals kitty
 
 ### Key Commands
 ```bash
