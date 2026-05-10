@@ -24,12 +24,18 @@ for REPO in "${REPOS[@]}"; do
             BN=$(basename "$FILE")
 
             case "$BN" in
-                "hyprland.conf")   CODENAME="HyprSnow" ;;
-                "waybar.conf")     CODENAME="Snowbar" ;;
-                "config.fish")     CODENAME="Snowfish" ;;
+                "hyprland.conf")   CODENAME="Hyprland Config" ;;
+                "waybar.conf")     CODENAME="Waybar Config" ;;
+                "config.fish")     CODENAME="Fish Config" ;;
+                "hypridle.conf")   CODENAME="Hypridle Config" ;;
+                "kitty.conf")      CODENAME="Kitty Config" ;;
+                "colors-matugen.conf") CODENAME="Kitty Matugen Colors" ;;
+                "skwd-theme.conf")    CODENAME="Kitty Skwd Theme" ;;
+                "hyprland-colors.conf") CODENAME="Hyprland Matugen Colors" ;;
+                "kitty-colors.conf")   CODENAME="Matugen Template" ;;
                 *)                 
-                    CLEAN=$(echo "$BN" | cut -d. -f1 | sed 's/[^a-zA-Z0-9]//g' | sed 's/./\U&/')
-                    CODENAME="Snow${CLEAN}" ;;
+                    CLEAN=$(echo "$BN" | cut -d. -f1 | sed 's/[^a-zA-Z0-9]//g')
+                    CODENAME="${CLEAN}" ;;
             esac
 
             if grep -q "SnowDots —" "$FULL_PATH"; then
@@ -40,8 +46,7 @@ for REPO in "${REPOS[@]}"; do
                 TEMP=$(mktemp)
                 {
                     echo "########################################################################"
-                    echo "##  SnowDots — $CODENAME                             Version: v1.0.0    ##"
-                    echo "##  Last Edited: $REAL_DATE                                           ##"
+                    echo "##  SnowDots - $CODENAME                                             ##"
                     echo "########################################################################"
                     echo ""
                     cat "$FULL_PATH"
