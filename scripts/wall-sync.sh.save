@@ -137,7 +137,7 @@ fi
 
 # 7. Update Fastfetch Colors (dynamic using hex codes from cache)
 KITTY_CACHE="$HOME/.cache/skwd-wall/colors-kitty.conf"
-FF_CONFIG="$HOME/.config/fastfetch/config.jsonc"
+FF_CONFIG="$HOME/Dotfiles/fastfetch/config.jsonc"
 
 if [ -f "$KITTY_CACHE" ]; then
     C1=$(grep -E "^color1\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
