@@ -24,6 +24,10 @@ output_path = '/home/snow/.config/skwd-wall/colors.json'
 input_path = '/home/snow/Dotfiles/matugen/templates/swaync.css'
 output_path = '/home/snow/.cache/skwd-wall/swaync.css'
 
+[templates.steam]
+input_path = '/home/snow/Dotfiles/matugen/templates/steam-millennium.css'
+output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/css/main/colors/matugen.css'
+
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true
