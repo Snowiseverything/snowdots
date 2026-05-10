@@ -227,7 +227,12 @@ EOF
     log "Fastfetch colors updated: $C1 $C2 $C4 $C9 $C8"
 }
 
+# Force fastfetch to reload config by touching the config file
+touch "$HOME/Dotfiles/fastfetch/config.jsonc"
+
 update_ff_colors
+
+# Fastfetch config regenerated - user needs to run 'fastfetch' to see new colors
 
 echo "Sync successful: $WALL_NAME"
 log "=== Wall-sync completed successfully ==="
