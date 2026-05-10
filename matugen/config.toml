@@ -28,6 +28,14 @@ output_path = '/home/snow/.cache/skwd-wall/swaync.css'
 input_path = '/home/snow/Dotfiles/matugen/templates/steam-millennium.css'
 output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/css/main/colors/matugen.css'
 
+[templates.steam_transparency]
+input_path = '/home/snow/Dotfiles/matugen/templates/steam-transparency.css'
+output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/css/main/transparency.css'
+
+[templates.steam_experimental]
+input_path = '/home/snow/Dotfiles/matugen/templates/steam-experimental-header.css'
+output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/experimental-import.css'
+
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true

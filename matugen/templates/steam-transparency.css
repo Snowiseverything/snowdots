@@ -1,0 +1,59 @@
+/* Steam Transparency & Blur Overlay 
+   Add transparency to Steam windows - more transparent
+*/
+
+/* Main window background - lower = more transparent */
+#main_window, 
+.Window,
+.Panel,
+
+/* Library */
+#library_root .librarybackground,
+
+/* Overlay backgrounds */
+.SteamBSD_overlay,
+
+/* Dialogs */
+.DialogWindow,
+
+/* Header/Title Bar areas */
+.title-area,
+.Header,
+.header-bar {
+
+    /* More transparent */
+    opacity: 0.6 !important;
+    
+    /* Blur effect */
+    backdrop-filter: blur(30px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(150%) !important;
+    
+    /* Much more transparent background */
+    background: rgba(0, 0, 0, 0.2) !important;
+    background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Keep text readable */
+* {
+    opacity: 1 !important;
+}
+
+/* Images and icons */
+img, .Image, .Icon {
+    opacity: 0.8 !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 4px !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+}

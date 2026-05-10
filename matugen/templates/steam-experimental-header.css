@@ -1,0 +1,23 @@
+@import url("css/main/transparency.css");
+
+/* Existing experimental imports below */
+@import url("css/main/community/store.css");
+@import url("css/main/community/market.css");
+@import url("css/main/community/inventory.css");
+@import url("css/main/community/account.css");
+@import url("css/main/community/footer.css");
+
+/* -> md3buttons.css */
+a.item_market_action_button {
+    border-radius: var(--corner-radius-full) !important;
+    padding: 3px 7px !important;
+}
+.btn_profile_action > span {
+    background: unset !important;
+}
+
+/* Header */
+._16jZ3HEbtaJTl80pQINN2Y {
+    border: unset !important;
+    box-shadow: unset !important;
+}
