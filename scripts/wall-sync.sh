@@ -135,56 +135,24 @@ fi
 #     notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
 # fi
 
-# 7. Fastfetch colors are updated by user manually or stays static
-# (Dynamic color update disabled - not working reliably)
-log "Fastfetch config unchanged - run 'fastfetch' manually to see colors if needed"
+# 7. Update Fastfetch Colors (dynamic)
+KITTY_CACHE="$HOME/.cache/skwd-wall/colors-kitty.conf"
+FF_CONFIG="$HOME/Dotfiles/fastfetch/config.jsonc"
 
-    # Extract colors
-    local C1=$(grep -E "^color1\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
-    local C2=$(grep -E "^color2\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
-    local C4=$(grep -E "^color4\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
-    local C9=$(grep -E "^color9\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
-    local C8=$(grep -E "^color8\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
-
+if [ -f "$KITTY_CACHE" ]; then
+    C1=$(grep -E "^color1\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    C2=$(grep -E "^color2\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    C4=$(grep -E "^color4\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    C9=$(grep -E "^color9\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    C8=$(grep -E "^color8\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
+    
     [ -z "$C1" ] && C1="#b7d084"
     [ -z "$C2" ] && C2="#a0d0c8"
     [ -z "$C4" ] && C4="#3a4d10"
     [ -z "$C9" ] && C9="#d3ec9e"
     [ -z "$C8" ] && C8="#909284"
-
-    # Map hex to color names for better compatibility
-map_color() {
-    local hex="$1"
-    hex="${hex//#/}"
-    local r=$((16#${hex:0:2}))
-    local g=$((16#${hex:2:2}))
-    local b=$((16#${hex:4:2}))
     
-    # Simple color mapping based on dominant channel
-    if [ $g -gt $r ] && [ $g -gt $b ]; then
-        echo "green"
-    elif [ $b -gt $r ] && [ $b -gt $g ]; then
-        echo "blue"
-    elif [ $r -gt 150 ] && [ $b -gt 100 ]; then
-        echo "magenta"
-    elif [ $r -gt 150 ] && [ $g -gt 100 ]; then
-        echo "yellow"
-    elif [ $r -gt 150 ]; then
-        echo "red"
-    elif [ $b -gt 100 ]; then
-        echo "cyan"
-    else
-        echo "white"
-    fi
-}
-
-C1_NAME=$(map_color "$C1")
-C2_NAME=$(map_color "$C2")
-C4_NAME=$(map_color "$C4")
-C9_NAME=$(map_color "$C9")
-C8_NAME=$(map_color "$C8")
-
-cat > "$FF_CONFIG" << EOF
+    cat > "$FF_CONFIG" << EOF
 {
   "\$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
   "logo": {
@@ -207,11 +175,7 @@ cat > "$FF_CONFIG" << EOF
     { "type": "disk", "key": "Home", "keyColor": "$C4", "folders": ["/home"] },
     { "type": "memory", "key": "󰑭", "keyColor": "$C8" },
     { "type": "uptime", "key": "󰅐", "keyColor": "$C2" },
-    { "type": "command", "key": "󰔄", "keyColor": "$C9", "text": "if [ -f /sys/class/thermal/thermal_zone0/temp ]; then echo \"$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))°C\"; else echo \"N/A\"; fi", "shell": "/bin/sh" },
-    { "type": "packages", "key": "󰏖", "keyColor": "$C4" },
-    { "type": "terminal", "key": "󰌮", "keyColor": "$C2" },
-    { "type": "shell", "key": "󰈹", "keyColor": "$C9", "format": "{name}" },
-    { "type": "version", "key": "󰌛", "keyColor": "$C8" },
+    { "type": "command", "key": "󰔄", "keyColor": "$C9", "text": "if [ -f /sys/class/thermal/thermal_zone0/temp ]; then echo \"\$((\$(cat /sys/class/thermal/thermal_zone0/temp) / 1000))°C\"; else echo \"N/A\"; fi", "shell": "/bin/sh" },
     { "type": "custom", "format": " \u001b[90m────────────────────────────────────" },
     "break",
     { "type": "colors", "symbol": "circle" },
@@ -219,18 +183,12 @@ cat > "$FF_CONFIG" << EOF
   ]
 }
 EOF
-
     log "Fastfetch colors updated: $C1 $C2 $C4 $C9 $C8"
-}
+fi
 
-# Force fastfetch to reload config by touching the config file
-touch "$HOME/Dotfiles/fastfetch/config.jsonc"
-
-update_ff_colors
-
-# Auto-run fastfetch if we have display (for Super+Shift+W)
+# Run fastfetch with --pipe false to force colors in script
 if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
-    fastfetch 2>/dev/null || true
+    fastfetch --pipe false 2>/dev/null || true
 fi
 
 echo "Sync successful: $WALL_NAME"
