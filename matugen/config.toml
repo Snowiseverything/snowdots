@@ -40,6 +40,18 @@ output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/experi
 input_path = '/home/snow/Dotfiles/matugen/templates/vencord.css'
 output_path = '/home/snow/.config/Vencord/themes/matugen.theme.css'
 
+[templates.brave]
+input_path = '/home/snow/Dotfiles/matugen/templates/brave.css'
+output_path = '/home/snow/.config/BraveSoftware/Brave-browser/current-theme.css'
+
+[templates.gtk3]
+input_path = '/home/snow/Dotfiles/matugen/templates/gtk.css'
+output_path = '/home/snow/.config/gtk-3.0/gtk.css'
+
+[templates.gtk4]
+input_path = '/home/snow/Dotfiles/matugen/templates/gtk.css'
+output_path = '/home/snow/.config/gtk-4.0/gtk.css'
+
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true

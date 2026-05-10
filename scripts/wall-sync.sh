@@ -129,6 +129,34 @@ else
     log "SwayNC reload skipped (timeout or not running)"
 fi
 
+# Fuzzel Colors Update
+FUZZEL_GEN="$HOME/.cache/skwd-wall/fuzzel-colors.ini"
+FUZZEL_CFG="$HOME/.config/fuzzel/fuzzel.ini"
+if [ -f "$FUZZEL_GEN" ]; then
+    BG=$(grep "^background=" "$FUZZEL_GEN" | cut -d= -f2)
+    TEXT=$(grep "^text=" "$FUZZEL_GEN" | cut -d= -f2)
+    MATCH=$(grep "^match=" "$FUZZEL_GEN" | cut -d= -f2)
+    SEL=$(grep "^selection=" "$FUZZEL_GEN" | cut -d= -f2)
+    BORDER=$(grep "^border=" "$FUZZEL_GEN" | cut -d= -f2)
+    
+    if [ -n "$BG" ]; then
+        # Colors from matugen come as hex (e.g. 161217dd), add alpha suffix for fuzzel format
+        sed -i "s/^background=.*/background=${BG}/" "$FUZZEL_CFG"
+        sed -i "s/^text=.*/text=${TEXT}/" "$FUZZEL_CFG"
+        sed -i "s/^prompt=.*/prompt=${MATCH}/" "$FUZZEL_CFG"
+        sed -i "s/^match=.*/match=${MATCH}/" "$FUZZEL_CFG"
+        sed -i "s/^selection=.*/selection=${SEL}/" "$FUZZEL_CFG"
+        sed -i "s/^border=.*/border=${BORDER}/" "$FUZZEL_CFG"
+        # Set other colors to match theme
+        sed -i "s/^placeholder=.*/placeholder=998d96ff/" "$FUZZEL_CFG"
+        sed -i "s/^input=.*/input=${TEXT}/" "$FUZZEL_CFG"
+        sed -i "s/^selection-text=.*/selection-text=e9e0e7ff/" "$FUZZEL_CFG"
+        sed -i "s/^selection-match=.*/selection-match=a0d0c8ff/" "$FUZZEL_CFG"
+        sed -i "s/^counter=.*/counter=998d96ff/" "$FUZZEL_CFG"
+        log "Fuzzel colors updated"
+    fi
+fi
+
 # 6. Notification - show wallpaper name and thumbnail
 WALL_NAME=$(basename "$WALLPAPER")
 if command -v notify-send &> /dev/null; then
