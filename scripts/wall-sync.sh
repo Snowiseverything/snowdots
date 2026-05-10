@@ -188,6 +188,7 @@ fi
 
 # Run fastfetch with --pipe false to force colors in script
 if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+    clear 2>/dev/null || true
     fastfetch --pipe false 2>/dev/null || true
 fi
 
