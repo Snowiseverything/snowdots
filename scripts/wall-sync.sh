@@ -135,15 +135,9 @@ fi
 #     notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
 # fi
 
-# 7. Update Fastfetch Colors
-update_ff_colors() {
-    local KITTY_CACHE="$HOME/.cache/skwd-wall/colors-kitty.conf"
-    local FF_CONFIG="$HOME/Dotfiles/fastfetch/config.jsonc"
-
-    if [ ! -f "$KITTY_CACHE" ]; then
-        log "Skipping fastfetch color update (missing kitcache)"
-        return
-    fi
+# 7. Fastfetch colors are updated by user manually or stays static
+# (Dynamic color update disabled - not working reliably)
+log "Fastfetch config unchanged - run 'fastfetch' manually to see colors if needed"
 
     # Extract colors
     local C1=$(grep -E "^color1\s" "$KITTY_CACHE" | head -1 | awk '{print $2}')
