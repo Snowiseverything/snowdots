@@ -129,11 +129,11 @@ else
     log "SwayNC reload skipped (timeout or not running)"
 fi
 
-# 6. Notification
-WALL_NAME=$(basename "$WALLPAPER")
-if command -v notify-send &> /dev/null; then
-    notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
-fi
+# 6. Notification - disabled, skwd already shows thumbnail notification
+# WALL_NAME=$(basename "$WALLPAPER")
+# if command -v notify-send &> /dev/null; then
+#     notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
+# fi
 
 # 7. Update Fastfetch Colors
 update_ff_colors() {
@@ -234,7 +234,10 @@ touch "$HOME/Dotfiles/fastfetch/config.jsonc"
 
 update_ff_colors
 
-# Fastfetch config regenerated - user needs to run 'fastfetch' to see new colors
+# Auto-run fastfetch if we have display (for Super+Shift+W)
+if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
+    fastfetch 2>/dev/null || true
+fi
 
 echo "Sync successful: $WALL_NAME"
 log "=== Wall-sync completed successfully ==="
