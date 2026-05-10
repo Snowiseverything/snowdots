@@ -109,6 +109,8 @@ if [ -f "$CACHE_DIR/hyprland-colors.conf" ]; then
             log_error "Failed to update hyprland borders"
         fi
     fi
+    # Reload hyprland to ensure all color changes take effect
+    hyprctl reload 2>/dev/null || true
 else
     log_error "hyprland-colors.conf not found"
 fi
@@ -127,11 +129,11 @@ else
     log "SwayNC reload skipped (timeout or not running)"
 fi
 
-# 6. Notification - disabled, skwd handles this
-# WALL_NAME=$(basename "$WALLPAPER")
-# if command -v notify-send &> /dev/null; then
-#     notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
-# fi
+# 6. Notification
+WALL_NAME=$(basename "$WALLPAPER")
+if command -v notify-send &> /dev/null; then
+    notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
+fi
 
 # 7. Update Fastfetch Colors
 update_ff_colors() {
