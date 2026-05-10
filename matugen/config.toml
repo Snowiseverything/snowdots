@@ -36,6 +36,10 @@ output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/css/ma
 input_path = '/home/snow/Dotfiles/matugen/templates/steam-experimental-header.css'
 output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/experimental-import.css'
 
+[templates.vencord]
+input_path = '/home/snow/Dotfiles/matugen/templates/vencord.css'
+output_path = '/home/snow/.config/Vencord/themes/matugen.theme.css'
+
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true
