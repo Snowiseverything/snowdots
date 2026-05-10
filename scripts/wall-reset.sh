@@ -17,4 +17,5 @@ else
 fi
 
 # 3. Sync
+notify-send "Running wall-reset..." 2>/dev/null || true
 ~/Dotfiles/scripts/wall-sync.sh "$TARGET"
