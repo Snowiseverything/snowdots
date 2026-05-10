@@ -186,7 +186,7 @@ EOF
     log "Fastfetch colors updated: $C1 $C2 $C4 $C9 $C8"
 fi
 
-# Run fastfetch with --pipe false to force colors in script
+# Run fastfetch to update current terminal (text updates, icons/logo need new terminal)
 if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
     clear 2>/dev/null || true
     fastfetch --pipe false 2>/dev/null || true
