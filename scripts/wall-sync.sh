@@ -127,11 +127,11 @@ else
     log "SwayNC reload skipped (timeout or not running)"
 fi
 
-# 6. Notification
-WALL_NAME=$(basename "$WALLPAPER")
-if command -v notify-send &> /dev/null; then
-    notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
-fi
+# 6. Notification - disabled, skwd handles this
+# WALL_NAME=$(basename "$WALLPAPER")
+# if command -v notify-send &> /dev/null; then
+#     notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
+# fi
 
 # 7. Update Fastfetch Colors
 update_ff_colors() {
@@ -212,6 +212,10 @@ cat > "$FF_CONFIG" << EOF
     { "type": "memory", "key": "󰑭", "keyColor": "$C8" },
     { "type": "uptime", "key": "󰅐", "keyColor": "$C2" },
     { "type": "command", "key": "󰔄", "keyColor": "$C9", "text": "if [ -f /sys/class/thermal/thermal_zone0/temp ]; then echo \"$(($(cat /sys/class/thermal/thermal_zone0/temp) / 1000))°C\"; else echo \"N/A\"; fi", "shell": "/bin/sh" },
+    { "type": "packages", "key": "󰏖", "keyColor": "$C4" },
+    { "type": "terminal", "key": "󰌮", "keyColor": "$C2" },
+    { "type": "shell", "key": "󰈹", "keyColor": "$C9", "format": "{name}" },
+    { "type": "version", "key": "󰌛", "keyColor": "$C8" },
     { "type": "custom", "format": " \u001b[90m────────────────────────────────────" },
     "break",
     { "type": "colors", "symbol": "circle" },
