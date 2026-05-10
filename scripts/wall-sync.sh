@@ -129,13 +129,13 @@ else
     log "SwayNC reload skipped (timeout or not running)"
 fi
 
-# 6. Notification - disabled, skwd already shows thumbnail notification
-# WALL_NAME=$(basename "$WALLPAPER")
-# if command -v notify-send &> /dev/null; then
-#     notify-send -i "$1" "Wallpaper Changed" "Applied: $(basename "$1")" 2>/dev/null || true
-# fi
+# 6. Notification - show wallpaper name and thumbnail
+WALL_NAME=$(basename "$WALLPAPER")
+if command -v notify-send &> /dev/null; then
+    notify-send -i "$WALLPAPER" "Wallpaper Changed" "Applied: $WALL_NAME" 2>/dev/null || true
+fi
 
-# 7. Update Fastfetch Colors (dynamic)
+# 7. Update Fastfetch Colors (dynamic using hex codes from cache)
 KITTY_CACHE="$HOME/.cache/skwd-wall/colors-kitty.conf"
 FF_CONFIG="$HOME/Dotfiles/fastfetch/config.jsonc"
 
