@@ -5,10 +5,6 @@
 
 #!/bin/bash
 
-CONFIG="$HOME/.cache/matugen/fuzzel-colors.ini"
+CONFIG="$HOME/.config/fuzzel/fuzzel.ini"
 
-if [ -f "$CONFIG" ]; then
-    fuzzel --config "$CONFIG" --icon-theme="Papirus-Dark" --show-icons -p "󰣇  "
-else
-    fuzzel -p "󰣇  " --background-color "0a0f11dd" --text-color "baeaffff"
-fi
+fuzzel --config "$CONFIG" --icon-theme="Papirus-Dark" -p "󰣇  "
