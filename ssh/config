@@ -3,5 +3,6 @@ Host snowpi
     User snow
     Port 22
     SetEnv TERM=xterm-256color
-    # This tries Tailscale SSH first, then falls back to your local key
     CheckHostIP no
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
