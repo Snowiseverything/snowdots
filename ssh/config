@@ -4,5 +4,4 @@ Host snowpi
     Port 22
     SetEnv TERM=xterm-256color
     CheckHostIP no
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
+    StrictHostKeyChecking accept-new
