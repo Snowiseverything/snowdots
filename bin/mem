@@ -1,0 +1,17 @@
+#!/bin/bash
+# Quick memory save script
+# Usage: mem "thing to remember"
+
+MEMFILE="$HOME/.hermes/MEMORY.md"
+
+if [ -z "$1" ]; then
+    echo "Usage: mem \"thing to remember\""
+    echo "Current memory:"
+    tail -20 "$MEMFILE"
+    exit 1
+fi
+
+echo "" >> "$MEMFILE"
+echo "## $(date '+%Y-%m-%d')" >> "$MEMFILE"
+echo "- $1" >> "$MEMFILE"
+echo "Added to memory: $1"
