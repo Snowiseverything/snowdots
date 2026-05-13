@@ -90,7 +90,7 @@ ColumnLayout {
         implicitHeight: root.centerWidth / 2
 
         color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.medium
+        radius: Tokens.rounding.full
 
         MaterialIcon {
             anchors.centerIn: parent
@@ -105,7 +105,7 @@ ColumnLayout {
             id: pfp
 
             anchors.fill: parent
-            path: Wallpapers.current || `${Paths.home}/Pictures/Wallpapers/315.webp`
+            path: `${Paths.home}/.face`
         }
     }
 
