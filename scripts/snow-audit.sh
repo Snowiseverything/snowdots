@@ -62,10 +62,15 @@ if [[ "$1" != "--sync" ]]; then
     echo -e "\n${YELLOW}󰸉 Visual Engine Status${NC}"
     LIVE_WALL=$(awww query 2>/dev/null | grep -oP 'image: \K.*')
     echo -e "  Wallpaper   : ${GREEN}$(basename "${LIVE_WALL:-None}")${NC}"
-    for p in awww-daemon skwd-daemon swaync; do
+    for p in awww-daemon skwd-daemon; do
         pgrep -x "$p" > /dev/null && printf "  %-12s: ${GREEN}RUNNING${NC}\n" "$p" || printf "  %-12s: ${RED}STOPPED${NC}\n" "$p"
     done
 fi
+
+echo -e "\n${YELLOW}Desktop Environment Status${NC}"
+for p in hyprland quickshell; do
+    pgrep -x "$p" > /dev/null && printf "  %-12s: ${GREEN}RUNNING${NC}\n" "$p" || printf "  %-12s: ${RED}STOPPED${NC}\n" "$p"
+done
 
 echo "---------------------------------------------------"
 echo -e "${BLUE}Audit Complete.${NC}"

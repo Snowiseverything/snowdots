@@ -37,7 +37,7 @@ Row {
             id: pfp
 
             anchors.fill: parent
-            path: `${Paths.home}/.face`
+            path: Wallpapers.current || `${Paths.home}/Pictures/Wallpapers/315.webp`
         }
 
         MouseArea {
