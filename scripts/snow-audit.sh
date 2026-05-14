@@ -68,7 +68,7 @@ if [[ "$1" != "--sync" ]]; then
 fi
 
 echo -e "\n${YELLOW}Desktop Environment Status${NC}"
-for p in hyprland quickshell; do
+for p in Hyprland quickshell; do
     pgrep -x "$p" > /dev/null && printf "  %-12s: ${GREEN}RUNNING${NC}\n" "$p" || printf "  %-12s: ${RED}STOPPED${NC}\n" "$p"
 done
 

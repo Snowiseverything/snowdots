@@ -157,6 +157,12 @@ if [ -f "$FUZZEL_GEN" ]; then
     fi
 fi
 
+# Update Cursor Colors (matugen dynamic)
+if [ -f "$HOME/Dotfiles/scripts/cursor-colors.sh" ]; then
+    "$HOME/Dotfiles/scripts/cursor-colors.sh" >> "$LOG_FILE" 2>&1 || log_error "Cursor colors failed"
+    log "Cursor colors updated"
+fi
+
 # 6. Notification - show wallpaper name and thumbnail
 WALL_NAME=$(basename "$WALLPAPER")
 if command -v notify-send &> /dev/null; then
