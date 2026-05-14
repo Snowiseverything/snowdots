@@ -182,7 +182,7 @@ if [ -f "$BTOP_TEMPLATE" ] && [ -f "$FUZZEL_GEN" ]; then
 
     sed -e "s/{{colors.surface.default.hex}}/#${BG}/g" \
         -e "s/{{colors.on_surface.default.hex}}/#${TEXT}/g" \
-        -e "s/{{colors.on_surface_variant.default.hex}}/#999999/g" \
+        -e "s/{{colors.on_surface_variant.default.hex}}/#${PRIMARY}/g" \
         -e "s/{{colors.surface_container_high.default.hex}}/#232325/g" \
         -e "s/{{colors.primary.default.hex}}/#${PRIMARY}/g" \
         -e "s/{{colors.secondary.default.hex}}/#${SECONDARY}/g" \
