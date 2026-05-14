@@ -52,6 +52,14 @@ output_path = '/home/snow/.config/gtk-3.0/gtk.css'
 input_path = '/home/snow/Dotfiles/matugen/templates/gtk.css'
 output_path = '/home/snow/.config/gtk-4.0/gtk.css'
 
+[templates.spicetify]
+input_path = '/home/snow/Dotfiles/matugen/templates/spicetify.ini'
+output_path = '/home/snow/.config/spicetify/Themes/Matugen/color.ini'
+
+[templates.starship]
+input_path = '/home/snow/Dotfiles/matugen/templates/starship.toml'
+output_path = '/home/snow/.config/starship.toml'
+
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true
