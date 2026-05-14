@@ -88,10 +88,9 @@ else
     log_error "Matugen failed (non-fatal, continuing)"
 fi
 
-# 4. Apply the Image using skwd-paper with animations
+# 4. Apply the Image using awww
 CURRENT_ON_SCREEN=$(awww query | grep -oP 'image: \K.*' | tr -d '[:space:]')
 if [ "$WALLPAPER" != "$CURRENT_ON_SCREEN" ]; then
-    skwd-paper DP-2 "$WALLPAPER" --shader pubgm --duration-ms 800 || \
     awww img "$WALLPAPER" --transition-type wipe --transition-angle 30 || \
     swww img "$WALLPAPER" --outputs DP-2 --transition-type wipe --transition-angle 30
 fi
