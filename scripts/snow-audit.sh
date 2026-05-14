@@ -35,6 +35,23 @@ for REPO in "$PRIMARY_REPO" "$SECONDARY_REPO"; do
     fi
 done
 
+# 2.5 LOCAL BACKUP SYNC STATUS
+BACKUP_DIR="/mnt/backups/System-Mirror/home-dots"
+if [ -d "$BACKUP_DIR" ]; then
+    LAST_SYNC=$(stat -c %Y "$BACKUP_DIR" 2>/dev/null)
+    NOW=$(date +%s)
+    AGE_MIN=$(( (NOW - LAST_SYNC) / 60 ))
+    if [ "$AGE_MIN" -lt 60 ]; then
+        printf "  %-12s: ${GREEN}Synced (%d min ago)${NC}\n" "Local Backup" "$AGE_MIN"
+    elif [ "$AGE_MIN" -lt 1440 ]; then
+        printf "  %-12s: ${YELLOW}Synced (%d hr ago)${NC}\n" "Local Backup" "$((AGE_MIN / 60))"
+    else
+        printf "  %-12s: ${RED}Outdated (%d days)${NC}\n" "Local Backup" "$((AGE_MIN / 1440))"
+    fi
+else
+    printf "  %-12s: ${RED}Not Mounted${NC}\n" "Local Backup"
+fi
+
 # 3. STORAGE MAP (Audit vs Sync Modes)
 echo -e "\n${YELLOW}󱛟 Storage Map${NC}"
 df -h -x tmpfs -x devtmpfs | grep -E '^/dev/|/mnt/' | awk '!seen[$2]++' | while read -r line; do
