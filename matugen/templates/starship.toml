@@ -9,7 +9,7 @@ $directory\
 [](fg:color_yellow bg:color_aqua)\
 $git_branch\
 $git_status\
-[](fg:color_aqua bg:color_blue)\
+[](fg:color_aqua bg:color_b3)\
 $c\
 $cpp\
 $rust\
@@ -20,13 +20,13 @@ $java\
 $kotlin\
 $haskell\
 $python\
-[](fg:color_blue bg:color_bg3)\
+[](fg:color_b3 bg:color_b1)\
 $docker_context\
 $conda\
 $pixi\
-[](fg:color_bg3 bg:color_bg1)\
+[](fg:color_b1 bg:color_bgt)\
 $time\
-[ ](fg:color_bg1)\
+[ ](fg:color_bgt)\
 $line_break$character"""
 
 palette = 'matugen'
@@ -35,10 +35,10 @@ palette = 'matugen'
 color_fg0 = '{{colors.on_surface.default.hex}}'
 color_orange = '{{colors.surface.default.hex}}'
 color_yellow = '{{colors.surface_container_low.default.hex}}'
-color_aqua = '{{colors.primary_container.default.hex}}'
-color_blue = '{{colors.secondary_container.default.hex}}'
-color_bg3 = '{{colors.tertiary_container.default.hex}}'
-color_bg1 = '{{colors.surface_container.default.hex}}'
+color_aqua = '{{colors.surface_container.default.hex}}'
+color_b3 = '{{colors.surface_container_high.default.hex}}'
+color_b1 = '{{colors.surface_container_highest.default.hex}}'
+color_bgt = '{{colors.primary_container.default.hex}}'
 color_green = '{{colors.primary.default.hex}}'
 color_red = '{{colors.error.default.hex}}'
 color_purple = '{{colors.primary.default.hex}}'
@@ -152,22 +152,22 @@ format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
 [docker_context]
 symbol = ""
-style = "bg:color_bg3"
-format = '[[ $symbol( $context) ](fg:color_fg0 bg:color_bg3)]($style)'
+style = "bg:color_b1"
+format = '[[ $symbol( $context) ](fg:color_fg0 bg:color_b1)]($style)'
 
 [conda]
-style = "bg:color_bg3"
-format = '[[ $symbol( $environment) ](fg:color_fg0 bg:color_bg3)]($style)'
+style = "bg:color_b1"
+format = '[[ $symbol( $environment) ](fg:color_fg0 bg:color_b1)]($style)'
 
 [pixi]
-style = "bg:color_bg3"
-format = '[[ $symbol( $version)( $environment) ](fg:color_fg0 bg:color_bg3)]($style)'
+style = "bg:color_b1"
+format = '[[ $symbol( $version)( $environment) ](fg:color_fg0 bg:color_b1)]($style)'
 
 [time]
 disabled = false
 time_format = "%R"
-style = "bg:color_bg1"
-format = '[[  $time ](fg:color_fg0 bg:color_bg1)]($style)'
+style = "bg:color_bgt"
+format = '[[  $time ](fg:color_fg0 bg:color_bgt)]($style)'
 
 [line_break]
 disabled = false
