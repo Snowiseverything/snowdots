@@ -60,6 +60,11 @@ output_path = '/home/snow/.config/spicetify/Themes/Matugen/color.ini'
 input_path = '/home/snow/Dotfiles/matugen/templates/starship.toml'
 output_path = '/home/snow/.config/starship.toml'
 
+[templates.opencode]
+input_path = '/home/snow/Dotfiles/matugen/templates/opencode.json'
+output_path = '/home/snow/.config/opencode/themes/matugen.json'
+reload = true
+
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true
