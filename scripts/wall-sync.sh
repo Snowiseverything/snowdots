@@ -163,6 +163,36 @@ if [ -f "$HOME/Dotfiles/scripts/cursor-colors.sh" ]; then
     log "Cursor colors updated"
 fi
 
+# Update Btop Theme (matugen dynamic)
+BTOP_TEMPLATE="$HOME/Dotfiles/matugen/templates/btop.theme"
+BTOP_THEME="$HOME/.config/btop/themes/matugen.theme"
+if [ -f "$BTOP_TEMPLATE" ] && [ -f "$FUZZEL_GEN" ]; then
+    # Extract colors from fuzzel-gen and create btop theme
+    PRIMARY=$(grep "^border=" "$FUZZEL_GEN" | cut -d= -f2 | cut -c1-6)
+    SECONDARY=$(grep "^match=" "$FUZZEL_GEN" | cut -d= -f2 | cut -c1-6)
+    TERTIARY=$(grep "^selection=" "$FUZZEL_GEN" | cut -d= -f2 | cut -c1-6)
+    BG=$(grep "^background=" "$FUZZEL_GEN" | cut -d= -f2 | cut -c1-6)
+    TEXT=$(grep "^text=" "$FUZZEL_GEN" | cut -d= -f2 | cut -c1-6)
+
+    [ -z "$PRIMARY" ] && PRIMARY="e4b7f3"
+    [ -z "$SECONDARY" ] && SECONDARY="a0d0c8"
+    [ -z "$TERTIARY" ] && TERTIARY="f8d8ff"
+    [ -z "$BG" ] && BG="161217"
+    [ -z "$TEXT" ] && TEXT="e9e0e7"
+
+    sed -e "s/{{colors.surface.default.hex}}/#${BG}/g" \
+        -e "s/{{colors.on_surface.default.hex}}/#${TEXT}/g" \
+        -e "s/{{colors.on_surface_variant.default.hex}}/#999999/g" \
+        -e "s/{{colors.surface_container_high.default.hex}}/#232325/g" \
+        -e "s/{{colors.primary.default.hex}}/#${PRIMARY}/g" \
+        -e "s/{{colors.secondary.default.hex}}/#${SECONDARY}/g" \
+        -e "s/{{colors.tertiary.default.hex}}/#${TERTIARY}/g" \
+        -e "s/{{colors.outline.default.hex}}/#666666/g" \
+        -e "s/{{colors.surface_container_default.hex}}/#2a2a2a/g" \
+        "$BTOP_TEMPLATE" > "$BTOP_THEME" 2>/dev/null || true
+    log "Btop theme updated"
+fi
+
 # 6. Notification - show wallpaper name and thumbnail
 WALL_NAME=$(basename "$WALLPAPER")
 if command -v notify-send &> /dev/null; then

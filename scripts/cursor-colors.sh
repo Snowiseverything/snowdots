@@ -40,18 +40,18 @@ ACCENT=$(grep "^selection=" "$FUZZEL_COLORS" | cut -d= -f2 | cut -c1-6)
 log "Primary: #$PRIMARY, Secondary: #$SECONDARY, Accent: #$ACCENT"
 
 # Find all SVG files in cursor theme and replace colors
-# Future-Cyan theme uses blue (#0099e5) as main color
+# Future-Cyan theme uses cyan (#23afc8) as main color - replace with matugen primary
 
 find "$CURSOR_DEST" -name "*.svg" 2>/dev/null | while read svg; do
     sed -i \
-        -e "s/#0099e5/#${PRIMARY}/g" \
-        -e "s/#0077b3/${PRIMARY}CC/g" \
-        -e "s/#00aaff/${PRIMARY}EE/g" \
-        -e "s/#005588/${PRIMARY}88/g" \
-        -e "s/#0099E5/#${PRIMARY}/g" \
-        -e "s/#0077B3/${PRIMARY}CC/g" \
-        -e "s/#00AAFF/${PRIMARY}EE/g" \
-        -e "s/#005588/${PRIMARY}88/g" \
+        -e "s/#23afc8/#${PRIMARY}/g" \
+        -e "s/#1a8fa3/${PRIMARY}CC/g" \
+        -e "s/#2ac4d8/${PRIMARY}EE/g" \
+        -e "s/#1694ad/${PRIMARY}99/g" \
+        -e "s/#23AFc8/#${PRIMARY}/g" \
+        -e "s/#1A8FA3/${PRIMARY}CC/g" \
+        -e "s/#2AC4D8/${PRIMARY}EE/g" \
+        -e "s/#1694AD/${PRIMARY}99/g" \
         "$svg"
 done
 
