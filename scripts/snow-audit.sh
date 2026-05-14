@@ -3,7 +3,8 @@
 ##  SnowDots — Master Audit                              Version: v3.5.0  ##
 ########################################################################
 
-HOSTNAME=$(hostname); GREEN='\033[0;32m'; RED='\033[0;31m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+HOSTNAME=$(hostname); BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
+GREEN="$BOLD"; RED="$BOLD"; YELLOW="$BOLD"; BLUE="$BOLD"
 
 # 1. Path Selection
 [[ "$HOSTNAME" == "snowpi" ]] && { PRIMARY_REPO="$HOME/SnowPi-Dotfiles"; SECONDARY_REPO="$HOME/Dotfiles"; } || { PRIMARY_REPO="$HOME/Dotfiles"; SECONDARY_REPO="$HOME/SnowPi-Dotfiles"; }
