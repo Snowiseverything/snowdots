@@ -89,6 +89,8 @@ else
 fi
 
 # 4. Apply the Image using skwd-paper with animations
+# Sync awww to current wallpaper (skwd-paper sets wall but awww can fall out of sync)
+awww img "$WALLPAPER" --transition-type none 2>/dev/null || true
 CURRENT_ON_SCREEN=$(awww query | grep -oP 'image: \K.*' | tr -d '[:space:]')
 if [ "$WALLPAPER" != "$CURRENT_ON_SCREEN" ]; then
     skwd-paper DP-2 "$WALLPAPER" --shader pubgm --duration-ms 800 || \
