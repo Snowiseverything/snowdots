@@ -62,13 +62,8 @@ for REPO in "${REPOS[@]}"; do
 done
 
 # --- Auto-Heal Symlinks & Mirroring ---
-if [[ "$HOSTNAME" == "snowpi" ]]; then
-    ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
-    OC_SHARED="$HOME/SnowPi-Dotfiles/.opencode"
-else
-    ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
-    OC_SHARED="$HOME/Dotfiles/.opencode"
-fi
+ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+OC_SHARED="$HOME/Dotfiles/.opencode"
 
 # Auto-heal OC symlinks
 if [ -d "$OC_SHARED" ]; then

@@ -1,9 +1,7 @@
 #!/bin/bash
 # setup-oc-sync.sh — Symlink shared OC configs into ~/.opencode/
-# Works on both Freezer (Dotfiles) and Snowpi (SnowPi-Dotfiles)
 
 DOTFILES_DIR="$HOME/Dotfiles"
-[ "$(hostname)" = "snowpi" ] && DOTFILES_DIR="$HOME/SnowPi-Dotfiles"
 OC_DIR="$HOME/.opencode"
 SHARED_DIR="$DOTFILES_DIR/.opencode"
 
