@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "📥 Manually pulling updates from remote..."
 cd ~/Dotfiles
-git fetch origin main
-git pull --rebase origin main
+git fetch gitlab main
+git pull --rebase gitlab main
 cd - > /dev/null
