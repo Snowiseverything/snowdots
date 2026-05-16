@@ -14,4 +14,6 @@ set -gx FZF_ALT_C_COMMAND "
   echo ..
 "
 
-fzf --fish | source
+if type -q fzf
+    fzf --fish | source
+end

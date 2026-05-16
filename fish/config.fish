@@ -15,6 +15,10 @@ switch (hostname)
     case freezer
         alias ff="fastfetch"
 
+        if status is-interactive
+            fastfetch
+        end
+
     case snowpi
         alias ff="fastfetch --logo raspberrypi --logo-color-1 red --logo-color-2 green"
 

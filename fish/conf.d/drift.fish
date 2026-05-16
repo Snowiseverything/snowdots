@@ -3,4 +3,6 @@
 ##  Last Edited: 2026-04-29                                           ##
 ########################################################################
 
-drift shell-init fish | source
+if type -q drift
+    drift shell-init fish | source
+end
