@@ -13,14 +13,8 @@ done
 START_DIR=$(pwd)
 HOSTNAME=$(hostname)
 
-# Determine remote names per host
-if [[ "$HOSTNAME" == "snowpi" ]]; then
-    CLOUD_REMOTE="origin"
-    PEER_REMOTE="freezer"
-else
-    CLOUD_REMOTE="gitlab"
-    PEER_REMOTE="snowpi"
-fi
+CLOUD_REMOTE="gitlab"
+PEER_REMOTE="snowpi"
 
 for REPO in "${REPOS[@]}"; do
     echo "---------------------------------------------------"
