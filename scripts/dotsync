@@ -13,16 +13,24 @@ done
 START_DIR=$(pwd)
 HOSTNAME=$(hostname)
 
+# Determine remote names per host
+if [[ "$HOSTNAME" == "snowpi" ]]; then
+    CLOUD_REMOTE="origin"
+    PEER_REMOTE="freezer"
+else
+    CLOUD_REMOTE="gitlab"
+    PEER_REMOTE="snowpi"
+fi
+
 for REPO in "${REPOS[@]}"; do
     echo "---------------------------------------------------"
     echo "❄️  SnowSync: Harmonizing [$(basename "$REPO")]"
     cd "$REPO" || continue
 
-    # STEP 1: Smart Pull from GitLab
+    # STEP 1: Smart Pull from Cloud
     echo "📥 Checking for remote updates..."
     git stash >/dev/null 2>&1
-    # Changed 'origin' to 'gitlab'
-    git pull gitlab main --no-rebase
+    git pull "$CLOUD_REMOTE" main --no-rebase
     git stash pop >/dev/null 2>&1
     
     # STEP 2: Detect Changes
@@ -38,18 +46,18 @@ for REPO in "${REPOS[@]}"; do
         git commit -m "$MSG"
     fi
 
-    # STEP 4: Triple-Node Sync
+    # STEP 4: Multi-Node Sync
     echo "🚀 Syncing commits to all nodes..."
     
-    # 1. Push to GitLab (Cloud)
-    git push gitlab main
+    # 1. Push to Cloud (GitLab)
+    git push "$CLOUD_REMOTE" main
     
-    # 2. Push to SSD Backup (Local Path or Network)
-    git push snowpi main
+    # 2. Push to Peer Machine
+    git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer push failed (offline?)"
     
-    # 3. Push to Peer Machine (If on Pi, push to Freezer)
+    # 3. Push to Backup (if remote exists)
     if [[ "$HOSTNAME" == "snowpi" ]]; then
-        git push freezer main 2>/dev/null
+        git push snowpi main 2>/dev/null
     fi
 done
 
