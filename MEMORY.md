@@ -1,1 +1,0 @@
-/home/snow/.opencode/MEMORY.md

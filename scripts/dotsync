@@ -56,8 +56,20 @@ done
 # --- Auto-Heal Symlinks & Mirroring ---
 if [[ "$HOSTNAME" == "snowpi" ]]; then
     ln -sf "$HOME/SnowPi-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+    OC_SHARED="$HOME/SnowPi-Dotfiles/.opencode"
 else
     ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+    OC_SHARED="$HOME/Dotfiles/.opencode"
+fi
+
+# Auto-heal OC symlinks
+if [ -d "$OC_SHARED" ]; then
+    for f in AGENTS.md MEMORY.md SOUL.md opencode.json; do
+        [ -L "$HOME/.opencode/$f" ] && [ "$(readlink "$HOME/.opencode/$f")" != "$OC_SHARED/$f" ] &&
+            ln -sf "$OC_SHARED/$f" "$HOME/.opencode/$f"
+    done
+    [ -L "$HOME/.opencode/skills" ] && [ "$(readlink "$HOME/.opencode/skills")" != "$OC_SHARED/skills" ] &&
+        ln -sfn "$OC_SHARED/skills" "$HOME/.opencode/skills"
 fi
 
 cd "$START_DIR"
