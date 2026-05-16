@@ -9,7 +9,7 @@ $directory\
 [](fg:color_yellow bg:color_aqua)\
 $git_branch\
 $git_status\
-[](fg:color_aqua bg:color_blue)\
+[](fg:color_aqua bg:color_b3)\
 $c\
 $cpp\
 $rust\
@@ -20,28 +20,28 @@ $java\
 $kotlin\
 $haskell\
 $python\
-[](fg:color_blue bg:color_bg3)\
+[](fg:color_b3 bg:color_b1)\
 $docker_context\
 $conda\
 $pixi\
-[](fg:color_bg3 bg:color_bg1)\
+[](fg:color_b1 bg:color_bgt)\
 $time\
-[ ](fg:color_bg1)\
+[ ](fg:color_bgt)\
 $line_break$character"""
 
-palette = 'gruvbox_dark'
+palette = 'matugen'
 
-[palettes.gruvbox_dark]
-color_fg0 = '#fbf1c7'
-color_bg1 = '#3c3836'
-color_bg3 = '#665c54'
-color_blue = '#458588'
-color_aqua = '#689d6a'
-color_green = '#98971a'
-color_orange = '#d65d0e'
-color_purple = '#b16286'
-color_red = '#cc241d'
-color_yellow = '#d79921'
+[palettes.matugen]
+color_fg0 = '#dfe3e8'
+color_orange = '#101417'
+color_yellow = '#181c20'
+color_aqua = '#1c2024'
+color_b3 = '#262a2e'
+color_b1 = '#313539'
+color_bgt = '#004c6e'
+color_green = '#94cdf7'
+color_red = '#ffb4ab'
+color_purple = '#94cdf7'
 
 [os]
 disabled = false
@@ -54,10 +54,8 @@ Ubuntu = "󰕈"
 SUSE = ""
 Raspbian = "󰐿"
 Mint = "󰣭"
-Macos = "󰀵"
 Manjaro = ""
 Linux = "󰌽"
-Gentoo = "󰣨"
 Fedora = "󰣛"
 Alpine = ""
 Amazon = ""
@@ -71,8 +69,8 @@ Debian = "󰐿"
 Redhat = "󱄛"
 RedHatEnterprise = "󱄛"
 Pop = ""
-CachyOS = "󰣇" 
-Unknown = "󰣇"  # The ultimate fallback
+CachyOS = "󰣇"
+Unknown = "󰣇"
 
 [username]
 show_always = true
@@ -154,22 +152,22 @@ format = '[[ $symbol( $version) ](fg:color_fg0 bg:color_blue)]($style)'
 
 [docker_context]
 symbol = ""
-style = "bg:color_bg3"
-format = '[[ $symbol( $context) ](fg:#83a598 bg:color_bg3)]($style)'
+style = "bg:color_b1"
+format = '[[ $symbol( $context) ](fg:color_fg0 bg:color_b1)]($style)'
 
 [conda]
-style = "bg:color_bg3"
-format = '[[ $symbol( $environment) ](fg:#83a598 bg:color_bg3)]($style)'
+style = "bg:color_b1"
+format = '[[ $symbol( $environment) ](fg:color_fg0 bg:color_b1)]($style)'
 
 [pixi]
-style = "bg:color_bg3"
-format = '[[ $symbol( $version)( $environment) ](fg:color_fg0 bg:color_bg3)]($style)'
+style = "bg:color_b1"
+format = '[[ $symbol( $version)( $environment) ](fg:color_fg0 bg:color_b1)]($style)'
 
 [time]
 disabled = false
 time_format = "%R"
-style = "bg:color_bg1"
-format = '[[  $time ](fg:color_fg0 bg:color_bg1)]($style)'
+style = "bg:color_bgt"
+format = '[[  $time ](fg:color_fg0 bg:color_bgt)]($style)'
 
 [line_break]
 disabled = false

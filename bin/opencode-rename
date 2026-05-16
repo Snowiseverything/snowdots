@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""Rename unnamed OpenCode sessions based on first user message.
+
+Usage:
+  opencode-rename           # rename all unnamed sessions
+  opencode-rename --watch   # keep running, check every 30s
+"""
+import json
+import os
+import sqlite3
+import sys
+import time
+from pathlib import Path
+
+DB = Path.home() / ".local/share/opencode/opencode.db"
+DAT_DIR = Path.home() / ".config/ai.opencode.desktop"
+DELETED_ID = object()  # sentinel
+
+def get_unnamed(db):
+    cur = db.execute("""
+        SELECT s.id, s.title
+        FROM session s
+        WHERE s.title LIKE 'New session - %' OR s.title LIKE 'New chat - %'
+    """)
+    return cur.fetchall()
+
+def get_first_user_text(db, session_id):
+    cur = db.execute("""
+        SELECT json_extract(p.data, '$.text')
+        FROM part p
+        JOIN message m ON p.message_id = m.id
+        WHERE m.session_id = ? AND json_extract(m.data, '$.role') = 'user' AND json_extract(p.data, '$.type') = 'text'
+        ORDER BY m.time_created ASC, p.time_created ASC
+        LIMIT 1
+    """, (session_id,))
+    row = cur.fetchone()
+    if row and row[0]:
+        return row[0].strip()
+    return None
+
+def make_title(text):
+    text = text.strip().replace("\n", " ").replace("\r", "")
+    text = " ".join(text.split())
+    if len(text) <= 55:
+        return text
+    return text[:55].rstrip(",;:. ") + "..."
+
+def clean_dat_cache(renamed_ids):
+    """Remove stale references to renamed sessions from .dat cache files."""
+    for fname in DAT_DIR.glob("*.dat"):
+        try:
+            raw = fname.read_text()
+            data = json.loads(raw)
+        except (json.JSONDecodeError, OSError):
+            continue
+        changed = False
+
+        def walk(obj):
+            nonlocal changed
+            if isinstance(obj, dict):
+                to_del = [k for k in obj if k in renamed_ids]
+                for k in to_del:
+                    del obj[k]
+                    changed = True
+                for k, v in obj.items():
+                    if isinstance(v, str):
+                        parsed = try_parse_json(v)
+                        if parsed is not None:
+                            walked = walk(parsed)
+                            if walked is not None and walked is not DELETED_ID:
+                                obj[k] = json.dumps(walked)
+                                changed = True
+                    elif isinstance(v, (dict, list)):
+                        walk(v)
+            elif isinstance(obj, list):
+                for i, item in enumerate(obj):
+                    if isinstance(item, dict):
+                        walk(item)
+                    elif isinstance(item, str):
+                        parsed = try_parse_json(item)
+                        if parsed is not None:
+                            walked = walk(parsed)
+                            if walked is not None and walked is not DELETED_ID:
+                                obj[i] = json.dumps(walked)
+                                changed = True
+            return obj
+
+        def try_parse_json(s):
+            try:
+                return json.loads(s)
+            except (json.JSONDecodeError, TypeError):
+                return None
+
+        walk(data)
+        if changed:
+            fname.write_text(json.dumps(data, indent=2) + "\n")
+            print(f"  Cleaned cache: {fname.name}")
+
+def rename_all():
+    if not DB.exists():
+        print(f"DB not found: {DB}")
+        return
+
+    db = sqlite3.connect(str(DB))
+    unnamed = get_unnamed(db)
+    if not unnamed:
+        print("No unnamed sessions found.")
+        db.close()
+        return
+
+    renamed = []
+    for sid, old_title in unnamed:
+        text = get_first_user_text(db, sid)
+        if not text:
+            print(f"  SKIP {sid}: no user message found")
+            continue
+        title = make_title(text)
+        db.execute("UPDATE session SET title = ? WHERE id = ?", (title, sid))
+        renamed.append(sid)
+        print(f"  {old_title[:40]:40s} -> {title}")
+
+    db.commit()
+    db.close()
+
+    if renamed:
+        id_set = set(renamed)
+        clean_dat_cache(id_set)
+        print(f"\nRenamed {len(renamed)} session(s). Restart OpenCode to see changes.")
+    else:
+        print("Nothing to rename.")
+
+def watch():
+    print("Watching for new sessions every 30s...")
+    while True:
+        try:
+            rename_all()
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+        time.sleep(30)
+
+if __name__ == "__main__":
+    if "--watch" in sys.argv:
+        watch()
+    else:
+        rename_all()
