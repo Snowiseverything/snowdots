@@ -3,7 +3,7 @@
 # SNOWSYNC v11.6 — The "Named Nodes" Edition
 # --------------------------------------------------------------------------
 
-POTENTIAL_REPOS=("$HOME/Dotfiles" "$HOME/SnowPi-Dotfiles")
+POTENTIAL_REPOS=("$HOME/Dotfiles")
 REPOS=()
 
 for R in "${POTENTIAL_REPOS[@]}"; do
