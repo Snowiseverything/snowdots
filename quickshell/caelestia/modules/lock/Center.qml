@@ -26,13 +26,6 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
         spacing: Tokens.spacing.small
 
-        transform: Scale {
-            origin.x: implicitWidth / 2
-            origin.y: implicitHeight / 2
-            xScale: root.breathScale
-            yScale: root.breathScale
-        }
-
         StyledText {
             Layout.alignment: Qt.AlignVCenter
             text: Time.hourStr
@@ -76,17 +69,6 @@ ColumnLayout {
                 font.bold: true
             }
         }
-    }
-
-    property real breathScale: 1
-
-    NumberAnimation on breathScale {
-        running: true
-        from: 1
-        to: 1.02
-        duration: 4000
-        easing.type: Easing.InOutSine
-        loops: Animation.Infinite
     }
 
     StyledText {
