@@ -42,20 +42,6 @@ ColumnLayout {
             font.pointSize: Math.floor(Tokens.font.size.extraLarge * 3 * root.centerScale)
             font.family: Tokens.font.family.clock
             font.bold: true
-            opacity: colonVisible ? 1 : 0
-
-            Behavior on opacity {
-                NumberAnimation { duration: 150 }
-            }
-        }
-
-        property bool colonVisible: true
-
-        Timer {
-            running: true
-            interval: 1000
-            repeat: true
-            onTriggered: root.colonVisible = !root.colonVisible
         }
 
         StyledText {
