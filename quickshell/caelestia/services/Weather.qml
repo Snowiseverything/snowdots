@@ -243,6 +243,8 @@ property string city
         });
     }
 
+    Component.onCompleted: Qt.callLater(root.reload)
+
     Connections {
         function onWeatherLocationChanged(): void {
             root.reload();
