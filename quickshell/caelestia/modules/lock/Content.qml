@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
+import qs.components.effects
 import qs.services
 
 RowLayout {
@@ -11,11 +12,45 @@ RowLayout {
 
     spacing: Tokens.spacing.large * 2
 
+    component HoverPanel: StyledRect {
+        property real hoverScale: 1
+
+        transform: Scale {
+            origin.x: width / 2
+            origin.y: height / 2
+            xScale: hoverScale
+            yScale: hoverScale
+        }
+
+        Behavior on hoverScale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+        HoverHandler {
+            onHoveredChanged: parent.hoverScale = hovered ? 1.02 : 1
+        }
+    }
+
+    component HoverClippingPanel: StyledClippingRect {
+        property real hoverScale: 1
+
+        transform: Scale {
+            origin.x: width / 2
+            origin.y: height / 2
+            xScale: hoverScale
+            yScale: hoverScale
+        }
+
+        Behavior on hoverScale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+
+        HoverHandler {
+            onHoveredChanged: parent.hoverScale = hovered ? 1.02 : 1
+        }
+    }
+
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.normal
 
-        StyledRect {
+        HoverPanel {
             Layout.fillWidth: true
             implicitHeight: weather.implicitHeight
 
@@ -30,7 +65,7 @@ RowLayout {
             }
         }
 
-        StyledRect {
+        HoverPanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
@@ -40,7 +75,7 @@ RowLayout {
             Fetch {}
         }
 
-        StyledClippingRect {
+        HoverClippingPanel {
             Layout.fillWidth: true
             implicitHeight: media.implicitHeight
 
@@ -64,7 +99,7 @@ RowLayout {
         Layout.fillWidth: true
         spacing: Tokens.spacing.normal
 
-        StyledRect {
+        HoverPanel {
             Layout.fillWidth: true
             implicitHeight: resources.implicitHeight
 
@@ -77,7 +112,7 @@ RowLayout {
             }
         }
 
-        StyledRect {
+        HoverPanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
 

@@ -26,6 +26,13 @@ ColumnLayout {
         Layout.alignment: Qt.AlignHCenter
         spacing: Tokens.spacing.small
 
+        transform: Scale {
+            origin.x: implicitWidth / 2
+            origin.y: implicitHeight / 2
+            xScale: root.breathScale
+            yScale: root.breathScale
+        }
+
         StyledText {
             Layout.alignment: Qt.AlignVCenter
             text: Time.hourStr
@@ -71,6 +78,17 @@ ColumnLayout {
         }
     }
 
+    property real breathScale: 1
+
+    NumberAnimation on breathScale {
+        running: true
+        from: 1
+        to: 1.02
+        duration: 4000
+        easing.type: Easing.InOutSine
+        loops: Animation.Infinite
+    }
+
     StyledText {
         Layout.alignment: Qt.AlignHCenter
         Layout.topMargin: -Tokens.padding.large * 2
@@ -86,16 +104,16 @@ ColumnLayout {
         Layout.topMargin: Tokens.spacing.large * 2
         Layout.alignment: Qt.AlignHCenter
 
-        implicitWidth: root.centerWidth / 2
-        implicitHeight: root.centerWidth / 2
+        implicitWidth: root.centerWidth * 0.8
+        implicitHeight: root.centerWidth * 0.45
 
         color: Colours.tPalette.m3surfaceContainer
-        radius: Tokens.rounding.full
+        radius: Tokens.rounding.large
 
         MaterialIcon {
             anchors.centerIn: parent
 
-            text: "person"
+            text: "image"
             color: Colours.palette.m3onSurfaceVariant
             font.pointSize: Math.floor(root.centerWidth / 4)
             visible: pfp.status !== Image.Ready
@@ -105,7 +123,9 @@ ColumnLayout {
             id: pfp
 
             anchors.fill: parent
-            path: `${Paths.home}/.face`
+            path: Wallpapers.current || `${Paths.home}/Pictures/Wallpapers/315.webp`
+
+            fillMode: Image.PreserveAspectCrop
         }
     }
 

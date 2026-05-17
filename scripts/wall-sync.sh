@@ -80,6 +80,10 @@ log "Using wallpaper: $WALLPAPER"
 # Save as the "Last Known Good"
 echo "$WALLPAPER" > "$LAST_WALL_FILE"
 
+# Sync wallpaper path to caelestia (so Wallpapers.current works in lock screen etc.)
+mkdir -p "$HOME/.local/state/caelestia/wallpaper"
+echo "$WALLPAPER" > "$HOME/.local/state/caelestia/wallpaper/path.txt"
+
 # Generate colors from new wallpaper using matugen
 log "Running matugen..."
 if matugen image "$WALLPAPER" --source-color-index 0 2>>"$LOG_FILE"; then

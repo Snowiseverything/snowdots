@@ -70,3 +70,24 @@
 - Added auto-heal OC symlink block to dotsync script
 - Snowpi todo: pull Dotfiles, run `setup-oc-sync.sh` to populate skills/ + update MEMORY.md
 - Snowpi Tailscale IP: 100.83.33.67 (note: AGENTS.md still shows old IP 100.120.197.52)
+
+## 2026-05-17
+- matugen config.toml already has all templates wired (opencode, starship, spicetify, steam, brave, gtk, vencord, clipse). starship uses symlink ~/.config/starship.toml -> ~/Dotfiles/starship/starship.toml - target file updates fine at same timestamp as other matugen outputs. Terminal apps still need restart for color changes - inherent limitation. Zombie skwd-paper process cleaned. configs all working, nothing more to wire.
+
+## 2026-05-17
+- Swaync removed from hyprland.conf exec-once. Caelestia handles notifications now (NotificationServer in Notifs.qml). spicetify backup apply fails with permission denied on /opt/spotify/Apps - needs 'sudo chmod a+wr /opt/spotify/Apps -R && spicetify backup apply' run manually.
+
+## 2026-05-18
+- Caelestia live config is at ~/.config/quickshell/caelestia/ - separate copy from ~/Dotfiles/quickshell/caelestia/. Edits to QML files must be copied to ~/.config/quickshell/caelestia/ to take effect. Lock screen Center.qml changed: .face icon replaced with current wallpaper (Wallpapers.current) in rounded rectangle. Dashboard profile pic already uses Wallpapers.current. 7 other QML files also differ between dotfiles and live.
+
+## 2026-05-18
+- wall-sync.sh now writes wallpaper path to ~/.local/state/caelestia/wallpaper/path.txt (caelestia's wallpaper tracker). Lock screen uses Wallpapers.current which reads from this file. Live caelestia config at ~/.config/quickshell/caelestia/ - edits to Dotfiles/quickshell/caelestia/ must be copied over (not symlinked).
+
+## 2026-05-18 (Lock Screen Alive)
+- LockSurface.qml: double-click blurred wallpaper opens `skwd wall toggle` via Process
+- NotifGroup.qml: swipe-to-dismiss notifications (horizontal drag past 100px threshold, calls n.close() for app group)
+- Media.qml: album art breathing pulse (1.0↔1.03) when playing + 24-bar sine-wave visualizer
+- Center.qml: clock text breathing (1.0↔1.02, 4s InOutSine loop)
+- Content.qml: all side panels (weather, fetch, media, resources, notifs) scale up 1.02 on mouse hover (HoverHandler + transform)
+- WeatherParticles.qml (new): live particles based on Weather.icon — rain lines, snow circles, fog/cloud blobs, clear sky sparkles
+- All QML edits done in both Dotfiles/quickshell/caelestia/ and ~/.config/quickshell/caelestia/

@@ -12,10 +12,21 @@ Item {
     id: root
 
     required property var lock
+    readonly property bool hasMedia: Players.active?.isPlaying ?? false
+    property real artPulse: 1
 
     anchors.left: parent.left
     anchors.right: parent.right
-    implicitHeight: layout.implicitHeight
+    implicitHeight: layout.implicitHeight + visualizer.implicitHeight
+
+    NumberAnimation on artPulse {
+        running: root.hasMedia
+        from: 1
+        to: 1.03
+        duration: 3000
+        easing.type: Easing.InOutSine
+        loops: Animation.Infinite
+    }
 
     Image {
         anchors.fill: parent
@@ -26,6 +37,13 @@ Item {
         sourceSize: {
             const dpr = (QsWindow.window as QsWindow)?.devicePixelRatio ?? 1;
             return Qt.size(width * dpr, height * dpr);
+        }
+
+        transform: Scale {
+            origin.x: width / 2
+            origin.y: height / 2
+            xScale: root.artPulse
+            yScale: root.artPulse
         }
 
         layer.enabled: true
@@ -137,6 +155,41 @@ Item {
                 onClicked: {
                     if (Players.active?.canGoNext)
                         Players.active.next();
+                }
+            }
+        }
+
+        Row {
+            id: visualizer
+
+            Layout.fillWidth: true
+            Layout.preferredHeight: 32
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: Tokens.spacing.large
+            Layout.bottomMargin: Tokens.padding.large
+
+            visible: root.hasMedia
+            spacing: 3
+
+            Repeater {
+                model: 24
+
+                Rectangle {
+                    width: (visualizer.width - visualizer.spacing * (24 - 1)) / 24
+                    radius: width / 2
+                    color: Colours.palette.m3primary
+                    opacity: 0.6
+                    y: visualizer.height - height
+
+                    Timer {
+                        running: root.hasMedia
+                        repeat: true
+                        interval: 150
+                        onTriggered: {
+                            const h = (Math.sin(Date.now() / 1000 + index * 1.5) * 0.5 + 0.5) * visualizer.height;
+                            parent.height = h;
+                        }
+                    }
                 }
             }
         }

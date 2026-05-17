@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import Quickshell.Wayland
+import Quickshell.Io
 import Caelestia.Config
 import qs.components
 import qs.services
@@ -156,6 +157,14 @@ WlSessionLockSurface {
         }
     }
 
+    Component {
+        id: skwdProcComp
+
+        Process {
+            command: ["skwd", "wall", "toggle"]
+        }
+    }
+
     ScreencopyView {
         id: background
 
@@ -171,6 +180,20 @@ WlSessionLockSurface {
             blurMax: 64
             blurMultiplier: 1
         }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.LeftButton
+            onDoubleClicked: skwdProcComp.createObject(root)
+        }
+    }
+
+    WeatherParticles {
+        id: particles
+
+        anchors.fill: parent
+        weather: Weather
+        z: 1
     }
 
     Item {

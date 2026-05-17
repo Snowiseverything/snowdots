@@ -43,6 +43,8 @@ StyledRect {
     readonly property string urgency: props.urgency
 
     property bool expanded
+    property real swipeOffset: 0
+    property real swipePressX: 0
 
     anchors.left: parent?.left
     anchors.right: parent?.right
@@ -51,6 +53,42 @@ StyledRect {
     clip: true
     radius: Tokens.rounding.normal
     color: root.urgency === "critical" ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+
+    transform: Translate { x: swipeOffset }
+    opacity: 1 - Math.abs(swipeOffset) / 400
+
+    NumberAnimation {
+        id: snapBackAnim
+
+        target: root
+        property: "swipeOffset"
+        to: 0
+        duration: 200
+        easing.type: Easing.OutCubic
+    }
+
+    function dismissAll(): void {
+        for (const n of Notifs.list) {
+            if (n.appName === root.modelData && !n.closed)
+                n.close();
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onPressed: mouse => root.swipePressX = mouse.x
+        onMouseXChanged: mouse => {
+            if (pressed)
+                root.swipeOffset = mouse.x - root.swipePressX;
+        }
+        onReleased: {
+            if (Math.abs(root.swipeOffset) > 100) {
+                root.dismissAll();
+            } else {
+                snapBackAnim.start();
+            }
+        }
+    }
 
     RowLayout {
         id: content
