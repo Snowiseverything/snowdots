@@ -12,6 +12,7 @@ Item {
 
     required property Pam pam
     readonly property alias placeholder: placeholder
+    property bool showPassword: false
     property string buffer
 
     Layout.fillWidth: true
@@ -79,6 +80,7 @@ Item {
         orientation: Qt.Horizontal
         spacing: Tokens.spacing.small / 2
         interactive: false
+        visible: !root.showPassword
 
         model: ScriptModel {
             values: root.buffer.split("")
@@ -144,5 +146,16 @@ Item {
 
             Anim {}
         }
+    }
+
+    StyledText {
+        anchors.centerIn: parent
+        text: root.buffer
+        visible: root.showPassword && root.buffer.length > 0
+        color: Colours.palette.m3onSurface
+        font.pointSize: Tokens.font.size.normal
+        font.family: Tokens.font.family.mono
+        elide: Text.ElideRight
+        maximumLineCount: 1
     }
 }

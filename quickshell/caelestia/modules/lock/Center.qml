@@ -42,6 +42,20 @@ ColumnLayout {
             font.pointSize: Math.floor(Tokens.font.size.extraLarge * 3 * root.centerScale)
             font.family: Tokens.font.family.clock
             font.bold: true
+            opacity: colonVisible ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation { duration: 150 }
+            }
+        }
+
+        property bool colonVisible: true
+
+        Timer {
+            running: true
+            interval: 1000
+            repeat: true
+            onTriggered: root.colonVisible = !root.colonVisible
         }
 
         StyledText {
@@ -186,6 +200,28 @@ ColumnLayout {
                 id: inputField
 
                 pam: root.lock.pam
+            }
+
+            StyledRect {
+                implicitWidth: implicitHeight
+                implicitHeight: visibilityIcon.implicitHeight + Tokens.padding.small * 2
+
+                color: inputField.showPassword ? Colours.palette.m3primary : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+                radius: Tokens.rounding.full
+
+                StateLayer {
+                    color: inputField.showPassword ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+                    onClicked: inputField.showPassword = !inputField.showPassword
+                }
+
+                MaterialIcon {
+                    id: visibilityIcon
+
+                    anchors.centerIn: parent
+                    text: inputField.showPassword ? "visibility_off" : "visibility"
+                    color: inputField.showPassword ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+                    font.weight: 500
+                }
             }
 
             StyledRect {
