@@ -17,14 +17,23 @@ Notifications: swaync
 ## Quick Start
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/Snowiseverything/snowdots/main/scripts/snow-dots.sh)
+curl -sL https://raw.githubusercontent.com/Snowiseverything/snowdots/main/scripts/install.sh | bash
 ```
 
-Or clone and run:
+This clones the repo to `~/Dotfiles` and launches the interactive installer.
+No git? The script installs it. No dependencies? You pick what to install.
+
+Or clone and run manually:
 
 ```bash
 git clone https://github.com/Snowiseverything/snowdots.git ~/Dotfiles
-bash ~/Dotfiles/scripts/snow-dots.sh
+bash ~/Dotfiles/scripts/snow-dots install
+```
+
+### GitLab mirror
+
+```bash
+curl -sL https://gitlab.com/sn0wman/snowdots/-/raw/main/scripts/install.sh | bash
 ```
 
 ## Features
