@@ -91,3 +91,14 @@
 - Content.qml: all side panels (weather, fetch, media, resources, notifs) scale up 1.02 on mouse hover (HoverHandler + transform)
 - WeatherParticles.qml (new): live particles based on Weather.icon — rain lines, snow circles, fog/cloud blobs, clear sky sparkles
 - All QML edits done in both Dotfiles/quickshell/caelestia/ and ~/.config/quickshell/caelestia/
+
+## 2026-05-20
+- Session 2026-05-20: Millennium, Metropolis, opencode-desktop-bin, Shelly, Snowflake GIF, Textextract
+
+- Millennium installed via steambrew.app (beta v3.0.0-beta.24). Needs sudo for /usr/lib/millennium/ + symlinks to ~/.steam/steam/ubuntu12_{32,64}/
+- Metropolis AUR upgrade 0.1.2->0.1.3 failed: PKGBUILD has cargo build --release --locked, Cargo.lock needs update. Fixed by removing --locked. Re-edit on every yay upgrade.
+- opencode-desktop-bin installed (source build failed: node-gyp ETIMEDOUT for Node 26.1.0 headers). Had file conflicts from prior install at /opt/OpenCode/, /usr/bin/, /usr/share/applications/, icons, licenses. Fixed by removing all then pacman -U.
+- Shelly orphaned pacman db entry at /var/lib/pacman/local/shelly-2.3.0.2-1/ removed (missing desc/files, binary gone, required by none)
+- Created ~/.config/quickshell/caelestia/assets/snowflake.gif (128x128, 12 frames, falling snowflakes with glow) for power menu. Added paths.sessionGif to ~/.config/caelestia/shell.json
+- Textextract (~/.local/bin/textextract): grim+slurp -> tesseract OCR -> wl-copy. Added notification feedback. Bind at ~/.config/hypr/hyprland.conf:287 ($mainMod SHIFT, T)
+- Discord matugen theme confirmed working: vencord template imports Midnight framework, overrides with matugen wallpaper colors
