@@ -118,8 +118,8 @@ border.padding = [2, 0]
 [start]
 command = """
 if command -v fd >/dev/null 2>&1; then
-    fd --strip-cwd-prefix --print0
+    fd --strip-cwd-prefix --print0 -E '.git' -E 'node_modules' -E '.cache'
 else
-    find . -print0
+    find . -not -path './.git/*' -not -path './node_modules/*' -not -path './.cache/*' -print0
 fi
 """
