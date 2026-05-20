@@ -7,7 +7,7 @@ HOSTNAME=$(hostname); BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
 GREEN="$BOLD"; RED="$BOLD"; YELLOW="$BOLD"; BLUE="$BOLD"
 
 # 1. Path Selection
-PRIMARY_REPO="$HOME/Dotfiles"; SECONDARY_REPO=""
+PRIMARY_REPO="$HOME/Freezer-Dotfiles"; SECONDARY_REPO=""
 
 echo -e "${BLUE}❄️  SnowDots Master Audit | Host: $HOSTNAME${NC}"
 echo "---------------------------------------------------"

@@ -164,13 +164,13 @@ if [ -f "$FUZZEL_GEN" ]; then
 fi
 
 # Update Cursor Colors (matugen dynamic)
-if [ -f "$HOME/Dotfiles/scripts/cursor-colors.sh" ]; then
-    "$HOME/Dotfiles/scripts/cursor-colors.sh" >> "$LOG_FILE" 2>&1 || log_error "Cursor colors failed"
+if [ -f "$HOME/Freezer-Dotfiles/scripts/cursor-colors.sh" ]; then
+    "$HOME/Freezer-Dotfiles/scripts/cursor-colors.sh" >> "$LOG_FILE" 2>&1 || log_error "Cursor colors failed"
     log "Cursor colors updated"
 fi
 
 # Update Btop Theme (matugen dynamic)
-BTOP_TEMPLATE="$HOME/Dotfiles/matugen/templates/btop.theme"
+BTOP_TEMPLATE="$HOME/Freezer-Dotfiles/matugen/templates/btop.theme"
 BTOP_THEME="$HOME/.config/btop/themes/matugen.theme"
 if [ -f "$BTOP_TEMPLATE" ] && [ -f "$FUZZEL_GEN" ]; then
     # Extract colors from fuzzel-gen and create btop theme

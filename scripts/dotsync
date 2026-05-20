@@ -3,7 +3,7 @@
 # SNOWSYNC v11.6 — The "Named Nodes" Edition
 # --------------------------------------------------------------------------
 
-POTENTIAL_REPOS=("$HOME/Dotfiles")
+POTENTIAL_REPOS=("$HOME/Freezer-Dotfiles")
 REPOS=()
 
 for R in "${POTENTIAL_REPOS[@]}"; do
@@ -56,8 +56,8 @@ for REPO in "${REPOS[@]}"; do
 done
 
 # --- Auto-Heal Symlinks & Mirroring ---
-ln -sf "$HOME/Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
-OC_SHARED="$HOME/Dotfiles/.opencode"
+    ln -sf "$HOME/Freezer-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
+    OC_SHARED="$HOME/Freezer-Dotfiles/.opencode"
 
 # Auto-heal OC symlinks
 if [ -d "$OC_SHARED" ]; then
@@ -71,5 +71,5 @@ fi
 
 cd "$START_DIR"
 # Only run mirror if the directory exists (prevents errors on Pi if not mounted)
-[ -d "$HOME/Dotfiles" ] && bash "$HOME/Dotfiles/scripts/dot-mirror.sh"
-[ -f "$HOME/Dotfiles/scripts/snow-audit.sh" ] && ~/Dotfiles/scripts/snow-audit.sh
+[ -d "$HOME/Freezer-Dotfiles" ] && bash "$HOME/Freezer-Dotfiles/scripts/dot-mirror.sh"
+[ -f "$HOME/Freezer-Dotfiles/scripts/snow-audit.sh" ] && ~/Freezer-Dotfiles/scripts/snow-audit.sh

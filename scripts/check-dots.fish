@@ -6,10 +6,9 @@
 #!/usr/bin/env fish
 
 if not set -q DOTS
-    set -gx DOTS ~/Dotfiles
-end
+    set -gx DOTS ~/Freezer-Dotfiles
 
-echo "❄️  Checking Dotfiles Integrity in $DOTS..."
+echo " Checking Freezer-Dotfiles Integrity in $DOTS..."
 echo "------------------------------------------------"
 cd $DOTS
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # setup-oc-sync.sh — Symlink shared OC configs into ~/.opencode/
 
-DOTFILES_DIR="$HOME/Dotfiles"
+DOTFILES_DIR="$HOME/Freezer-Dotfiles"
 OC_DIR="$HOME/.opencode"
 SHARED_DIR="$DOTFILES_DIR/.opencode"
 
