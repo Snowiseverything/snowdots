@@ -226,6 +226,7 @@ SYMLINKS=(
     "hypr/hyprland.conf:$REPO_DIR/hypr/hyprland.conf"
     "hypr/hypridle.conf:$REPO_DIR/hypr/hypridle.conf"
     "starship.toml:$REPO_DIR/starship/starship.toml"
+    "mm/config.toml:$REPO_DIR/mm/config.toml"
 )
 
 link_config() {
