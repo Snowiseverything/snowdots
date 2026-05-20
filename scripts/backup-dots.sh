@@ -37,7 +37,6 @@ configs=(
     "$HOME/.config/wofi"
     "$HOME/.config/fuzzel"
     "$HOME/.config/wlogout"
-    "$HOME/.config/mm"
     "$HOME/.local/bin"
 )
 

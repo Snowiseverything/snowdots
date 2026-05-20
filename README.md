@@ -39,7 +39,7 @@ curl -sL https://gitlab.com/sn0wman/snowdots/-/raw/main/scripts/install.sh | bas
 ## Features
 
 - **Hyprland** — Dynamic tiling, smooth animations, material-you colors
-- **fish** — Auto-complete, autopair, pure prompt, fuzzy file nav with matchmaker
+- **fish** — Auto-complete, autopair, pure prompt, fuzzy file nav with fzf
 - **kitty** — GPU-accelerated terminal with material-you theme
 - **starship** — Minimal, fast prompt
 - **waybar** — Status bar with workspaces, volume, brightness, network, clock
@@ -95,7 +95,6 @@ bash ~/Dotfiles/scripts/snow-dots.sh
 - Sets up symlinks for all configs
 - Installs fisher + plugins (if fish is installed)
 - Sets fish as default shell (optional)
-- Installs matchmaker fuzzy finder (optional)
 - Shows restore instructions at the end
 
 **Want to undo?** Run `snow-dots restore` and pick your backup.
@@ -206,9 +205,9 @@ origin → git@gitlab.com:sn0man/snowpi-dotfiles.git
 | Super + Space | Toggle layout |
 | Super + arrows | Move focus |
 | Super + Print | Screenshot full |
-| Ctrl + F | matchmaker (files) |
-| Ctrl + R | matchmaker (files + dirs) |
-| Alt + C | matchmaker (dirs) |
+| Ctrl + T | fzf (files) |
+| Ctrl + R | fzf (history) |
+| Alt + C | fzf (dirs + cd) |
 
 ## Wallpaper & Themes
 

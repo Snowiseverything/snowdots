@@ -226,7 +226,6 @@ SYMLINKS=(
     "hypr/hyprland.conf:$REPO_DIR/hypr/hyprland.conf"
     "hypr/hypridle.conf:$REPO_DIR/hypr/hypridle.conf"
     "starship.toml:$REPO_DIR/starship/starship.toml"
-    "mm/config.toml:$REPO_DIR/mm/config.toml"
 )
 
 link_config() {
@@ -271,28 +270,7 @@ ok "Scripts linked to ~/.local/bin"
 
 echo ""
 
-# ── 7. matchmaker ─────────────────────────────────────────────────
-echo "  ${BOLD}${SNOWFLAKE} Optional Tools${NC}"
-read -rp "  Install matchmaker fuzzy finder? (requires cargo) [y/N] " choice
-if [[ "$choice" =~ ^[yY] ]]; then
-    if command -v cargo &>/dev/null; then
-        cargo install matchmaker-cli 2>&1 | tail -1
-        mkdir -p "$HOME/.config/fish/conf.d"
-        cat > "$HOME/.config/fish/conf.d/matchmaker.fish" << 'FISHEOF'
-if status is-interactive
-    bind \cf 'mm --cwd $PWD | read -l path; and cd "$path"; and commandline -f repaint'
-    bind \cr 'mm --include-dirs --cwd $PWD | read -l path; and cd "$path"; and commandline -f repaint'
-    bind \ec 'mm --dirs-only --cwd $PWD | read -l path; and cd "$path"; and commandline -f repaint'
-end
-FISHEOF
-        ok "matchmaker + fish bindings installed"
-    else
-        warn "cargo not found. Install rustup first."
-    fi
-fi
-echo ""
-
-# ── 8. Done + Restore Info ───────────────────────────────────────
+# ── 7. Done ───────────────────────────────────────────
 echo "  ${BOLD}${SNOWFLAKE}${BOLD} Setup Complete${NC}"
 echo ""
 echo -e "  ${GREEN}══════════════════════════════════════${NC}"
