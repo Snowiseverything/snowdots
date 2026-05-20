@@ -3,63 +3,67 @@
 # SNOWSYNC v11.6 — The "Named Nodes" Edition
 # --------------------------------------------------------------------------
 
-POTENTIAL_REPOS=("$HOME/Freezer-Dotfiles")
-REPOS=()
-
-for R in "${POTENTIAL_REPOS[@]}"; do
-    if [ -d "$R" ]; then REPOS+=("$R"); fi
-done
-
 START_DIR=$(pwd)
 HOSTNAME=$(hostname)
 
-CLOUD_REMOTE="gitlab"
-PEER_REMOTE="snowpi"
+# Detect which machine and set repo accordingly
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    REPO_DIR="$HOME/Freezer-Dotfiles"
+    CLOUD_REMOTE="gitlab"
+    PEER_REMOTE="snowpi"
+elif [[ "$HOSTNAME" == "snowpi" ]]; then
+    REPO_DIR="$HOME/SnowPi-Dotfiles"
+    CLOUD_REMOTE="gitlab"
+    PEER_REMOTE="freezer"
+else
+    echo "❌ Unknown hostname: $HOSTNAME"
+    exit 1
+fi
 
-for REPO in "${REPOS[@]}"; do
-    echo "---------------------------------------------------"
-    echo "❄️  SnowSync: Harmonizing [$(basename "$REPO")]"
-    cd "$REPO" || continue
+if [ ! -d "$REPO_DIR" ]; then
+    echo "❌ Repo directory not found: $REPO_DIR"
+    exit 1
+fi
 
-    # STEP 1: Smart Pull from Cloud
-    echo "📥 Checking for remote updates..."
-    git stash >/dev/null 2>&1
-    git pull "$CLOUD_REMOTE" main --no-rebase
-    git stash pop >/dev/null 2>&1
-    
-    # STEP 2: Detect Changes
-    git add .
-    CHANGES=$(git status --porcelain)
+echo "---------------------------------------------------"
+echo "❄️  SnowSync: Harmonizing [$(basename "$REPO_DIR")] on $HOSTNAME"
+cd "$REPO_DIR" || exit 1
 
-    # STEP 3: Smart Commit
-    if [ ! -z "$CHANGES" ]; then
-        MAJOR_CHANGE=$(git diff --name-only | head -n 1)
-        if [ -z "$MAJOR_CHANGE" ]; then MAJOR_CHANGE="new files"; fi
-        MSG="sync | $HOSTNAME | updated $MAJOR_CHANGE"
-        echo "📤 Committing: $MSG"
-        git commit -m "$MSG"
-    fi
+# STEP 1: Smart Pull from Cloud
+echo "📥 Checking for remote updates..."
+git stash >/dev/null 2>&1
+git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || git pull origin main --no-rebase
+git stash pop >/dev/null 2>&1
 
-    # STEP 4: Multi-Node Sync
-    echo "🚀 Syncing commits to all nodes..."
-    
-    # 1. Push to Cloud (GitLab)
-    git push "$CLOUD_REMOTE" main
-    
-    # 2. Push to Peer Machine
-    git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer push failed (offline?)"
-    
-    # 3. Push to Backup (if remote exists)
-    if [[ "$HOSTNAME" == "snowpi" ]]; then
-        git push snowpi main 2>/dev/null
-    fi
-done
+# STEP 2: Detect Changes
+git add .
+CHANGES=$(git status --porcelain)
 
-# --- Auto-Heal Symlinks & Mirroring ---
-    ln -sf "$HOME/Freezer-Dotfiles/scripts/dotsync" "$HOME/.local/bin/dotsync"
-    OC_SHARED="$HOME/Freezer-Dotfiles/.opencode"
+# STEP 3: Smart Commit
+if [ ! -z "$CHANGES" ]; then
+    MAJOR_CHANGE=$(git diff --name-only | head -n 1)
+    if [ -z "$MAJOR_CHANGE" ]; then MAJOR_CHANGE="new files"; fi
+    MSG="sync | $HOSTNAME | updated $MAJOR_CHANGE"
+    echo "📤 Committing: $MSG"
+    git commit -m "$MSG"
+fi
 
-# Auto-heal OC symlinks
+# STEP 4: Multi-Node Sync
+echo "🚀 Syncing commits to all nodes..."
+
+# 1. Push to Cloud (GitLab)
+git push "$CLOUD_REMOTE" main 2>/dev/null || git push origin main
+
+# 2. Push to Peer Machine (if online)
+git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer push failed (offline?)"
+
+cd "$START_DIR"
+
+# --- Auto-Heal Symlinks ---
+DOTFILES_REPO="$REPO_DIR"
+ln -sf "$DOTFILES_REPO/scripts/dotsync" "$HOME/.local/bin/dotsync"
+
+OC_SHARED="$DOTFILES_REPO/.opencode"
 if [ -d "$OC_SHARED" ]; then
     for f in AGENTS.md MEMORY.md SOUL.md opencode.json; do
         [ -L "$HOME/.opencode/$f" ] && [ "$(readlink "$HOME/.opencode/$f")" != "$OC_SHARED/$f" ] &&
@@ -69,7 +73,12 @@ if [ -d "$OC_SHARED" ]; then
         ln -sfn "$OC_SHARED/skills" "$HOME/.opencode/skills"
 fi
 
-cd "$START_DIR"
-# Only run mirror if the directory exists (prevents errors on Pi if not mounted)
-[ -d "$HOME/Freezer-Dotfiles" ] && bash "$HOME/Freezer-Dotfiles/scripts/dot-mirror.sh"
-[ -f "$HOME/Freezer-Dotfiles/scripts/snow-audit.sh" ] && ~/Freezer-Dotfiles/scripts/snow-audit.sh
+# --- Machine-specific extras ---
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    [ -d "$HOME/Freezer-Dotfiles" ] && bash "$HOME/Freezer-Dotfiles/scripts/dot-mirror.sh"
+    [ -f "$HOME/Freezer-Dotfiles/scripts/snow-audit.sh" ] && ~/Freezer-Dotfiles/scripts/snow-audit.sh
+elif [[ "$HOSTNAME" == "snowpi" ]]; then
+    [ -f "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh" ] && bash "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh"
+fi
+
+echo "✅ Sync complete!"

@@ -31,7 +31,11 @@ if ! grep -q "\.cargo/bin" ~/.config/fish/config.fish 2>/dev/null; then
     echo "✓ Added ~/.cargo/bin to fish PATH"
 fi
 
-# 4. Add SSH keys to known_hosts
+# 4. Setup Git remotes
+cd ~/SnowPi-Dotfiles
+git remote add gitlab git@gitlab.com:sn0wman/dotfiles.git 2>/dev/null || true
+
+# 5. Add SSH keys to known_hosts
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 
