@@ -89,11 +89,19 @@ bash ~/Dotfiles/scripts/snow-dots.sh
 - Installs matchmaker fuzzy finder (optional)
 - Shows restore instructions at the end
 
-**Want to undo?** The backup includes all your original configs. Just follow the restore instructions printed at the end, or run:
-```bash
-rm -rf ~/.config/hypr ~/.config/fish ~/.config/kitty ~/.config/starship.toml
-cp -r ~/.dotfiles-backup-*/.config/* ~/.config/
-```
+**Want to undo?** Run `snow-dots restore` and pick your backup.
+
+### snow-dots CLI
+
+After install, `snow-dots` is available as a command:
+
+| Command | Description |
+|---------|-------------|
+| `snow-dots help` | Show help |
+| `snow-dots install` | Run interactive installer |
+| `snow-dots backup` | Backup current dotfiles |
+| `snow-dots restore` | Restore from a backup |
+| `snow-dots list` | List available backups |
 
 ### 2. Manual Setup
 

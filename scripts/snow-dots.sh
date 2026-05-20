@@ -6,14 +6,14 @@
 set -e
 
 # ── Colors ──────────────────────────────────────────────────────────
-BOLD='\033[1m'
-CYAN='\033[0;36m'
-BLUE='\033[0;34m'
-WHITE='\033[0;37m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
+BOLD=$'\033[1m'
+CYAN=$'\033[0;36m'
+BLUE=$'\033[0;34m'
+WHITE=$'\033[0;37m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+RED=$'\033[0;31m'
+NC=$'\033[0m'
 
 # ── ASCII ────────────────────────────────────────────────────────────
 SNOWFLAKE='❄️'
@@ -27,7 +27,6 @@ ${CYAN}   ▀▀▀▀▀▀▀▀▀▀▀  ${WHITE}╵${NC}
 
 DISTRO=""
 PKG_CMD=""
-BACKUP_DIR=""
 USER_SHELL=""
 
 # ── Helpers ─────────────────────────────────────────────────────────
@@ -73,74 +72,6 @@ detect_shell() {
     esac
 }
 
-# ── Backup ───────────────────────────────────────────────────────────
-backup_config() {
-    BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
-    mkdir -p "$BACKUP_DIR"
-
-    info "Backing up current config to $BACKUP_DIR"
-
-    local configs=(
-        "$HOME/.config/hypr"
-        "$HOME/.config/fish"
-        "$HOME/.config/kitty"
-        "$HOME/.config/starship.toml"
-        "$HOME/.config/fastfetch"
-        "$HOME/.config/waybar"
-        "$HOME/.config/swaync"
-        "$HOME/.config/dunst"
-        "$HOME/.config/wofi"
-        "$HOME/.config/fuzzel"
-        "$HOME/.config/wlogout"
-        "$HOME/.local/bin"
-    )
-
-    for path in "${configs[@]}"; do
-        if [ -e "$path" ]; then
-            local rel="${path#$HOME/}"
-            local dest_dir="$BACKUP_DIR/$rel"
-            mkdir -p "$(dirname "$dest_dir")"
-            cp -rL "$path" "$dest_dir" 2>/dev/null
-            ok "Backed up $rel"
-        fi
-    done
-
-    # Backup shell rc files
-    for rc in "$HOME/.bashrc" "$HOME/.config/fish/config.fish" "$HOME/.zshrc"; do
-        if [ -f "$rc" ]; then
-            cp "$rc" "$BACKUP_DIR/" 2>/dev/null
-            ok "Backed up $(basename "$rc")"
-        fi
-    done
-
-    echo ""
-    info "Backup saved to: $BACKUP_DIR"
-    echo ""
-}
-
-print_restore_instructions() {
-    echo ""
-    echo "  ${BOLD}${YELLOW}════════════════════════════════════════════════${NC}"
-    echo "  ${BOLD}${YELLOW}  How to Restore Your Old Config${NC}"
-    echo "  ${BOLD}${YELLOW}════════════════════════════════════════════════${NC}"
-    echo ""
-    echo "  Your old config was backed up to:"
-    echo "    ${CYAN}$BACKUP_DIR${NC}"
-    echo ""
-    echo "  To restore everything, run:"
-    echo ""
-    echo "    ${WHITE}bash${NC}"
-    echo "    rm -rf ~/.config/hypr ~/.config/fish ~/.config/kitty ~/.config/starship.toml ~/.config/fastfetch ~/.config/waybar ~/.config/swaync ~/.config/dunst ~/.local/bin"
-    echo "    cp -r $BACKUP_DIR/.config/* ~/.config/"
-    echo "    cp -r $BACKUP_DIR/.local/bin ~/.local/bin"
-    echo "    cp $BACKUP_DIR/.bashrc ~/.bashrc 2>/dev/null; true"
-    echo ""
-    echo "  Or just restore individual files from the backup dir."
-    echo "  The backup stays on your system — delete it when ready:"
-    echo "    rm -rf $BACKUP_DIR"
-    echo ""
-}
-
 # ── Main ────────────────────────────────────────────────────────────
 clear
 echo -e "$LOGO"
@@ -164,7 +95,10 @@ echo "  dotfiles so you can restore if you don't like the setup."
 echo ""
 read -rp "  Backup current config before proceeding? [Y/n] " do_backup
 if [[ ! "$do_backup" =~ ^[nN] ]]; then
-    backup_config
+    bash "$REPO_DIR/scripts/backup-dots.sh" 2>/dev/null || {
+        SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+        bash "$SCRIPT_DIR/backup-dots.sh"
+    }
 else
     warn "Skipping backup. You won't have a restore point."
     echo ""
@@ -324,7 +258,7 @@ done
 
 # Script symlinks
 mkdir -p "$HOME/.local/bin"
-for script in "$REPO_DIR/scripts"/*.sh; do
+for script in "$REPO_DIR/scripts"/*.sh "$REPO_DIR/scripts/snow-dots"; do
     name=$(basename "$script")
     if [ -L "$HOME/.local/bin/$name" ]; then
         rm "$HOME/.local/bin/$name"
@@ -371,13 +305,11 @@ fi
 echo -e "  ${GREEN}══════════════════════════════════════${NC}"
 echo ""
 echo "  What now?"
+echo "    ${CYAN}•${NC} Run ${BOLD}snow-dots backup${NC} to backup current config"
+echo "    ${CYAN}•${NC} Run ${BOLD}snow-dots restore${NC} to restore from backup"
 echo "    ${CYAN}•${NC} Run ${BOLD}dotsync${NC} to pull latest"
 echo "    ${CYAN}•${NC} Edit configs in ~/Dotfiles/"
 echo "    ${CYAN}•${NC} Read the README for keybinds"
 echo ""
-
-if [ -n "$BACKUP_DIR" ]; then
-    print_restore_instructions
-fi
 
 echo "  ${SNOWFLAKE} Enjoy!"
