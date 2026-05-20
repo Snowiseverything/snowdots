@@ -1,0 +1,52 @@
+#!/bin/bash
+# --------------------------------------------------------------------------
+# Dotfiles Setup Script for SnowPi
+# --------------------------------------------------------------------------
+
+echo "❄️  Setting up SnowPi Dotfiles..."
+
+# 1. Create Dotfiles symlink
+if [ ! -L "$HOME/Dotfiles" ]; then
+    ln -sf "$HOME/SnowPi-Dotfiles" "$HOME/Dotfiles"
+    echo "✓ Created ~/Dotfiles → ~/SnowPi-Dotfiles symlink"
+fi
+
+# 2. Create .local/bin symlinks
+mkdir -p ~/.local/bin
+cd ~/.local/bin
+
+for script in "$HOME/Dotfiles/scripts"/*.sh; do
+    name=$(basename "$script")
+    if [ -f "$script" ] && [ ! -L "$name" ]; then
+        ln -sf "$script" "$name"
+    fi
+done
+ln -sf "$HOME/Dotfiles/scripts/dotsync" dotsync
+echo "✓ Linked scripts to ~/.local/bin"
+
+# 3. Add cargo bin to PATH if not already
+if ! grep -q "\.cargo/bin" ~/.config/fish/config.fish 2>/dev/null; then
+    mkdir -p ~/.config/fish
+    echo "fish_add_path ~/.cargo/bin" >> ~/.config/fish/config.fish
+    echo "✓ Added ~/.cargo/bin to fish PATH"
+fi
+
+# 4. Add SSH keys to known_hosts
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+# Add freezer if not exists
+if ! grep -q "freezer" ~/.ssh/known_hosts 2>/dev/null; then
+    ssh-keyscan -H 192.168.0.111 >> ~/.ssh/known_hosts 2>/dev/null
+    ssh-keyscan -H freezer >> ~/.ssh/known_hosts 2>/dev/null
+    echo "✓ Added Freezer to known_hosts"
+fi
+
+# Add GitLab if not exists
+if ! grep -q "gitlab.com" ~/.ssh/known_hosts 2>/dev/null; then
+    ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts 2>/dev/null
+    echo "✓ Added GitLab to known_hosts"
+fi
+
+echo ""
+echo "✅ Setup complete! Run 'source ~/.config/fish/config.fish' to reload shell."
