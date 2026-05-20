@@ -10,10 +10,12 @@ HOSTNAME=$(hostname)
 if [[ "$HOSTNAME" == "freezer" ]]; then
     REPO_DIR="$HOME/Freezer-Dotfiles"
     CLOUD_REMOTE="gitlab"
+    CLOUD_URL="git@gitlab.com:sn0wman/dotfiles.git"
     PEER_REMOTE="snowpi"
 elif [[ "$HOSTNAME" == "snowpi" ]]; then
     REPO_DIR="$HOME/SnowPi-Dotfiles"
-    CLOUD_REMOTE="gitlab"
+    CLOUD_REMOTE="origin"
+    CLOUD_URL="git@gitlab.com:sn0wman/snowpi-dotfiles.git"
     PEER_REMOTE="freezer"
 else
     echo "❌ Unknown hostname: $HOSTNAME"
@@ -52,6 +54,7 @@ fi
 echo "🚀 Syncing commits to all nodes..."
 
 # 1. Push to Cloud (GitLab)
+git remote set-url "$CLOUD_REMOTE" "$CLOUD_URL" 2>/dev/null
 git push "$CLOUD_REMOTE" main 2>/dev/null || git push origin main
 
 # 2. Push to Peer Machine (if online)
