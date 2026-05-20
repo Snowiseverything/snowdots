@@ -77,8 +77,8 @@ if [ -d "$OC_SHARED" ]; then
 fi
 
 # --- Machine-specific extras ---
+# Note: dot-mirror.sh removed - requires sudo, run manually instead
 if [[ "$HOSTNAME" == "freezer" ]]; then
-    [ -d "$HOME/Freezer-Dotfiles" ] && bash "$HOME/Freezer-Dotfiles/scripts/dot-mirror.sh"
     [ -f "$HOME/Freezer-Dotfiles/scripts/snow-audit.sh" ] && ~/Freezer-Dotfiles/scripts/snow-audit.sh
 elif [[ "$HOSTNAME" == "snowpi" ]]; then
     [ -f "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh" ] && bash "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh"
