@@ -3,13 +3,14 @@
 # Dotfiles Setup Script for SnowPi
 # --------------------------------------------------------------------------
 
-echo "❄️  Setting up SnowPi Dotfiles..."
+echo "❄️  Setting up Dotfiles for SnowPi..."
 
-# 1. Create Dotfiles symlink
-if [ ! -L "$HOME/Dotfiles" ]; then
-    ln -sf "$HOME/SnowPi-Dotfiles" "$HOME/Dotfiles"
-    echo "✓ Created ~/Dotfiles → ~/SnowPi-Dotfiles symlink"
+# 1. Ensure Dotfiles directory exists
+if [ ! -d "$HOME/Dotfiles" ]; then
+    echo "❌ Dotfiles not found at $HOME/Dotfiles"
+    exit 1
 fi
+echo "✓ Dotfiles at $HOME/Dotfiles"
 
 # 2. Create .local/bin symlinks
 mkdir -p ~/.local/bin
@@ -32,7 +33,7 @@ if ! grep -q "\.cargo/bin" ~/.config/fish/config.fish 2>/dev/null; then
 fi
 
 # 4. Setup Git remotes
-cd ~/SnowPi-Dotfiles
+cd ~/Dotfiles
 git remote add gitlab git@gitlab.com:sn0wman/dotfiles.git 2>/dev/null || true
 
 # 5. Add SSH keys to known_hosts

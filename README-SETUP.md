@@ -1,77 +1,46 @@
-# Dotfiles Setup
+# SnowDots Setup
 
 ## Overview
 
-This repo is designed to work on both Freezer (main PC) and SnowPi (RPi4) using a symlink approach.
-
-### Directory Structure
+Single `~/Dotfiles` repo for both Freezer (desktop) and SnowPi (RPi4).
+Configs use `~/Dotfiles/` paths. Machine-specific logic via hostname detection.
 
 ```
 ~/
-├── Freezer-Dotfiles/  ← Actual files (this repo)
+├── Dotfiles/          ← This repo (same path on both machines)
 │   ├── scripts/
 │   ├── fish/
-│   ├── hypr/
+│   ├── hypr/          ← Freezer-only (Hyprland)
 │   └── ...
-├── SnowPi-Dotfiles/   ← Separate repo for SnowPi
-│   ├── scripts/
-│   ├── fish/
-│   └── ...
-└── Dotfiles/           ← Symlink to current machine's actual repo
-    └── (points to Freezer-Dotfiles on Freezer, SnowPi-Dotfiles on SnowPi)
 ```
 
 ## How It Works
 
-1. All configs use `~/Dotfiles/` paths
-2. On Freezer: `~/Dotfiles` → `~/Freezer-Dotfiles`
-3. On SnowPi: `~/Dotfiles` → `~/SnowPi-Dotfiles`
-4. Both repos share same structure, but machine-specific configs differ
+1. Both machines use `~/Dotfiles`
+2. `dotsync` detects `freezer` or `snowpi` and pushes to correct GitLab
+3. Freezer → `sn0wman/snowdots.git` (GitLab) + `Snowiseverything/snowdots.git` (GitHub)
+4. SnowPi → `sn0wman/snowpi-dotfiles.git` (GitLab only)
 
 ## Setup
 
-### Freezer
 ```bash
-# Run setup script
-bash ~/Freezer-Dotfiles/scripts/setup-freezer.sh
-
-# Or manually:
-ln -sf ~/Freezer-Dotfiles ~/Dotfiles
-```
-
-### SnowPi
-```bash
-# Run setup script
-bash ~/SnowPi-Dotfiles/scripts/setup-snowpi.sh
-
-# Or manually:
-ln -sf ~/SnowPi-Dotfiles ~/Dotfiles
+bash ~/Dotfiles/scripts/setup-freezer.sh   # on Freezer
+bash ~/Dotfiles/scripts/setup-snowpi.sh    # on SnowPi
 ```
 
 ## Syncing
 
-Use `dotsync` to push/pull from GitLab:
 ```bash
 dotsync
 ```
 
-## Adding New Configs
+## Remotes
 
-When adding new configs:
-1. Add to this repo
-2. Create symlinks in `~/.config/` or `~/.local/bin/`
-3. Update setup script if needed
+```bash
+# Freezer
+gitlab→git@gitlab.com:sn0wman/snowdots.git
+github→git@github.com:Snowiseverything/snowdots.git
 
-## Scripts
-
-- `setup-freezer.sh` - Setup Freezer
-- `setup-snowpi.sh` - Setup SnowPi  
-- `dotsync` - Sync to GitLab
-- `dot-mirror.sh` - Backup to external drive
-- `snow-audit.sh` - System audit
-
-## SSH Keys
-
-- Add your public key to `ssh/authorized_keys` in this repo
-- Push to GitLab, then pull on other machines
-- Use same key for both Freezer and SnowPi access
+# SnowPi
+origin→git@gitlab.com:sn0wman/snowpi-dotfiles.git
+```

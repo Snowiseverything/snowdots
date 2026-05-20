@@ -3,7 +3,7 @@
 # SnowBranding Iron v7 - Symlink-Aware & Safe
 # --------------------------------------------------------------------------
 
-REPOS=("$HOME/Freezer-Dotfiles" "$HOME/SnowPi-Dotfiles")
+REPOS=("$HOME/Dotfiles")
 
 for REPO in "${REPOS[@]}"; do
     [ ! -d "$REPO" ] && continue

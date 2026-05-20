@@ -3,13 +3,14 @@
 # Dotfiles Setup Script for Freezer
 # --------------------------------------------------------------------------
 
-echo "❄️  Setting up Freezer Dotfiles..."
+echo "❄️  Setting up Dotfiles..."
 
-# 1. Create Dotfiles symlink
-if [ ! -L "$HOME/Dotfiles" ]; then
-    ln -sf "$HOME/Freezer-Dotfiles" "$HOME/Dotfiles"
-    echo "✓ Created ~/Dotfiles → ~/Freezer-Dotfiles symlink"
+# 1. Ensure Dotfiles directory exists
+if [ ! -d "$HOME/Dotfiles" ]; then
+    echo "❌ Dotfiles not found at $HOME/Dotfiles"
+    exit 1
 fi
+echo "✓ Dotfiles at $HOME/Dotfiles"
 
 # 2. Create .config symlinks
 mkdir -p ~/.config

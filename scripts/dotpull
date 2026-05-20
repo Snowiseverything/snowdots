@@ -1,6 +1,6 @@
 #!/bin/bash
 echo " Manually pulling updates from remote..."
-cd ~/Freezer-Dotfiles
+cd ~/Dotfiles
 git fetch origin main
 git pull --rebase origin main
 cd - > /dev/null

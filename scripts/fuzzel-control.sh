@@ -3,7 +3,7 @@
 ##  SnowDots — SnowFuzzelcontrol                             v1.1.6   ##
 ########################################################################
 
-DOT_DIR="$HOME/Freezer-Dotfiles"
+DOT_DIR="$HOME/Dotfiles"
 SCRIPT_DIR="$DOT_DIR/scripts"
 
 # Ensures all scripts are executable
