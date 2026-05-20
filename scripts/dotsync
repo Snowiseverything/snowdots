@@ -6,7 +6,12 @@
 HOSTNAME=$(hostname)
 REPO="$HOME/Dotfiles"
 CLOUD_REMOTE="gitlab"
-PEER_REMOTE="snowpi"
+
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    PEER_REMOTE="snowpi"
+elif [[ "$HOSTNAME" == "snowpi" ]]; then
+    PEER_REMOTE="freezer"
+fi
 
 if [ ! -d "$REPO" ]; then
     echo "❌ Dotfiles repo not found at $REPO"
