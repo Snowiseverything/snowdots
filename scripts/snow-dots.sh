@@ -13,7 +13,7 @@ WHITE='\033[0;37m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
 # ── ASCII ────────────────────────────────────────────────────────────
 SNOWFLAKE='❄️'
@@ -27,6 +27,8 @@ ${CYAN}   ▀▀▀▀▀▀▀▀▀▀▀  ${WHITE}╵${NC}
 
 DISTRO=""
 PKG_CMD=""
+BACKUP_DIR=""
+USER_SHELL=""
 
 # ── Helpers ─────────────────────────────────────────────────────────
 info()  { echo -e "  ${CYAN}${SNOWFLAKE}${NC} $1"; }
@@ -61,6 +63,84 @@ detect_distro() {
     fi
 }
 
+detect_shell() {
+    local shell_name
+    shell_name=$(basename "$SHELL" 2>/dev/null || echo "bash")
+    case "$shell_name" in
+        fish) USER_SHELL="fish" ;;
+        bash|zsh) USER_SHELL="bash" ;;
+        *) USER_SHELL="bash" ;;
+    esac
+}
+
+# ── Backup ───────────────────────────────────────────────────────────
+backup_config() {
+    BACKUP_DIR="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$BACKUP_DIR"
+
+    info "Backing up current config to $BACKUP_DIR"
+
+    local configs=(
+        "$HOME/.config/hypr"
+        "$HOME/.config/fish"
+        "$HOME/.config/kitty"
+        "$HOME/.config/starship.toml"
+        "$HOME/.config/fastfetch"
+        "$HOME/.config/waybar"
+        "$HOME/.config/swaync"
+        "$HOME/.config/dunst"
+        "$HOME/.config/wofi"
+        "$HOME/.config/fuzzel"
+        "$HOME/.config/wlogout"
+        "$HOME/.local/bin"
+    )
+
+    for path in "${configs[@]}"; do
+        if [ -e "$path" ]; then
+            local rel="${path#$HOME/}"
+            local dest_dir="$BACKUP_DIR/$rel"
+            mkdir -p "$(dirname "$dest_dir")"
+            cp -rL "$path" "$dest_dir" 2>/dev/null
+            ok "Backed up $rel"
+        fi
+    done
+
+    # Backup shell rc files
+    for rc in "$HOME/.bashrc" "$HOME/.config/fish/config.fish" "$HOME/.zshrc"; do
+        if [ -f "$rc" ]; then
+            cp "$rc" "$BACKUP_DIR/" 2>/dev/null
+            ok "Backed up $(basename "$rc")"
+        fi
+    done
+
+    echo ""
+    info "Backup saved to: $BACKUP_DIR"
+    echo ""
+}
+
+print_restore_instructions() {
+    echo ""
+    echo "  ${BOLD}${YELLOW}════════════════════════════════════════════════${NC}"
+    echo "  ${BOLD}${YELLOW}  How to Restore Your Old Config${NC}"
+    echo "  ${BOLD}${YELLOW}════════════════════════════════════════════════${NC}"
+    echo ""
+    echo "  Your old config was backed up to:"
+    echo "    ${CYAN}$BACKUP_DIR${NC}"
+    echo ""
+    echo "  To restore everything, run:"
+    echo ""
+    echo "    ${WHITE}bash${NC}"
+    echo "    rm -rf ~/.config/hypr ~/.config/fish ~/.config/kitty ~/.config/starship.toml ~/.config/fastfetch ~/.config/waybar ~/.config/swaync ~/.config/dunst ~/.local/bin"
+    echo "    cp -r $BACKUP_DIR/.config/* ~/.config/"
+    echo "    cp -r $BACKUP_DIR/.local/bin ~/.local/bin"
+    echo "    cp $BACKUP_DIR/.bashrc ~/.bashrc 2>/dev/null; true"
+    echo ""
+    echo "  Or just restore individual files from the backup dir."
+    echo "  The backup stays on your system — delete it when ready:"
+    echo "    rm -rf $BACKUP_DIR"
+    echo ""
+}
+
 # ── Main ────────────────────────────────────────────────────────────
 clear
 echo -e "$LOGO"
@@ -73,10 +153,24 @@ echo ""
 # ── 1. Prerequisites check ────────────────────────────────────────
 info "Checking system..."
 detect_distro
-ok "Detected: $DISTRO"
+detect_shell
+ok "Detected: $DISTRO | Shell: $USER_SHELL"
 echo ""
 
-# ── 2. Clone repo ─────────────────────────────────────────────────
+# ── 2. Backup ────────────────────────────────────────────────────
+echo "  ${BOLD}${SNOWFLAKE} Backup Current Config${NC}"
+echo "  Before making changes, SnowDots will backup your current"
+echo "  dotfiles so you can restore if you don't like the setup."
+echo ""
+read -rp "  Backup current config before proceeding? [Y/n] " do_backup
+if [[ ! "$do_backup" =~ ^[nN] ]]; then
+    backup_config
+else
+    warn "Skipping backup. You won't have a restore point."
+    echo ""
+fi
+
+# ── 3. Clone repo ─────────────────────────────────────────────────
 REPO_DIR="$HOME/Dotfiles"
 INSTALL_REPO=true
 
@@ -99,32 +193,13 @@ if $INSTALL_REPO; then
 fi
 echo ""
 
-# ── 3. Package selection ──────────────────────────────────────────
+# ── 4. Package selection ──────────────────────────────────────────
 echo "  ${BOLD}${SNOWFLAKE} Package Selection${NC}"
 echo "  (you can skip any group, install later with pacman)"
 echo ""
 
-install_group() {
-    local name="$1"
-    local desc="$2"
-    shift 2
-    local pkgs=("$@")
-    echo -e "  ${CYAN}${SNOWFLAKE}${NC} ${BOLD}$name${NC} — $desc"
-    echo -e "    ${WHITE}Packages: ${pkgs[*]}${NC}"
-    read -rp "    Install? [Y/n] " choice
-    if [[ ! "$choice" =~ ^[nN] ]]; then
-        info "Installing $name..."
-        $PKG_CMD "${pkgs[@]}" 2>&1 | tail -1
-        ok "$name installed"
-    else
-        info "Skipped $name"
-    fi
-    echo ""
-}
-
 case "$DISTRO" in
     arch)
-        # Core
         read -rp "  ${SNOWFLAKE} Install core WM components? (hyprland, fish, kitty, waybar) [Y/n] " choice
         if [[ ! "$choice" =~ ^[nN] ]]; then
             $PKG_CMD hyprland fish kitty waybar wofi fuzzel swaync dunst wlogout \
@@ -134,7 +209,6 @@ case "$DISTRO" in
             ok "Core packages installed"
         fi
 
-        # AUR
         if [ -n "$AUR_CMD" ]; then
             read -rp "  ${SNOWFLAKE} Install AUR extras? (matugen-bin, hyprland-guiutils) [Y/n] " choice
             if [[ ! "$choice" =~ ^[nN] ]]; then
@@ -145,14 +219,12 @@ case "$DISTRO" in
             warn "No AUR helper found (yay/paru). Install matugen-bin manually."
         fi
 
-        # Fonts
         read -rp "  ${SNOWFLAKE} Install extra fonts? (cascadia-code, fantasque-nerd) [Y/n] " choice
         if [[ ! "$choice" =~ ^[nN] ]]; then
             $PKG_CMD ttf-cascadia-code-nerd ttf-fantasque-nerd ttf-material-design-icons-desktop-git
             ok "Fonts installed"
         fi
 
-        # Apps
         read -rp "  ${SNOWFLAKE} Install apps? (thunar, firefox, rofi) [y/N] " choice
         if [[ "$choice" =~ ^[yY] ]]; then
             $PKG_CMD thunar firefox rofi 2>&1 | tail -1
@@ -173,7 +245,7 @@ case "$DISTRO" in
         ;;
 esac
 
-# ── 4. Shell setup ────────────────────────────────────────────────
+# ── 5. Shell setup ────────────────────────────────────────────────
 echo "  ${BOLD}${SNOWFLAKE} Shell Setup${NC}"
 if command -v fish &>/dev/null; then
     read -rp "  Set fish as default shell? [y/N] " choice
@@ -192,9 +264,23 @@ if command -v fish &>/dev/null; then
 else
     warn "fish not installed. Install it and re-run this step."
 fi
+
+# Add $HOME/.local/bin to PATH for current shell
+if [[ "$USER_SHELL" == "fish" ]]; then
+    fish -c "fish_add_path $HOME/.local/bin" 2>/dev/null
+else
+    rcfile="$HOME/.bashrc"
+    [[ "$USER_SHELL" == "zsh" ]] && rcfile="$HOME/.zshrc"
+    if [ -f "$rcfile" ]; then
+        if ! grep -q '\.local/bin' "$rcfile" 2>/dev/null; then
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rcfile"
+            ok "Added ~/.local/bin to PATH in $rcfile"
+        fi
+    fi
+fi
 echo ""
 
-# ── 5. Symlinks ──────────────────────────────────────────────────
+# ── 6. Symlinks ──────────────────────────────────────────────────
 echo "  ${BOLD}${SNOWFLAKE} Config Symlinks${NC}"
 echo "  Linking $REPO_DIR configs to ~/.config/"
 echo ""
@@ -250,7 +336,7 @@ ok "Scripts linked to ~/.local/bin"
 
 echo ""
 
-# ── 6. matchmaker ─────────────────────────────────────────────────
+# ── 7. matchmaker ─────────────────────────────────────────────────
 echo "  ${BOLD}${SNOWFLAKE} Optional Tools${NC}"
 read -rp "  Install matchmaker fuzzy finder? (requires cargo) [y/N] " choice
 if [[ "$choice" =~ ^[yY] ]]; then
@@ -271,13 +357,17 @@ FISHEOF
 fi
 echo ""
 
-# ── 7. Done ──────────────────────────────────────────────────────
+# ── 8. Done + Restore Info ───────────────────────────────────────
 echo "  ${BOLD}${SNOWFLAKE}${BOLD} Setup Complete${NC}"
 echo ""
 echo -e "  ${GREEN}══════════════════════════════════════${NC}"
-echo -e "  ${GREEN}  Restart your session or run:${NC}"
-echo -e "  ${GREEN}    exec fish${NC}"
-echo -e "  ${GREEN}    source ~/.config/fish/config.fish${NC}"
+echo -e "  ${GREEN}  Reload your shell:${NC}"
+if [[ "$USER_SHELL" == "fish" ]] || command -v fish &>/dev/null; then
+    echo -e "  ${GREEN}    exec fish${NC}"
+    echo -e "  ${GREEN}    source ~/.config/fish/config.fish${NC}"
+else
+    echo -e "  ${GREEN}    source ~/.bashrc${NC}"
+fi
 echo -e "  ${GREEN}══════════════════════════════════════${NC}"
 echo ""
 echo "  What now?"
@@ -285,4 +375,9 @@ echo "    ${CYAN}•${NC} Run ${BOLD}dotsync${NC} to pull latest"
 echo "    ${CYAN}•${NC} Edit configs in ~/Dotfiles/"
 echo "    ${CYAN}•${NC} Read the README for keybinds"
 echo ""
+
+if [ -n "$BACKUP_DIR" ]; then
+    print_restore_instructions
+fi
+
 echo "  ${SNOWFLAKE} Enjoy!"

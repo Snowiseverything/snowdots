@@ -65,23 +65,35 @@ bash ~/Dotfiles/scripts/snow-dots.sh
 
 ## Setup
 
-### 1. Interactive Installer
+### 1. Interactive Installer (Recommended)
 
-The easiest way is `snow-dots.sh` — an interactive snow-themed installer:
-
+```bash
+bash <(curl -sL https://raw.githubusercontent.com/Snowiseverything/snowdots/main/scripts/snow-dots.sh)
 ```
+
+Or clone and run locally:
+
+```bash
+git clone https://github.com/Snowiseverything/snowdots.git ~/Dotfiles
 bash ~/Dotfiles/scripts/snow-dots.sh
 ```
 
-It will:
-- Detect your distro (Arch, Debian, Fedora)
-- Install packages (Hyprland, fish, kitty, waybar, fonts, etc.)
-- Set up symlinks for all configs
-- Install fisher + plugins
-- Set fish as default shell
-- Install matchmaker fuzzy finder
+**What it does:**
+- Detects your distro (Arch, Debian, Fedora)
+- **Backs up your current config** to `~/.dotfiles-backup-*` before touching anything
+- Installs packages (Hyprland, fish, kitty, waybar, fonts, etc.)
+- Detects if you use bash/fish/zsh and adjusts PATH setup accordingly
+- Sets up symlinks for all configs
+- Installs fisher + plugins (if fish is installed)
+- Sets fish as default shell (optional)
+- Installs matchmaker fuzzy finder (optional)
+- Shows restore instructions at the end
 
-Run it once. Re-run anytime for updates.
+**Want to undo?** The backup includes all your original configs. Just follow the restore instructions printed at the end, or run:
+```bash
+rm -rf ~/.config/hypr ~/.config/fish ~/.config/kitty ~/.config/starship.toml
+cp -r ~/.dotfiles-backup-*/.config/* ~/.config/
+```
 
 ### 2. Manual Setup
 
