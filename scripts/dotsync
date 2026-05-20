@@ -1,30 +1,34 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SnowSync — Unified Dotfiles Sync
+# SnowSync v12.1 — Separate Repos Edition
 # --------------------------------------------------------------------------
 
 HOSTNAME=$(hostname)
 REPO="$HOME/Dotfiles"
-CLOUD_REMOTE="gitlab"
-
-if [[ "$HOSTNAME" == "freezer" ]]; then
-    PEER_REMOTE="snowpi"
-elif [[ "$HOSTNAME" == "snowpi" ]]; then
-    PEER_REMOTE="freezer"
-fi
 
 if [ ! -d "$REPO" ]; then
     echo "❌ Dotfiles repo not found at $REPO"
     exit 1
 fi
 
-echo "❄️  SnowSync: [$(basename "$REPO")] on $HOSTNAME"
 cd "$REPO" || exit 1
 
-# Pull from GitLab
+echo "---------------------------------------------------"
+echo "❄️  SnowSync: [$(basename "$REPO")] on $HOSTNAME"
+
+# Machine-specific remote config
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    CLOUD_REMOTE="gitlab"
+    PEER_REMOTE="snowpi"
+elif [[ "$HOSTNAME" == "snowpi" ]]; then
+    CLOUD_REMOTE="origin"
+    PEER_REMOTE="freezer"
+fi
+
+# Pull from cloud
 echo "📥 Pulling from $CLOUD_REMOTE..."
 git stash >/dev/null 2>&1
-git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null
+git pull "$CLOUD_REMOTE" main --no-rebase
 git stash pop >/dev/null 2>&1
 
 # Commit local changes
@@ -39,11 +43,11 @@ if [ ! -z "$CHANGES" ]; then
     git commit -m "$MSG"
 fi
 
-# Push to GitLab
-echo "🚀 Syncing to GitLab..."
+# Push to cloud
+echo "🚀 Syncing to $CLOUD_REMOTE..."
 git push "$CLOUD_REMOTE" main 2>/dev/null
 
-# Push to peer machine
+# Push to peer
 echo "📡 Syncing to $PEER_REMOTE..."
 git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer offline"
 
@@ -52,16 +56,7 @@ cd ~
 # Auto-heal symlinks
 ln -sf "$REPO/scripts/dotsync" "$HOME/.local/bin/dotsync"
 
-# OC sync
-OC="$REPO/.opencode"
-if [ -d "$OC" ]; then
-    for f in AGENTS.md MEMORY.md SOUL.md opencode.json; do
-        [ -L "$HOME/.opencode/$f" ] && ln -sf "$OC/$f" "$HOME/.opencode/$f"
-    done
-    [ -L "$HOME/.opencode/skills" ] && ln -sfn "$OC/skills" "$HOME/.opencode/skills"
-fi
-
-# Machine-specific
+# Machine-specific audit
 if [[ "$HOSTNAME" == "freezer" ]]; then
     [ -f "$REPO/scripts/snow-audit.sh" ] && bash "$REPO/scripts/snow-audit.sh"
 elif [[ "$HOSTNAME" == "snowpi" ]]; then
