@@ -1,87 +1,66 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SNOWSYNC v11.6 — The "Named Nodes" Edition
+# SnowSync — Unified Dotfiles Sync
 # --------------------------------------------------------------------------
 
-START_DIR=$(pwd)
 HOSTNAME=$(hostname)
+REPO="$HOME/Dotfiles"
+CLOUD_REMOTE="gitlab"
+PEER_REMOTE="snowpi"
 
-# Detect which machine and set repo accordingly
-if [[ "$HOSTNAME" == "freezer" ]]; then
-    REPO_DIR="$HOME/Freezer-Dotfiles"
-    CLOUD_REMOTE="gitlab"
-    CLOUD_URL="git@gitlab.com:sn0wman/dotfiles.git"
-    PEER_REMOTE="snowpi"
-elif [[ "$HOSTNAME" == "snowpi" ]]; then
-    REPO_DIR="$HOME/SnowPi-Dotfiles"
-    CLOUD_REMOTE="origin"
-    CLOUD_URL="git@gitlab.com:sn0wman/snowpi-dotfiles.git"
-    PEER_REMOTE="freezer"
-else
-    echo "❌ Unknown hostname: $HOSTNAME"
+if [ ! -d "$REPO" ]; then
+    echo "❌ Dotfiles repo not found at $REPO"
     exit 1
 fi
 
-if [ ! -d "$REPO_DIR" ]; then
-    echo "❌ Repo directory not found: $REPO_DIR"
-    exit 1
-fi
+echo "❄️  SnowSync: [$(basename "$REPO")] on $HOSTNAME"
+cd "$REPO" || exit 1
 
-echo "---------------------------------------------------"
-echo "❄️  SnowSync: Harmonizing [$(basename "$REPO_DIR")] on $HOSTNAME"
-cd "$REPO_DIR" || exit 1
-
-# STEP 1: Smart Pull from Cloud
-echo "📥 Checking for remote updates..."
+# Pull from GitLab
+echo "📥 Pulling from $CLOUD_REMOTE..."
 git stash >/dev/null 2>&1
-git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || git pull origin main --no-rebase
+git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null
 git stash pop >/dev/null 2>&1
 
-# STEP 2: Detect Changes
+# Commit local changes
 git add .
 CHANGES=$(git status --porcelain)
 
-# STEP 3: Smart Commit
 if [ ! -z "$CHANGES" ]; then
     MAJOR_CHANGE=$(git diff --name-only | head -n 1)
     if [ -z "$MAJOR_CHANGE" ]; then MAJOR_CHANGE="new files"; fi
-    MSG="sync | $HOSTNAME | updated $MAJOR_CHANGE"
+    MSG="sync | $HOSTNAME | $MAJOR_CHANGE"
     echo "📤 Committing: $MSG"
     git commit -m "$MSG"
 fi
 
-# STEP 4: Multi-Node Sync
-echo "🚀 Syncing commits to all nodes..."
+# Push to GitLab
+echo "🚀 Syncing to GitLab..."
+git push "$CLOUD_REMOTE" main 2>/dev/null
 
-# 1. Push to Cloud (GitLab)
-git remote set-url "$CLOUD_REMOTE" "$CLOUD_URL" 2>/dev/null
-git push "$CLOUD_REMOTE" main 2>/dev/null || git push origin main
+# Push to peer machine
+echo "📡 Syncing to $PEER_REMOTE..."
+git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer offline"
 
-# 2. Push to Peer Machine (if online)
-git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer push failed (offline?)"
+cd ~
 
-cd "$START_DIR"
+# Auto-heal symlinks
+ln -sf "$REPO/scripts/dotsync" "$HOME/.local/bin/dotsync"
 
-# --- Auto-Heal Symlinks ---
-DOTFILES_REPO="$REPO_DIR"
-ln -sf "$DOTFILES_REPO/scripts/dotsync" "$HOME/.local/bin/dotsync"
-
-OC_SHARED="$DOTFILES_REPO/.opencode"
-if [ -d "$OC_SHARED" ]; then
+# OC sync
+OC="$REPO/.opencode"
+if [ -d "$OC" ]; then
     for f in AGENTS.md MEMORY.md SOUL.md opencode.json; do
-        [ -L "$HOME/.opencode/$f" ] && [ "$(readlink "$HOME/.opencode/$f")" != "$OC_SHARED/$f" ] &&
-            ln -sf "$OC_SHARED/$f" "$HOME/.opencode/$f"
+        [ -L "$HOME/.opencode/$f" ] && ln -sf "$OC/$f" "$HOME/.opencode/$f"
     done
-    [ -L "$HOME/.opencode/skills" ] && [ "$(readlink "$HOME/.opencode/skills")" != "$OC_SHARED/skills" ] &&
-        ln -sfn "$OC_SHARED/skills" "$HOME/.opencode/skills"
+    [ -L "$HOME/.opencode/skills" ] && ln -sfn "$OC/skills" "$HOME/.opencode/skills"
 fi
 
-# --- Machine-specific extras ---
-# Note: dot-mirror.sh removed - requires sudo, run manually instead
+# Machine-specific
 if [[ "$HOSTNAME" == "freezer" ]]; then
-    [ -f "$HOME/Freezer-Dotfiles/scripts/snow-audit.sh" ] && ~/Freezer-Dotfiles/scripts/snow-audit.sh
+    [ -f "$REPO/scripts/snow-audit.sh" ] && bash "$REPO/scripts/snow-audit.sh"
 elif [[ "$HOSTNAME" == "snowpi" ]]; then
-    [ -f "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh" ] && bash "$HOME/SnowPi-Dotfiles/scripts/audit-dots.sh"
+    [ -f "$REPO/scripts/audit-dots.sh" ] && bash "$REPO/scripts/audit-dots.sh"
 fi
 
-echo "✅ Sync complete!"
+echo "✅ Done"
