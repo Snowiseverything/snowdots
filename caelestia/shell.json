@@ -1,0 +1,52 @@
+{
+    "background": {
+        "enabled": false,
+        "wallpaperEnabled": false
+    },
+    "bar": {
+        "clock": {
+            "background": false,
+            "showDate": false,
+            "showIcon": true
+        },
+        "excludedScreens": [
+        ],
+        "persistent": true,
+        "popouts": {
+            "activeWindow": true
+        },
+        "status": {
+            "showAudio": true,
+            "showKbLayout": false,
+            "showMicrophone": false
+        },
+        "tray": {
+            "background": false,
+            "compact": true,
+            "recolour": false
+        },
+        "workspaces": {
+            "occupiedBg": false,
+            "shown": 5
+        }
+    },
+    "launcher": {
+        "enabled": false,
+        "showOnHover": false
+    },
+    "paths": {
+        "mediaGif": "~/.config/quickshell/caelestia/assets/bongocat.gif",
+        "sessionGif": "~/.config/quickshell/caelestia/assets/power.gif"
+    },
+    "services": {
+        "lyricsBackend": "Auto",
+        "showLyrics": true,
+        "useFahrenheit": false,
+        "weatherLocation": "Erbil"
+    },
+    "utilities": {
+        "toasts": {
+            "nowPlaying": true
+        }
+    }
+}

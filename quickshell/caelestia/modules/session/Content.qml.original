@@ -45,23 +45,16 @@ Column {
         KeyNavigation.down: hibernate
     }
 
-    StyledRect {
+    AnimatedImage {
         width: Tokens.sizes.session.button
         height: Tokens.sizes.session.button
-        radius: Tokens.rounding.large
-        color: Colours.tPalette.m3surfaceContainer
+        sourceSize.width: width * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1)
 
-        AnimatedImage {
-            anchors.fill: parent
-            anchors.margins: Tokens.padding.small
-            sourceSize.width: width * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1)
-
-            playing: visible
-            asynchronous: true
-            speed: Config.general.sessionGifSpeed
-            source: Paths.absolutePath(Config.paths.sessionGif)
-            fillMode: AnimatedImage.PreserveAspectFit
-        }
+        playing: visible
+        asynchronous: true
+        speed: Config.general.sessionGifSpeed
+        source: Paths.absolutePath(Config.paths.sessionGif)
+        fillMode: AnimatedImage.PreserveAspectFit
     }
 
     SessionButton {
