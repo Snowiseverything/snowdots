@@ -63,4 +63,18 @@ elif [[ "$HOSTNAME" == "snowpi" ]]; then
     [ -f "$REPO/scripts/audit-dots.sh" ] && bash "$REPO/scripts/audit-dots.sh"
 fi
 
+# Ask about GitHub publish (Freezer only)
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    echo ""
+    read -rp "📢 Publish sanitized version to GitHub? [y/N] " publish_gh
+    case "$publish_gh" in
+        [yY]|[yY][eE][sS])
+            bash "$REPO/scripts/publish-public.sh"
+            ;;
+        *)
+            echo "⏭️  Skipped GitHub publish"
+            ;;
+    esac
+fi
+
 echo "✅ Done"
