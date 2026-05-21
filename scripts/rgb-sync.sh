@@ -23,3 +23,4 @@ print('%02x%02x%02x' % (int(r2*255), int(g2*255), int(b2*255)))
 [ -z "$COLOR" ] && exit 0
 
 openrgb --mode static --color "$COLOR" --brightness 50 &>/dev/null
+python3 "$HOME/.local/bin/mad68-rgb.py" "$COLOR" &>/dev/null
