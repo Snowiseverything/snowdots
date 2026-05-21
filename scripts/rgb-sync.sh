@@ -17,7 +17,8 @@ g = int(hex_color[2:4], 16) / 255.0
 b = int(hex_color[4:6], 16) / 255.0
 
 h, l, s = colorsys.rgb_to_hls(r, g, b)
-r2, g2, b2 = colorsys.hls_to_rgb(h, 0.40, 0.75)
+# Force hue to blue (~210°) for consistent blue RGB theme
+r2, g2, b2 = colorsys.hls_to_rgb(210.0 / 360.0, 0.40, 0.75)
 r2 = max(0, min(255, int(r2 * 255 + 0.5)))
 g2 = max(0, min(255, int(g2 * 255 + 0.5)))
 b2 = max(0, min(255, int(b2 * 255 + 0.5)))
