@@ -189,11 +189,17 @@ ColumnLayout {
             }
 
             StyledRect {
+                id: visibilityBtn
+
                 implicitWidth: implicitHeight
                 implicitHeight: visibilityIcon.implicitHeight + Tokens.padding.small * 2
 
+                Layout.preferredWidth: inputField.buffer.length > 0 ? implicitWidth : 0
+
                 color: inputField.showPassword ? Colours.palette.m3primary : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
                 radius: Tokens.rounding.full
+
+                Behavior on Layout.preferredWidth { Anim { type: Anim.FastSpatial } }
 
                 StateLayer {
                     color: inputField.showPassword ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
@@ -204,13 +210,15 @@ ColumnLayout {
                     id: visibilityIcon
 
                     anchors.centerIn: parent
-                    text: inputField.showPassword ? "visibility_off" : "visibility"
+                    text: inputField.showPassword ? "visibility" : "visibility_off"
                     color: inputField.showPassword ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
                     font.weight: 500
                 }
             }
 
             StyledRect {
+                id: enterBtn
+
                 implicitWidth: implicitHeight
                 implicitHeight: enterIcon.implicitHeight + Tokens.padding.small * 2
 

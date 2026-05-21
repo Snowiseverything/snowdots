@@ -18,8 +18,6 @@ Item {
     Layout.fillWidth: true
     Layout.fillHeight: true
 
-    clip: true
-
     Connections {
         function onBufferChanged(): void {
             if (root.pam.buffer.length > root.buffer.length) {
@@ -75,7 +73,7 @@ Item {
         anchors.horizontalCenterOffset: implicitWidth > root.width ? -(implicitWidth - root.width) / 2 : 0
 
         implicitWidth: fullWidth
-        implicitHeight: Tokens.font.size.normal
+        implicitHeight: Tokens.font.size.large
 
         orientation: Qt.Horizontal
         spacing: Tokens.spacing.small / 2
@@ -157,7 +155,7 @@ Item {
         opacity: root.showPassword && root.buffer.length > 0 ? 1 : 0
         visible: root.buffer.length > 0
         color: Colours.palette.m3onSurface
-        font.pointSize: Tokens.font.size.normal
+        font.pointSize: Tokens.font.size.large
         font.family: Tokens.font.family.mono
         elide: Text.ElideRight
         maximumLineCount: 1
