@@ -32,16 +32,16 @@ $line_break$character"""
 palette = 'matugen'
 
 [palettes.matugen]
-color_fg0 = '#dfe3e8'
-color_orange = '#101417'
-color_yellow = '#181c20'
-color_aqua = '#1c2024'
-color_b3 = '#262a2e'
-color_b1 = '#313539'
-color_bgt = '#004c6e'
-color_green = '#94cdf7'
+color_fg0 = '#e9e0e7'
+color_orange = '#161217'
+color_yellow = '#1f1a1f'
+color_aqua = '#231e23'
+color_b3 = '#2d282e'
+color_b1 = '#383339'
+color_bgt = '#5c386b'
+color_green = '#e4b7f3'
 color_red = '#ffb4ab'
-color_purple = '#94cdf7'
+color_purple = '#e4b7f3'
 
 [os]
 disabled = false

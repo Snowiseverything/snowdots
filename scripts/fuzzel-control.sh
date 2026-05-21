@@ -24,7 +24,7 @@ main_menu() {
     CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Control Center: ")
 
     case "$CHOICE" in
-        *Lock) loginctl lock-session ;;
+        *Lock) quickshell -c caelestia ipc call lock lock ;;
         *"Edit Configs"*) show_configs ;;
         *"Edit Scripts"*) show_scripts ;;
         *"Run Scripts"*) run_scripts ;;
