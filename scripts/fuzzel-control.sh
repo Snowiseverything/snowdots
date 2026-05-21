@@ -83,8 +83,7 @@ show_scripts() {
     LIST+="\n󰕌 Back"
 
     CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Edit Script: ")
-    [ $? -ne 0 ] && return
-    [[ "$CHOICE" == *"Back"* ]] && main_menu && return
+    [[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
     
     CLEAN_NAME=$(echo "$CHOICE" | cut -d' ' -f2-)
     edit_file "$SCRIPT_DIR/$CLEAN_NAME"
@@ -104,8 +103,7 @@ show_configs() {
     LIST+="\n󰕌 Back"
 
     CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Edit Config: ")
-    [ $? -ne 0 ] && return
-    [[ "$CHOICE" == *"Back"* ]] && main_menu && return
+    [[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
 
     CLEAN_NAME=$(echo "$CHOICE" | cut -d' ' -f2-)
     edit_file "${paths[$CLEAN_NAME]}"
@@ -117,8 +115,7 @@ copy_scripts() {
     LIST+="\n󰕌 Back"
 
     CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Copy Script: ")
-    [ $? -ne 0 ] && return
-    [[ "$CHOICE" == *"Back"* ]] && main_menu && return
+    [[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
 
     CLEAN_NAME=$(echo "$CHOICE" | cut -d' ' -f2-)
     cat "$SCRIPT_DIR/$CLEAN_NAME" | wl-copy
