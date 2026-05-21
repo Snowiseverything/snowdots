@@ -1,0 +1,98 @@
+{
+  "animations": false,
+  "features": {
+    "matugen": true,
+    "ollama": false,
+    "steam": true,
+    "wallhaven": true,
+    "videoAutoScale": true
+  },
+  "postProcessing": [
+    {
+      "command": "bash /home/snow/Dotfiles/scripts/wall-sync.sh \"%path%\"",
+      "type": "all"
+    },
+    {
+      "command": "bash /home/snow/Dotfiles/scripts/rename-wallpapers.sh",
+      "type": "all"
+    }
+  ],
+  "postProcessOnRestore": true,
+  "matugen": {
+    "mode": "dark",
+    "schemeType": "scheme-vibrant",
+    "colorIndex": 0,
+    "pickerOnApply": false
+  },
+  "general": {
+    "randomInterval": 3600,
+    "notifyOnWallpaperChange": false,
+    "reopenAtLastSelection": true,
+    "locale": "Erbil",
+    "uiScale": 1
+  },
+  "wallpaperVolume": 35,
+  "integrations": [
+    {
+      "name": "hyprland",
+      "template": "/home/snow/Dotfiles/matugen/templates/hyprland-colors.conf",
+      "output": "/home/snow/.cache/skwd-wall/hyprland-colors.conf",
+      "reload": "hyprctl reload"
+    },
+    {
+      "name": "kitty",
+      "template": "/home/snow/Dotfiles/matugen/templates/kitty-colors.conf",
+      "output": "/home/snow/.cache/skwd-wall/colors-kitty.conf",
+      "reload": "pkill -USR1 kitty"
+    },
+    {
+      "name": "caelestia",
+      "template": "/home/snow/Dotfiles/matugen/templates/caelestia-scheme.json",
+      "output": "/home/snow/.local/state/caelestia/scheme.json",
+      "reload": ""
+    },
+    {
+      "name": "skwd",
+      "template": "/home/snow/Dotfiles/matugen/templates/skwd-colors.json",
+      "output": "/home/snow/.cache/skwd-wall/colors.json",
+      "reload": "bash /home/snow/Dotfiles/scripts/rgb-sync.sh"
+    }
+  ],
+  "ExternalMatugenCommand": "matugen image %path% --source-color-index 0 && bash /home/snow/Dotfiles/scripts/rgb-sync.sh",
+  "components": {
+    "wallpaperSelector": {
+      "enabled": true,
+      "displayMode": "wall",
+      "gridColumns": 5,
+      "gridRows": 4,
+      "wallhavenColumns": 5,
+      "wallhavenRows": 4
+    }
+  },
+  "wallhaven": {
+    "apiKey": ""
+  },
+  "display": {
+    "fillMode": "fill"
+  },
+  "colorSource": "magick",
+  "steam": {
+    "apiKey": "D432569B6CFEA4FDC62D820649013956",
+    "username": "therealmrsnowman"
+  },
+  "transition": {
+    "enabled": true,
+    "shader": "chromatic-bloom",
+    "lastShader": "bounce",
+    "durationMs": 800
+  },
+  "paper": {
+    "engine": "skwd-paper",
+    "awww": {
+      "transitionType": "fade"
+    }
+  },
+  "performance": {
+    "imageOptimizePreset": "quality"
+  }
+}
