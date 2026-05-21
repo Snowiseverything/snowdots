@@ -126,12 +126,16 @@ power_menu() {
     P_OPTIONS="󰒲 Suspend\n󰈆 Logout\n󰜉 Reboot\n󰐥 Shutdown\n󰕌 Back"
     P_CHOICE=$(echo -e "$P_OPTIONS" | fuzzel --dmenu --minimal-lines -p "Power: ")
 
+    [[ -z "$P_CHOICE" || "$P_CHOICE" == *"Back"* ]] && main_menu && return
+
+    CONFIRM=$(echo -e "󰄱 Yes, $P_CHOICE\n󰅜 No, go back" | fuzzel --dmenu --minimal-lines -p "Confirm: ")
+    [[ "$CONFIRM" != *"Yes"* ]] && main_menu && return
+
     case "$P_CHOICE" in
         *Suspend) systemctl suspend ;;
         *Logout) hyprctl dispatch exit ;;
         *Reboot) systemctl reboot ;;
         *Shutdown) systemctl poweroff ;;
-        *Back) main_menu ;;
     esac
 }
 
