@@ -16,7 +16,7 @@ g = int(hex_color[2:4], 16) / 255.0
 b = int(hex_color[4:6], 16) / 255.0
 
 h, _, _ = colorsys.rgb_to_hls(r, g, b)
-r2, g2, b2 = colorsys.hls_to_rgb(h, 0.35, 0.80)
+r2, g2, b2 = colorsys.hls_to_rgb(h, 0.28, 0.80)
 print('%02x%02x%02x' % (int(r2*255), int(g2*255), int(b2*255)))
 " 2>/dev/null)
 
