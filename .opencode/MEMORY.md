@@ -108,3 +108,6 @@
 
 ## 2026-05-21
 - rgb-sync.sh: per-device OpenRGB calibration. Reads matugen accent from ~/.cache/skwd-wall/colors.json. Fans (device 2): accent hue, L=0.35 S=0.80. RAM (device 0,1): -20° hue shift, L=0.30 S=0.90 (compensates ENE yellow tint). --brightness 50 on all. Single openrgb call per device for speed (was 4.1s, now 1.4s). accent hue changes per wallpaper
+
+## 2026-05-21
+- RGB race condition fixed: skwd ExternalMatugenCommand had -c %config% which pointed to skwd config (no skwd-colors.json template). Fixed: removed -c flag so matugen uses default config.toml (has all 16 templates). rgb-sync moved from skwd postProcessing to matugen post_processing (runs AFTER colors.json generated). skwd postProcessing was racing with matugen - rgb-sync read stale colors.json before matugen finished.
