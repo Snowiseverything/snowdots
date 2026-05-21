@@ -80,7 +80,10 @@ Item {
         orientation: Qt.Horizontal
         spacing: Tokens.spacing.small / 2
         interactive: false
-        visible: !root.showPassword
+        opacity: root.showPassword ? 0 : 1
+        enabled: !root.showPassword
+
+        Behavior on opacity { Anim {} }
 
         model: ScriptModel {
             values: root.buffer.split("")
@@ -151,11 +154,14 @@ Item {
     StyledText {
         anchors.centerIn: parent
         text: root.buffer
-        visible: root.showPassword && root.buffer.length > 0
+        opacity: root.showPassword && root.buffer.length > 0 ? 1 : 0
+        visible: root.buffer.length > 0
         color: Colours.palette.m3onSurface
         font.pointSize: Tokens.font.size.normal
         font.family: Tokens.font.family.mono
         elide: Text.ElideRight
         maximumLineCount: 1
+
+        Behavior on opacity { Anim {} }
     }
 }
