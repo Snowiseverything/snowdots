@@ -41,7 +41,3 @@ sed -e "s/#1e1e2e/$BG/g" \
     -e "s/#45475a/$SURFACE/g" \
     "$TEMPLATE" > "$CONFIG_FILE"
 
-# Restart SDDM to apply changes
-if command -v systemctl &>/dev/null; then
-    systemctl restart sddm &>/dev/null || true
-fi

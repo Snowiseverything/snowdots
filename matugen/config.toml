@@ -20,7 +20,7 @@ output_path = '/home/snow/.cache/skwd-wall/fuzzel-colors.ini'
 input_path = '/home/snow/Dotfiles/matugen/templates/skwd-colors.json'
 output_path = '/home/snow/.config/skwd-wall/colors.json'
 
-[templates.caestia]
+[templates.caelestia]
 input_path = '/home/snow/Dotfiles/matugen/templates/caelestia-scheme.json'
 output_path = '/home/snow/.local/state/caelestia/scheme.json'
 
