@@ -31,15 +31,14 @@ git stash >/dev/null 2>&1
 git pull "$CLOUD_REMOTE" main --no-rebase
 git stash pop >/dev/null 2>&1
 
-# Commit local changes
-git add .
+# Commit local changes (skip matugen-generated files — they're gitignored)
 CHANGES=$(git status --porcelain)
 
 if [ ! -z "$CHANGES" ]; then
-    MAJOR_CHANGE=$(git diff --name-only | head -n 1)
-    if [ -z "$MAJOR_CHANGE" ]; then MAJOR_CHANGE="new files"; fi
-    MSG="sync | $HOSTNAME | $MAJOR_CHANGE"
+    FIRST_CHANGE=$(echo "$CHANGES" | head -1 | sed 's/^.. //' | sed 's/\/.*//')
+    MSG="sync | $HOSTNAME | $FIRST_CHANGE"
     echo "📤 Committing: $MSG"
+    git add .
     git commit -m "$MSG"
 fi
 
