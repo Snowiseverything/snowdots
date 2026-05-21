@@ -1,5 +1,5 @@
 #!/bin/bash
-# Normalize matugen accent to fully saturated color, apply to OpenRGB LEDs
+# Boost accent saturation moderately for LEDs, apply to OpenRGB
 
 COLORS_FILE="$HOME/.config/skwd-wall/colors.json"
 
@@ -18,11 +18,15 @@ for v in "$G" "$B"; do
 done
 
 RANGE=$((MAX - MIN))
-[ "$RANGE" -lt 5 ] && RANGE=5
-
-R=$(( (R - MIN) * 255 / RANGE ))
-G=$(( (G - MIN) * 255 / RANGE ))
-B=$(( (B - MIN) * 255 / RANGE ))
+if [ "$RANGE" -gt 5 ]; then
+    # Partial normalization: blend 70% toward fully saturated
+    RN=$(( (R - MIN) * 255 / RANGE ))
+    GN=$(( (G - MIN) * 255 / RANGE ))
+    BN=$(( (B - MIN) * 255 / RANGE ))
+    R=$(( R + (RN - R) * 70 / 100 ))
+    G=$(( G + (GN - G) * 70 / 100 ))
+    B=$(( B + (BN - B) * 70 / 100 ))
+fi
 
 COLOR=$(printf "%02x%02x%02x" "$R" "$G" "$B")
 
