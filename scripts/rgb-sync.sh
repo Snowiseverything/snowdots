@@ -1,50 +1,35 @@
 #!/bin/bash
-# Extract wallpaper colors and apply to OpenRGB LEDs
+# Normalize matugen accent to fully saturated color, apply to OpenRGB LEDs
 
-LAST_WALL="$HOME/.cache/skwd-wall/last-wallpaper.json"
-CURRENT_JPG="$HOME/.cache/skwd-wall/wallpaper/current.jpg"
+COLORS_FILE="$HOME/.config/skwd-wall/colors.json"
 
-if [ -f "$LAST_WALL" ]; then
-    WALLPAPER=$(jq -r '.path' "$LAST_WALL")
-elif [ -f "$CURRENT_JPG" ]; then
-    WALLPAPER="$CURRENT_JPG"
-else
+if [ ! -f "$COLORS_FILE" ]; then
     exit 0
 fi
 
-[ -z "$WALLPAPER" ] && exit 0
-
-# Get 4 dominant colors sorted by brightness (brightest first)
-readarray -t PALETTE < <(
-    magick "$WALLPAPER" -colors 4 -depth 8 -format "%c" histogram:info:- 2>/dev/null \
-    | sort -rn | head -4 \
-    | while read -r line; do
-        HEX=$(echo "$line" | sed 's/.*#\([0-9A-Fa-f]\{6\}\).*/\1/')
-        R=$((16#${HEX:0:2})); G=$((16#${HEX:2:2})); B=$((16#${HEX:4:2}))
-        echo "$((R+G+B)) $HEX"
-    done | sort -rn | awk '{print $2}'
-)
-
-# Filter out very dark colors (luminance < 40); use at least 1 color
-FILTERED=()
-for HEX in "${PALETTE[@]}"; do
-    [ -z "$HEX" ] && continue
-    R=$((16#${HEX:0:2})); G=$((16#${HEX:2:2})); B=$((16#${HEX:4:2}))
-    MAX=$R; MIN=$R
-    for v in "$G" "$B"; do
-        [ "$v" -gt "$MAX" ] && MAX=$v
-        [ "$v" -lt "$MIN" ] && MIN=$v
-    done
-    L=$(( (MAX + MIN) / 2 ))
-    [ "$L" -ge 40 ] && FILTERED+=("$HEX")
-done
-
-# Fallback if everything filtered
-if [ ${#FILTERED[@]} -eq 0 ]; then
-    FILTERED=("${PALETTE[@]:0:1}")
+ACCENT=$(jq -r '.accent' "$COLORS_FILE")
+if [ -z "$ACCENT" ] || [ "$ACCENT" = "null" ]; then
+    exit 0
 fi
 
-# Use only richest color for all LEDs to match wallpaper
-openrgb --device 0 --mode static --color "${FILTERED[0]}" &>/dev/null
-openrgb --device 1 --mode static --color "${FILTERED[0]}" &>/dev/null
-openrgb --device 2 --mode static --color "${FILTERED[0]}" &>/dev/null
+HEX="${ACCENT#\#}"
+R=$((16#${HEX:0:2})); G=$((16#${HEX:2:2})); B=$((16#${HEX:4:2}))
+
+MIN=$R; MAX=$R
+for v in "$G" "$B"; do
+    [ "$v" -lt "$MIN" ] && MIN=$v
+    [ "$v" -gt "$MAX" ] && MAX=$v
+done
+
+RANGE=$((MAX - MIN))
+[ "$RANGE" -lt 5 ] && RANGE=5
+
+R=$(( (R - MIN) * 255 / RANGE ))
+G=$(( (G - MIN) * 255 / RANGE ))
+B=$(( (B - MIN) * 255 / RANGE ))
+
+COLOR=$(printf "%02x%02x%02x" "$R" "$G" "$B")
+
+openrgb --device 0 --mode static --color "$COLOR" &>/dev/null
+openrgb --device 1 --mode static --color "$COLOR" &>/dev/null
+openrgb --device 2 --mode static --color "$COLOR" &>/dev/null
