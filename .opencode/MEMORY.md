@@ -111,3 +111,6 @@
 
 ## 2026-05-21
 - RGB race condition fixed: skwd ExternalMatugenCommand had -c %config% which pointed to skwd config (no skwd-colors.json template). Fixed: removed -c flag so matugen uses default config.toml (has all 16 templates). rgb-sync moved from skwd postProcessing to matugen post_processing (runs AFTER colors.json generated). skwd postProcessing was racing with matugen - rgb-sync read stale colors.json before matugen finished.
+
+## 2026-05-22
+- MAD68 HE keyboard RGB protocol: uses 32-byte HID output report via hub.f.gg format [7, 65, 2, 0, 0x96, R, G, B, 0xB1, zero-pad]. Previously tried Pro protocol (55 0B 64-byte chunks) which didn't work for HE (PID 0x1058). WebHID JavaScript worked, Python hidapi works. Udev rule at /etc/udev/rules.d/99-mad68.rules needed for hidraw write access. Keyboard must be in customization mode.
