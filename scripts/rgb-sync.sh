@@ -1,24 +1,9 @@
 #!/bin/bash
-# Wait for matugen to finish, then apply saturated accent to OpenRGB
+# Normalize matugen accent to fully saturated color, apply to OpenRGB LEDs
 
 COLORS_FILE="$HOME/.config/skwd-wall/colors.json"
-LAST_WALL="$HOME/.cache/skwd-wall/last-wallpaper.json"
 
-# Record when this wallpaper was applied
-WALL_MTIME=$(stat -c %Y "$LAST_WALL" 2>/dev/null || echo 0)
-
-# Wait for colors.json to be newer than the wallpaper event
-WAIT_START=$(date +%s)
-while true; do
-    if [ -f "$COLORS_FILE" ]; then
-        COL_MTIME=$(stat -c %Y "$COLORS_FILE" 2>/dev/null || echo 0)
-        [ "$COL_MTIME" -gt "$WALL_MTIME" ] && break
-    fi
-    sleep 0.3
-    [ "$(($(date +%s) - WAIT_START))" -gt 15 ] && exit 0
-done
-
-ACCENT=$(jq -r '.accent' "$COLORS_FILE")
+ACCENT=$(jq -r '.accent' "$COLORS_FILE" 2>/dev/null)
 if [ -z "$ACCENT" ] || [ "$ACCENT" = "null" ]; then
     exit 0
 fi
