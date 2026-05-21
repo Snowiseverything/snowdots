@@ -128,8 +128,8 @@ power_menu() {
 
     [[ -z "$P_CHOICE" || "$P_CHOICE" == *"Back"* ]] && main_menu && return
 
-    CONFIRM=$(echo -e "󰄱 Yes, $P_CHOICE\n󰅜 No, go back" | fuzzel --dmenu --minimal-lines -p "Confirm: ")
-    [[ "$CONFIRM" != *"Yes"* ]] && main_menu && return
+    CONFIRM=$(echo -e " Yes, $P_CHOICE\n󰅜 No, go back" | fuzzel --dmenu --minimal-lines -p "Confirm: ")
+    [[ "$CONFIRM" != *"Yes"* ]] && return
 
     case "$P_CHOICE" in
         *Suspend) systemctl suspend ;;
