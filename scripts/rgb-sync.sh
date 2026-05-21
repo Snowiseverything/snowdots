@@ -1,7 +1,7 @@
 #!/bin/bash
 # Boost accent to vibrant color while preserving exact hue, apply to OpenRGB
 
-COLORS_FILE="$HOME/.config/skwd-wall/colors.json"
+COLORS_FILE="$HOME/.cache/skwd-wall/colors.json"
 
 ACCENT=$(jq -r '.accent' "$COLORS_FILE" 2>/dev/null)
 if [ -z "$ACCENT" ] || [ "$ACCENT" = "null" ]; then

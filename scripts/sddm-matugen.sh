@@ -2,7 +2,7 @@
 # sddm-matugen.sh - Apply matugen colors to SDDM silent theme
 set -euo pipefail
 
-COLORS="$HOME/.config/skwd-wall/colors.json"
+COLORS="$HOME/.cache/skwd-wall/colors.json"
 TEMPLATE="/usr/share/sddm/themes/silent/configs/catppuccin-mocha.conf"
 CONFIG_FILE="$HOME/.cache/sddm-matugen.conf"
 SYMLINK_TARGET="/usr/share/sddm/themes/silent/configs/default.conf"
