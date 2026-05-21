@@ -114,3 +114,6 @@
 
 ## 2026-05-22
 - MAD68 HE keyboard RGB protocol: uses 32-byte HID output report via hub.f.gg format [7, 65, 2, 0, 0x96, R, G, B, 0xB1, zero-pad]. Previously tried Pro protocol (55 0B 64-byte chunks) which didn't work for HE (PID 0x1058). WebHID JavaScript worked, Python hidapi works. Udev rule at /etc/udev/rules.d/99-mad68.rules needed for hidraw write access. Keyboard must be in customization mode.
+
+## 2026-05-22
+- skwd config tracked in Dotfiles (symlinked). rename-wallpapers.sh type changed from static to all (runs after Wallhaven downloads)

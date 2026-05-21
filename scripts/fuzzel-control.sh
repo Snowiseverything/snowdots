@@ -62,7 +62,8 @@ run_scripts() {
     LIST+="󰕌 Back"
 
     CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Run Script: ")
-    [[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
+    [ $? -ne 0 ] && return
+    [[ "$CHOICE" == *"Back"* ]] && main_menu && return
 
     FINAL_SCRIPT=""
     for f in "${!labels[@]}"; do
@@ -82,7 +83,8 @@ show_scripts() {
     LIST+="\n󰕌 Back"
 
     CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Edit Script: ")
-    [[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
+    [ $? -ne 0 ] && return
+    [[ "$CHOICE" == *"Back"* ]] && main_menu && return
     
     CLEAN_NAME=$(echo "$CHOICE" | cut -d' ' -f2-)
     edit_file "$SCRIPT_DIR/$CLEAN_NAME"
@@ -102,7 +104,8 @@ show_configs() {
     LIST+="\n󰕌 Back"
 
     CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Edit Config: ")
-    [[ "$CHOICE" == *"Back"* || -z "$CHOICE" ]] && main_menu && return
+    [ $? -ne 0 ] && return
+    [[ "$CHOICE" == *"Back"* ]] && main_menu && return
 
     CLEAN_NAME=$(echo "$CHOICE" | cut -d' ' -f2-)
     edit_file "${paths[$CLEAN_NAME]}"
@@ -114,7 +117,8 @@ copy_scripts() {
     LIST+="\n󰕌 Back"
 
     CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Copy Script: ")
-    [[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
+    [ $? -ne 0 ] && return
+    [[ "$CHOICE" == *"Back"* ]] && main_menu && return
 
     CLEAN_NAME=$(echo "$CHOICE" | cut -d' ' -f2-)
     cat "$SCRIPT_DIR/$CLEAN_NAME" | wl-copy
@@ -125,8 +129,8 @@ copy_scripts() {
 power_menu() {
     P_OPTIONS="󰒲 Suspend\n󰈆 Logout\n󰜉 Reboot\n󰐥 Shutdown\n󰕌 Back"
     P_CHOICE=$(echo -e "$P_OPTIONS" | fuzzel --dmenu --minimal-lines -p "Power: ")
-
-    [[ -z "$P_CHOICE" || "$P_CHOICE" == *"Back"* ]] && main_menu && return
+    [ $? -ne 0 ] && return
+    [[ "$P_CHOICE" == *"Back"* ]] && main_menu && return
 
     CONFIRM=$(echo -e " Yes, $P_CHOICE\n󰅜 No, go back" | fuzzel --dmenu --minimal-lines -p "Confirm: ")
     [[ "$CONFIRM" != *"Yes"* ]] && return
