@@ -70,5 +70,5 @@ output_path = '/home/snow/.config/opencode/themes/matugen.json'
 reload = true
 
 [post_processing]
-command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
+command = "/home/snow/Dotfiles/scripts/wall-sync.sh && /home/snow/Dotfiles/scripts/rgb-sync.sh"
 run_on_change = true
