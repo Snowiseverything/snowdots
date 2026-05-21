@@ -27,3 +27,6 @@ awww img "$TARGET" --transition-type wipe --transition-angle 30
 
 WALL_NAME=$(basename "$TARGET")
 notify-send -i "$TARGET" "Wallpaper Changed" "Applied: $WALL_NAME" 2>/dev/null || true
+
+# Refresh RGB LEDs with current wallpaper colors
+bash "$HOME/Dotfiles/scripts/rgb-sync.sh" &>/dev/null
