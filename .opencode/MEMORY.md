@@ -117,3 +117,15 @@
 
 ## 2026-05-22
 - skwd config tracked in Dotfiles (symlinked). rename-wallpapers.sh type changed from static to all (runs after Wallhaven downloads)
+
+## 2026-05-24
+- fastfetch: removed docker command from config.jsonc + wall-sync.sh template (was hanging 5s)
+- 10 OC subagents created: health-monitor, pkg-manager, snowpi-bridge, tailscale-manager, docker-orchestrator, docker-cleanup, backup-agent, disk-usage, dotfiles-sync, log-scanner
+- oc-sync.sh: Tailscale IP, ~/.agents/ sync, bidirectional SQLite merge (INSERT OR IGNORE)
+- 30min auto-sync timer (oc-fast-sync.timer) enabled
+- Granular bash permissions: safe cmds auto-allow, dangerous ask
+- Root disk space: deleted old btrfs snapshots (6), 100% to 55% (17G free)
+- System updated: sudo pacman -Syu
+- ACCELA accent wired to wall-sync.sh: reads primary from colors.json, updates ACCELA.conf
+- Cache merged back: /home/.cache-root to /var/cache/, stray symlink removed
+- Wallpaper source file: /home/snow/Pictures/Wallpapers/328.webp

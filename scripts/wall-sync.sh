@@ -261,5 +261,15 @@ if [ -n "$DISPLAY" ] || [ -n "$WAYLAND_DISPLAY" ]; then
     fastfetch --pipe false 2>/dev/null || true
 fi
 
+# Update ACCELA accent color from wallpaper palette
+COLOR_FILE="$CACHE_DIR/colors.json"
+ACCELA_CONF="$HOME/.config/Tachibana Labs/ACCELA.conf"
+if [ -f "$COLOR_FILE" ] && [ -f "$ACCELA_CONF" ]; then
+    ACCENT=$(python3 -c "import json; print(json.load(open('$COLOR_FILE'))['primary'])")
+    sed -i "s/^accent_color=.*/accent_color=$ACCENT/" "$ACCELA_CONF"
+    sed -i "s/^user_accent_color=.*/user_accent_color=$ACCENT/" "$ACCELA_CONF"
+    log "ACCELA accent updated to $ACCENT"
+fi
+
 echo "Sync successful: $WALL_NAME"
 log "=== Wall-sync completed successfully ==="
