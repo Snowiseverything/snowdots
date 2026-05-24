@@ -60,10 +60,6 @@ fi
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 
-# Add snowpi if not exists
-if ! grep -q "snowpi" ~/.ssh/known_hosts 2>/dev/null; then
-    ssh-keyscan -H snowpi >> ~/.ssh/known_hosts 2>/dev/null
-    echo "✓ Added snowpi to known_hosts"
 fi
 
 # Add GitLab if not exists

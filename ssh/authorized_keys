@@ -1,3 +1,2 @@
-paste-your-public-key-here
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF1ztvQW4EiNNPsl0h+a1XqtZ6bePJLGimnmweCVkk5c snowpi-identity
-ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIoLkPOFb98JtMy5sQrrpBwjDtwluEFcC9qLSqM2Fr4F snow@freezer
+# Add your public keys here (one per line)
+# paste-your-public-key-here

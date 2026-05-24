@@ -40,18 +40,3 @@ git remote add gitlab git@gitlab.com:sn0wman/dotfiles.git 2>/dev/null || true
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 
-# Add freezer if not exists
-if ! grep -q "freezer" ~/.ssh/known_hosts 2>/dev/null; then
-    ssh-keyscan -H 192.168.0.111 >> ~/.ssh/known_hosts 2>/dev/null
-    ssh-keyscan -H freezer >> ~/.ssh/known_hosts 2>/dev/null
-    echo "✓ Added Freezer to known_hosts"
-fi
-
-# Add GitLab if not exists
-if ! grep -q "gitlab.com" ~/.ssh/known_hosts 2>/dev/null; then
-    ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts 2>/dev/null
-    echo "✓ Added GitLab to known_hosts"
-fi
-
-echo ""
-echo "✅ Setup complete! Run 'source ~/.config/fish/config.fish' to reload shell."

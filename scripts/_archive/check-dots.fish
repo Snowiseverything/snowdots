@@ -30,7 +30,7 @@ else
 end
 
 # Remote Check
-git fetch snowpi >/dev/null 2>&1
+git fetch remote >/dev/null 2>&1
 set status_output (git status -uno)
 if not string match -q "*Your branch is up to date*" "$status_output"
     echo "📡 Remote Status: Local and SnowPi are out of sync. Run 'dotsync'!"
