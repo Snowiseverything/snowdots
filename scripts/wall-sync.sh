@@ -237,7 +237,6 @@ if [ -f "$KITTY_CACHE" ]; then
     { "type": "os", "key": "󰣇", "keyColor": "$C1" },
     { "type": "command", "key": "󰄉", "keyColor": "$C9", "text": "birth_install=\$(stat -c %W / | tr -d '-'); now=\$(date +%s); echo \$(( (now - birth_install) / 86400 )) days", "shell": "/bin/sh" },
     { "type": "localip", "key": "󰩟", "keyColor": "$C2", "compact": true },
-    { "type": "command", "key": "󱖨", "keyColor": "$C4", "text": "echo \$(docker ps --format '{{.Names}}' | wc -l) containers / \$(systemctl list-units --type=service --state=running | grep '.service' | wc -l) services", "shell": "/bin/sh" },
     { "type": "custom", "format": " \u001b[90m─────── Hardware ───────" },
     { "type": "cpu", "key": "󰻠", "keyColor": "$C1" },
     { "type": "gpu", "key": "󰍛", "keyColor": "$C9" },
