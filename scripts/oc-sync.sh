@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-SNOWPI="192.168.1.35"
+SNOWPI="100.83.33.67"
 SSH_USER="snow"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -43,12 +43,16 @@ case "${1:-full}" in
       --exclude 'package-lock.json' \
       "$HOME/.config/opencode/" \
       "$SSH_USER@$SNOWPI:.config/opencode/"
-    # Dotfiles .opencode (skills, AGENTS.md, SOUL.md, MEMORY.md)
+    # Agents config (skills, AGENTS.md, SOUL.md, MEMORY.md, agents/)
     rsync -av --delete \
       --exclude 'node_modules/' \
       --exclude 'package-lock.json' \
       "$HOME/Dotfiles/.opencode/" \
       "$SSH_USER@$SNOWPI:Dotfiles/.opencode/"
+    # ~/.agents/ (installed skills registry)
+    rsync -av --delete \
+      "$HOME/.agents/" \
+      "$SSH_USER@$SNOWPI:.agents/"
     # Session DB
     sqlite3 ~/.local/share/opencode/opencode.db "PRAGMA wal_checkpoint(TRUNCATE);" 2>/dev/null || true
     rsync -av --delete ~/.local/share/opencode/opencode.db* \

@@ -34,7 +34,6 @@ ollama run llama3
 - **No micro editor:** Use nano only.
 
 ## Services
-- Docker: `docker ps`, `docker compose -f <file> up -d`
 - Systemd: `systemctl status/start/restart <service>`
 
 ## Network
@@ -42,7 +41,7 @@ ollama run llama3
 - Snowpi (RPi4, DietPi): 192.168.1.35 (Tailscale: 100.83.33.67)
 
 ## Dotfiles
-Bare git repo at `~/.dotfiles`. Managed via scripts in `/home/snow/scripts/`.
+Git repo at `~/Dotfiles`. Managed via `~/scripts/dotsync` (multi-remote) and `~/scripts/oc-sync.sh` (rsync to Snowpi).
 
 ## Memory System
 **AT START OF EVERY SESSION:** Read `~/.opencode/MEMORY.md` first.
