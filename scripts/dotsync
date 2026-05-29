@@ -1,6 +1,6 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SnowSync v12.1 — Separate Repos Edition
+# SnowSync v13 — Separate Repos Edition
 # --------------------------------------------------------------------------
 
 HOSTNAME=$(hostname)
@@ -13,17 +13,41 @@ fi
 
 cd "$REPO" || exit 1
 
-echo "---------------------------------------------------"
-echo "❄️  SnowSync: [$(basename "$REPO")] on $HOSTNAME"
-
-# Machine-specific remote config
+# Machine-specific config
 if [[ "$HOSTNAME" == "freezer" ]]; then
+    REPO_NAME="snowdots"
     CLOUD_REMOTE="gitlab"
+    CLOUD_URL="gitlab.com/sn0wman/snowdots"
     PEER_REMOTE="snowpi"
+    PEER_URL="snowpi (LAN)"
 elif [[ "$HOSTNAME" == "snowpi" ]]; then
+    REPO_NAME="snowpi-dotfiles"
     CLOUD_REMOTE="origin"
+    CLOUD_URL="gitlab.com/sn0wman/snowpi-dotfiles"
     PEER_REMOTE="freezer"
+    PEER_URL="freezer (Tailscale)"
 fi
+
+# ── Banner ─────────────────────────────────────
+clear 2>/dev/null || true
+echo ""
+echo "██████╗  ██████╗ ████████╗███████╗██╗   ██╗███╗   ██╗ ██████╗"
+echo "██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝╚██╗ ██╔╝████╗  ██║██╔════╝"
+echo "██║  ██║██║   ██║   ██║   ███████╗ ╚████╔╝ ██╔██╗ ██║██║     "
+echo "██║  ██║██║   ██║   ██║   ╚════██║  ╚██╔╝  ██║╚██╗██║██║     "
+echo "██████╔╝╚██████╔╝   ██║   ███████║   ██║   ██║ ╚████║╚██████╗"
+echo "╚═════╝  ╚═════╝    ╚═╝   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝ ╚═════╝"
+echo ""
+echo "  ┌─ Host:  $HOSTNAME"
+echo "  ├─ Repo:  $REPO_NAME"
+echo "  ├─ Push:  $CLOUD_URL"
+echo "  ├─ Peer:  $PEER_URL"
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    echo "  └─ GH:    github.com/Snowiseverything/snowdots (public, sanitized)"
+else
+    echo "  └─ GH:    —"
+fi
+echo "───────────────────────────────────────────────"
 
 # Commit local changes first (avoids template flash from stash)
 CHANGES=$(git status --porcelain)
