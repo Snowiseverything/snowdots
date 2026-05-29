@@ -25,13 +25,7 @@ elif [[ "$HOSTNAME" == "snowpi" ]]; then
     PEER_REMOTE="freezer"
 fi
 
-# Pull from cloud
-echo "📥 Pulling from $CLOUD_REMOTE..."
-git stash >/dev/null 2>&1
-git pull "$CLOUD_REMOTE" main --no-rebase
-git stash pop >/dev/null 2>&1
-
-# Commit local changes (skip matugen-generated files — they're gitignored)
+# Commit local changes first (avoids template flash from stash)
 CHANGES=$(git status --porcelain)
 
 if [ ! -z "$CHANGES" ]; then
@@ -41,6 +35,10 @@ if [ ! -z "$CHANGES" ]; then
     git add .
     git commit -m "$MSG"
 fi
+
+# Pull from cloud (no stash needed — clean tree)
+echo "📥 Pulling from $CLOUD_REMOTE..."
+git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || echo "⚠️  Pull failed"
 
 # Push to cloud
 echo "🚀 Syncing to $CLOUD_REMOTE..."

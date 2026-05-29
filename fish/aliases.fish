@@ -13,7 +13,7 @@ alias l='eza -lh --icons=auto'
 alias zed='zeditor'
 abbr -a c clear
 abbr -a la 'ls -a'
-abbr -a ll 'eza -lha --icons=auto --sort=name --group-directories-first'
+alias ll='eza -lha --icons=auto --sort=name --group-directories-first'
 abbr -a ld 'eza -lhD --icons=auto'
 abbr -a lt 'eza --icons=auto --tree'
 abbr -a ltt 'eza --tree --level=2 --long --icons --git'
@@ -113,6 +113,9 @@ abbr -a sdu 'sudo btrfs filesystem du -s /.snapshots/*'
 abbr -a sdelr 'sudo snapper -c root delete'
 abbr -a sdelh 'sudo snapper -c home delete --sync' #eg  --sync 1 or 2-4
 abbr -a sbdel 'sudo btrfs subvolume delete' #eg  sudo btrfs subvolume delete /.snapshots/5/snapshot
+# ── SSH ────────────────────────────────────────
+alias snowpi='ssh snow@192.168.1.35'
+
 # ── SnowDots Scripts ───────────────────────────
 alias saudit='~/scripts/snow-audit.sh'
 alias wall-reset='~/scripts/wall-reset.sh'

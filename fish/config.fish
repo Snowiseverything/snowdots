@@ -16,6 +16,8 @@ fish_add_path ~/scripts
 # ── Machine-Specific ─────────────────────────
 switch (hostname)
     case freezer
+        set fish_greeting
+
         alias ff="fastfetch"
 
         if status is-interactive
@@ -23,6 +25,8 @@ switch (hostname)
         end
 
     case snowpi
+        set fish_greeting
+
         alias ff="fastfetch --logo raspberrypi --logo-color-1 red --logo-color-2 green"
 
         if status is-interactive
