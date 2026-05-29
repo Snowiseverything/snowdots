@@ -129,3 +129,6 @@
 - ACCELA accent wired to wall-sync.sh: reads primary from colors.json, updates ACCELA.conf
 - Cache merged back: /home/.cache-root to /var/cache/, stray symlink removed
 - Wallpaper source file: /home/snow/Pictures/Wallpapers/328.webp
+
+## 2026-05-30
+- 2026-05-30: OC remote control setup. Installed @lesquel/opencode-pilot globally. Dashboard on :4097 (token: snowefb35112). Systemd opencode-serve.service on :4096 with pilot on :4097. Created ~/scripts/oc-sync.sh for Freezer->Snowpi sync (configs + dotfiles + sessions). Boot sync + 5-min timer for memory/dotfiles. Autostart optimized: qs -c caelestia -n -d (skips Python wrapper, no sleep), skwd + wall-reset.sh immediate, heavy apps delayed. QML cache sparse (only 1 file) - caelestia cold boot slower. /dev/sda3 LUKS 16.4s boot bottleneck. Autostart no longer uses waypaper

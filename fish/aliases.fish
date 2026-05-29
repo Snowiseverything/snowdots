@@ -113,4 +113,13 @@ abbr -a sdu 'sudo btrfs filesystem du -s /.snapshots/*'
 abbr -a sdelr 'sudo snapper -c root delete'
 abbr -a sdelh 'sudo snapper -c home delete --sync' #eg  --sync 1 or 2-4
 abbr -a sbdel 'sudo btrfs subvolume delete' #eg  sudo btrfs subvolume delete /.snapshots/5/snapshot
+# ── SnowDots Scripts ───────────────────────────
+alias saudit='~/scripts/snow-audit.sh'
+alias wall-reset='~/scripts/wall-reset.sh'
+alias wall-sync='~/scripts/wall-sync.sh'
+alias rename-wall='~/scripts/rename-wallpapers.sh'
+alias night-light='~/scripts/night-light.sh'
+alias sun-sched='~/scripts/sun-schedule.sh'
+alias snow-ctl='~/scripts/fuzzel-control.sh'
+alias fix-me='~/Dotfiles/scripts/fix-me.sh'
 # refresh

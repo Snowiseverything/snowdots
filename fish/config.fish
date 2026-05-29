@@ -6,9 +6,12 @@
 set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source
 
+source ~/.config/fish/aliases.fish
+
 alias dotsync='~/Dotfiles/scripts/dotsync'
 fish_add_path ~/Dotfiles/scripts
 fish_add_path ~/.local/bin
+fish_add_path ~/scripts
 
 # ── Machine-Specific ─────────────────────────
 switch (hostname)
