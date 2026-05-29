@@ -20,11 +20,8 @@ echo "🧹 Scrubbing personal info..."
 # Remove opencode config (has IPs, hostnames, memory)
 rm -rf .opencode/
 
-# Remove SSH keys, keep placeholder
-cat > ssh/authorized_keys << 'EOF'
-# Add your public keys here (one per line)
-# paste-your-public-key-here
-EOF
+# Remove SSH dir (keys, config)
+rm -rf .ssh/
 
 # Replace specific IPs with placeholders
 find . -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.conf' -o -name '*.md' -o -name '*.toml' \) \
@@ -33,9 +30,12 @@ find . -type f \( -name '*.sh' -o -name '*.fish' -o -name '*.conf' -o -name '*.m
     -e 's/192\.168\.1\.35/192.168.1.200/g' \
     {} +
 
-# Replace specific hostname references in scripts/configs
-find . -type f \( -name '*.sh' -o -name '*.fish' \) \
-  -exec sed -i \
-    -e 's/git fetch remote/git fetch remote/g' \
-    -e 's/git push remote/git push remote/g' \
-    -e 's/git pull remote/git pull remote/g' \
+# Commit and push
+git add -A
+git diff --cached --quiet && echo "⏭️  No changes to publish" && exit 0
+
+echo "📦 Committing sanitized version..."
+git commit -m "sync | public | $(date +%F)"
+
+echo "🚀 Force-pushing to GitHub..."
+git push "$GH_REMOTE" main --force 2>/dev/null || echo "⚠️  Push failed"
