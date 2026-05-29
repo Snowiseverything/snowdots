@@ -13,7 +13,7 @@
 
 ## Systems
 - Freezer: Main workstation (192.168.0.111)
-- Snowpi: RPi4 backup (Tailscale: 100.120.197.52)
+- Snowpi: RPi4 backup (Tailscale: 100.83.33.67)
 
 ## Session Notes (2026-05-12)
 

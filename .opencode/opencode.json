@@ -99,7 +99,5 @@
       "skill-creator": "ask"
     }
   },
-  "plugin": [
-    "opencode-antigravity-quota"
-  ]
+  "plugin": []
 }

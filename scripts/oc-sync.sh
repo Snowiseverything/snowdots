@@ -1,8 +1,8 @@
 #!/bin/bash
 # OpenCode Sync — Freezer -> Snowpi
-# Usage: oc-sync.sh          (full sync - configs + memory + skills)
+# Usage: oc-sync.sh          (full sync - configs + memory + skills + sessions)
 #        oc-sync.sh --fast   (memory + dotfiles only - every 5 min)
-#        oc-sync.sh --sessions (session DB only - hourly)
+#        oc-sync.sh --sessions (session DB only - hourly, restarts serve daemon)
 
 set -euo pipefail
 
@@ -21,18 +21,28 @@ case "${1:-full}" in
     ;;
 
   --sessions)
-    echo "[$TIMESTAMP] Session sync: exporting + importing..."
-    # Flush WAL to main DB for clean snapshot
-    sqlite3 ~/.local/share/opencode/opencode.db "PRAGMA wal_checkpoint(TRUNCATE);" 2>/dev/null || true
-    # Export last 50 sessions as JSON
+    echo "[$TIMESTAMP] Session sync: bidirectional DB merge..."
     mkdir -p /tmp/oc-sync
-    opencode export $(opencode session list 2>/dev/null | tail -50 | awk '{print $1}') \
-      -o /tmp/oc-sync/sessions.json 2>/dev/null || true
-    # Push to Snowpi
-    rsync -av /tmp/oc-sync/sessions.json "$SSH_USER@$SNOWPI:/tmp/oc-sync/"
-    # Import on Snowpi
-    ssh "$SSH_USER@$SNOWPI" "cd ~ && opencode import /tmp/oc-sync/sessions.json 2>/dev/null || true" 2>/dev/null || true
-    rm -f /tmp/oc-sync/sessions.json
+    set +e
+    scp -q "$SSH_USER@$SNOWPI:.local/share/opencode/opencode.db" /tmp/oc-sync/snowpi.db 2>/dev/null
+    if [ -f /tmp/oc-sync/snowpi.db ] && [ -s /tmp/oc-sync/snowpi.db ]; then
+      sqlite3 ~/.local/share/opencode/opencode.db <<SQL
+        ATTACH DATABASE '/tmp/oc-sync/snowpi.db' AS snowpi;
+        INSERT OR IGNORE INTO project SELECT * FROM snowpi.project;
+        INSERT OR IGNORE INTO session SELECT * FROM snowpi.session;
+        INSERT OR IGNORE INTO session_message SELECT * FROM snowpi.session_message;
+        INSERT OR IGNORE INTO message SELECT * FROM snowpi.message;
+        INSERT OR IGNORE INTO todo SELECT * FROM snowpi.todo;
+        DETACH snowpi;
+SQL
+      echo "  Merged $(sqlite3 /tmp/oc-sync/snowpi.db 'SELECT COUNT(*) FROM session') Snowpi sessions"
+    fi
+    sqlite3 ~/.local/share/opencode/opencode.db "PRAGMA wal_checkpoint(TRUNCATE);" 2>/dev/null || true
+    rsync -av --delete ~/.local/share/opencode/opencode.db* \
+      "$SSH_USER@$SNOWPI:.local/share/opencode/"
+    rm -rf /tmp/oc-sync
+    set -e
+    echo "  Done. Serve daemon picks up DB changes on next restart."
     ;;
 
   full|*)
