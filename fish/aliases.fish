@@ -53,7 +53,7 @@ alias .4='cd ../../../..'
 alias .5='cd ../../../../..'
 
 # File finding
-abbr -a ff 'find . -type f -name'
+abbr -a ffind 'find . -type f -name'
 abbr -a fd 'find . -type d -name'
 abbr -a fdh 'fd --hidden'
 
