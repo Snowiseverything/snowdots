@@ -60,8 +60,6 @@ fi
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
 
-fi
-
 # Add GitLab if not exists
 if ! grep -q "gitlab.com" ~/.ssh/known_hosts 2>/dev/null; then
     ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts 2>/dev/null

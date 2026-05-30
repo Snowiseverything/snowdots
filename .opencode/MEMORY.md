@@ -136,3 +136,13 @@
 
 ## 2026-05-30
 - Starship: separate per-machine Dotfiles repos. Freezer = Arch prompt, Snowpi = raspbi prompt. Both pushed to GitLab. Snowpi gitlab: sn0wman/snowpi-dotfiles
+
+## 2026-05-30 (late)
+- Fixed: missing `zoxide init fish | source` in config.fish (cd alias to z was broken)
+- Fixed: `ff` abbr for `find . -type f -name` conflicted with `alias ff=fastfetch`. Renamed to `ffind` on both Freezer and Snowpi
+- MTP phone not showing in file manager: missing `gvfs-mtp` package. Install: `sudo pacman -S gvfs-mtp`
+- setup-freezer.sh had stray `fi` at line 63 (no matching if). Removed.
+- Created matugen SDDM template for silent theme (`Dotfiles/matugen/templates/sddm-silent.conf`). No wallpaper — uses solid matugen surface color as background like catppuccin presets.
+- SDDM is SilentSDDM theme v1.4.2 at `/usr/share/sddm/themes/silent/`. Configs/ has catppuccin presets built in.
+- Phone images backed up at `/mnt/backups/NothingPhone/` (41G).
+- Setup script at `~/scripts/setup-sddm.sh` copies matugen config to theme dir (needs sudo).
