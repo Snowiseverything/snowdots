@@ -49,28 +49,39 @@ else
 fi
 echo "───────────────────────────────────────────────"
 
-# Commit local changes first (avoids template flash from stash)
+# ── Sync ───────────────────────────────────────
 CHANGES=$(git status --porcelain)
+CHANGE_COUNT=$(echo "$CHANGES" | grep -c . || echo 0)
 
-if [ ! -z "$CHANGES" ]; then
+if [ "$CHANGE_COUNT" -gt 0 ]; then
     FIRST_CHANGE=$(echo "$CHANGES" | head -1 | sed 's/^.. //' | sed 's/\/.*//')
     MSG="sync | $HOSTNAME | $FIRST_CHANGE"
-    echo "📤 Committing: $MSG"
+    echo "📤 Committing $CHANGE_COUNT file(s): $MSG"
     git add .
     git commit -m "$MSG"
 fi
 
-# Pull from cloud (no stash needed — clean tree)
-echo "📥 Pulling from $CLOUD_REMOTE..."
+echo "📥 Pulling from $CLOUD_URL..."
 git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || echo "⚠️  Pull failed"
 
-# Push to cloud
-echo "🚀 Syncing to $CLOUD_REMOTE..."
+echo "🚀 Pushing to $CLOUD_URL..."
 git push "$CLOUD_REMOTE" main 2>/dev/null
 
-# Push to peer
-echo "📡 Syncing to $PEER_REMOTE..."
+echo "📡 Pushing to $PEER_URL..."
 git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer offline"
+
+# ── Sync Summary ──────────────────────────────
+echo ""
+echo "  ◈ Sync Summary ──────────────────────────"
+echo "    $CLOUD_URL    ✅ Synced  (private)"
+if [ "$CHANGE_COUNT" -gt 0 ]; then
+    echo "    files                         $CHANGE_COUNT changed"
+fi
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    echo "    github.com/Snowiseverything     ⏸️  Pending (ask below)"
+fi
+echo "    $PEER_URL            ✅ Pushed"
+echo "  ────────────────────────────────────────"
 
 cd ~
 
