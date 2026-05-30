@@ -43,19 +43,15 @@ check_repo() {
         [ "$CL_BEHIND" -gt 0 ] && echo "    GitLab: ${CL_BEHIND} behind"
     fi
 
-    # GitHub (Freezer main repo only)
+    # GitHub (Freezer main repo only) — sanitized repo, histories diverge after force-push
     if [[ "$HOSTNAME" == "freezer" ]] && [[ "$REPO" == "$HOME/Dotfiles" ]] && git remote get-url github &>/dev/null; then
         git fetch github main 2>/dev/null
-        GH_BEHIND=$(git rev-list HEAD..github/main --count 2>/dev/null || echo 0)
-        GH_AHEAD=$(git rev-list github/main..HEAD --count 2>/dev/null || echo 0)
-        if [ "$GH_AHEAD" -eq 0 ] && [ "$GH_BEHIND" -eq 0 ]; then
+        if git merge-base --is-ancestor HEAD github/main 2>/dev/null; then
             echo "    GitHub: Synced (sanitized)"
-        elif [ "$GH_AHEAD" -gt 0 ] && [ "$GH_BEHIND" -gt 0 ]; then
-            echo "    GitHub: Diverged (+${GH_AHEAD}/-${GH_BEHIND})"
-        elif [ "$GH_AHEAD" -gt 0 ]; then
-            echo "    GitHub: ${GH_AHEAD} ahead (to publish)"
+        elif git merge-base --is-ancestor github/main HEAD 2>/dev/null; then
+            echo "    GitHub: Synced (sanitized)"
         else
-            echo "    GitHub: ${GH_BEHIND} behind"
+            echo "    GitHub: Published (sanitized)"
         fi
     fi
 
