@@ -93,9 +93,9 @@ if [[ "$HOSTNAME" == "freezer" ]]; then
         AGE_MIN=$(( (NOW - LAST_SYNC) / 60 ))
         echo ""
         printf "  %-12s: " "Backup"
-        if [ "$AGE_MIN" -lt 60 ]; then echo "${BOLD}$AGE_MIN min ago${NC}"
-        elif [ "$AGE_MIN" -lt 1440 ]; then echo "${BOLD}$((AGE_MIN / 60)) hr ago${NC}"
-        else echo "${BOLD}$((AGE_MIN / 1440)) days ago${NC}"
+        if [ "$AGE_MIN" -lt 60 ]; then echo -e "${BOLD}$AGE_MIN min ago${NC}"
+        elif [ "$AGE_MIN" -lt 1440 ]; then echo -e "${BOLD}$((AGE_MIN / 60)) hr ago${NC}"
+        else echo -e "${BOLD}$((AGE_MIN / 1440)) days ago${NC}"
         fi
     fi
 fi
