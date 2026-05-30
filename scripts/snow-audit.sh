@@ -1,10 +1,10 @@
 #!/bin/bash
 ########################################################################
-##  SnowDots — Master Audit                              Version: v4.0  ##
+##  SnowDots — Master Audit                              Version: v4.1  ##
 ########################################################################
 
 HOSTNAME=$(hostname)
-BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
+BOLD='\033[1m'; NC='\033[0m'
 
 PRIMARY_REPO="$HOME/Dotfiles"
 
@@ -16,19 +16,27 @@ echo -e "${BOLD}☁️  Remote Sync Status${NC}"
 if [ -d "$PRIMARY_REPO" ]; then
     cd "$PRIMARY_REPO" || exit
 
-    # GitLab
-    git fetch gitlab main 2>/dev/null
-    GL_BEHIND=$(git rev-list HEAD..gitlab/main --count 2>/dev/null)
-    GL_AHEAD=$(git rev-list gitlab/main..HEAD --count 2>/dev/null)
-    if [ "$GL_AHEAD" -eq 0 ] && [ "$GL_BEHIND" -eq 0 ]; then
-        printf "  %-12s: ${BOLD}Synced${NC}\n" "GitLab"
+    if [[ "$HOSTNAME" == "snowpi" ]]; then
+        CLOUD="origin"
+        PEER="freezer"
     else
-        [ "$GL_AHEAD" -gt 0 ] && printf "  %-12s: ${BOLD}${GL_AHEAD} ahead${NC}\n" "GitLab"
-        [ "$GL_BEHIND" -gt 0 ] && printf "  %-12s: ${BOLD}${GL_BEHIND} behind${NC}\n" "GitLab"
+        CLOUD="gitlab"
+        PEER="snowpi"
     fi
 
-    # GitHub (sanitized public mirror)
-    if git remote get-url github &>/dev/null; then
+    # Cloud (GitLab)
+    git fetch "$CLOUD" main 2>/dev/null
+    CL_BEHIND=$(git rev-list HEAD.."$CLOUD"/main --count 2>/dev/null)
+    CL_AHEAD=$(git rev-list "$CLOUD"/main..HEAD --count 2>/dev/null)
+    if [ "$CL_AHEAD" -eq 0 ] && [ "$CL_BEHIND" -eq 0 ]; then
+        printf "  %-12s: ${BOLD}Synced${NC}\n" "GitLab"
+    else
+        [ "$CL_AHEAD" -gt 0 ] && printf "  %-12s: ${BOLD}${CL_AHEAD} ahead${NC}\n" "GitLab"
+        [ "$CL_BEHIND" -gt 0 ] && printf "  %-12s: ${BOLD}${CL_BEHIND} behind${NC}\n" "GitLab"
+    fi
+
+    # GitHub (Freezer only)
+    if [[ "$HOSTNAME" == "freezer" ]] && git remote get-url github &>/dev/null; then
         git fetch github main 2>/dev/null
         GH_BEHIND=$(git rev-list HEAD..github/main --count 2>/dev/null || echo 0)
         GH_AHEAD=$(git rev-list github/main..HEAD --count 2>/dev/null || echo 0)
@@ -43,9 +51,8 @@ if [ -d "$PRIMARY_REPO" ]; then
         fi
     fi
 
-    # Peer (Snowpi)
-    PEER_REMOTE="snowpi"
-    if git remote get-url "$PEER_REMOTE" &>/dev/null; then
+    # Peer
+    if git remote get-url "$PEER" &>/dev/null; then
         printf "  %-12s: ${BOLD}Configured${NC}\n" "Peer"
     fi
 
@@ -66,20 +73,22 @@ if [ -d "$PRIMARY_REPO" ]; then
         done
     fi
 
-    # Local Backup
-    BACKUP_DIR="/mnt/backups/System-Mirror/home-dots"
-    if [ -d "$BACKUP_DIR" ]; then
-        LAST_SYNC=$(stat -c %Y "$BACKUP_DIR" 2>/dev/null)
-        NOW=$(date +%s)
-        AGE_MIN=$(( (NOW - LAST_SYNC) / 60 ))
-        echo ""
-        printf "  %-12s: " "Local Backup"
-        if [ "$AGE_MIN" -lt 60 ]; then
-            echo -e "${BOLD}$AGE_MIN min ago${NC}"
-        elif [ "$AGE_MIN" -lt 1440 ]; then
-            echo -e "${BOLD}$((AGE_MIN / 60)) hr ago${NC}"
-        else
-            echo -e "${BOLD}$((AGE_MIN / 1440)) days ago${NC}"
+    # Local Backup (Freezer only)
+    if [[ "$HOSTNAME" == "freezer" ]]; then
+        BACKUP_DIR="/mnt/backups/System-Mirror/home-dots"
+        if [ -d "$BACKUP_DIR" ]; then
+            LAST_SYNC=$(stat -c %Y "$BACKUP_DIR" 2>/dev/null)
+            NOW=$(date +%s)
+            AGE_MIN=$(( (NOW - LAST_SYNC) / 60 ))
+            echo ""
+            printf "  %-12s: " "Local Backup"
+            if [ "$AGE_MIN" -lt 60 ]; then
+                echo -e "${BOLD}$AGE_MIN min ago${NC}"
+            elif [ "$AGE_MIN" -lt 1440 ]; then
+                echo -e "${BOLD}$((AGE_MIN / 60)) hr ago${NC}"
+            else
+                echo -e "${BOLD}$((AGE_MIN / 1440)) days ago${NC}"
+            fi
         fi
     fi
 fi
@@ -87,7 +96,7 @@ fi
 # ── SYSTEM STATUS ──────────────────────────────
 echo -e "\n${BOLD}󰍹 System${NC}"
 echo -e "  Uptime    : ${BOLD}$(uptime -p | sed 's/up //')${NC}"
-TEMP=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+TEMP=$(cat /sys/class/thermal/thermal_zone1/temp /sys/class/thermal/thermal_zone0/temp 2>/dev/null | head -1)
 [ -n "$TEMP" ] && echo -e "  Temp      : ${BOLD}$((TEMP/1000))°C${NC}"
 
 # ── NETWORK STATUS ─────────────────────────────
@@ -114,12 +123,19 @@ done
 
 # ── SERVICES ───────────────────────────────────
 echo -e "\n${BOLD}󰓦 Services${NC}"
-for s in Hyprland quickshell awww-daemon skwd-daemon; do
-    pgrep -x "$s" &>/dev/null && printf "  %-12s: ${BOLD}RUNNING${NC}\n" "$s" || printf "  %-12s: STOPPED\n" "$s"
-done
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    for s in Hyprland quickshell awww-daemon skwd-daemon; do
+        pgrep -x "$s" &>/dev/null && printf "  %-12s: ${BOLD}RUNNING${NC}\n" "$s" || printf "  %-12s: STOPPED\n" "$s"
+    done
+elif [[ "$HOSTNAME" == "snowpi" ]]; then
+    for s in pihole-FTL syncthing sshd; do
+        pgrep -x "$s" &>/dev/null && printf "  %-12s: ${BOLD}RUNNING${NC}\n" "$s" || printf "  %-12s: STOPPED\n" "$s"
+    done
+fi
 if command -v docker &>/dev/null; then
     DOCKER_COUNT=$(docker ps -q 2>/dev/null | wc -l)
-    printf "  %-12s: ${BOLD}%d container(s)${NC}\n" "Docker" "$DOCKER_COUNT"
+    DOCKER_NAMES=$(docker ps --format '{{.Names}}' 2>/dev/null | tr '\n' ' ')
+    printf "  %-12s: ${BOLD}%d container(s)${NC} %s\n" "Docker" "$DOCKER_COUNT" "$DOCKER_NAMES"
 fi
 
 echo "---------------------------------------------------"
