@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-SNOWPI="192.168.1.35"
+SNOWPI="192.168.1.200"
 SSH_USER="snow"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
