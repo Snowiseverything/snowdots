@@ -32,10 +32,16 @@ check_repo() {
     if [ "$LABEL" != "main" ]; then echo ""; fi
     echo -e "  ${BOLD}$LABEL${NC} ($(basename "$REPO"))"
 
-    git fetch "$CLOUD" main 2>/dev/null
+    # Fetch both remotes in parallel
+    git fetch "$CLOUD" main --depth 1 2>/dev/null & CL_PID=$!
+    GH_PID=""
+    if [[ "$HOSTNAME" == "freezer" ]] && [[ "$REPO" == "$HOME/Dotfiles" ]] && git remote get-url github &>/dev/null; then
+        git fetch github main --depth 1 2>/dev/null & GH_PID=$!
+    fi
+
+    wait "$CL_PID" 2>/dev/null
     CL_BEHIND=$(git rev-list HEAD.."$CLOUD"/main --count 2>/dev/null)
     CL_AHEAD=$(git rev-list "$CLOUD"/main..HEAD --count 2>/dev/null || echo 0)
-
     if [ "$CL_AHEAD" -eq 0 ] && [ "$CL_BEHIND" -eq 0 ]; then
         echo "    GitLab: Synced"
     else
@@ -43,9 +49,8 @@ check_repo() {
         [ "$CL_BEHIND" -gt 0 ] && echo "    GitLab: ${CL_BEHIND} behind"
     fi
 
-    # GitHub (Freezer main repo only) — sanitized repo, histories diverge after force-push
-    if [[ "$HOSTNAME" == "freezer" ]] && [[ "$REPO" == "$HOME/Dotfiles" ]] && git remote get-url github &>/dev/null; then
-        git fetch github main 2>/dev/null
+    if [ -n "$GH_PID" ]; then
+        wait "$GH_PID" 2>/dev/null
         if git merge-base --is-ancestor HEAD github/main 2>/dev/null; then
             echo "    GitHub: Synced (sanitized)"
         elif git merge-base --is-ancestor github/main HEAD 2>/dev/null; then

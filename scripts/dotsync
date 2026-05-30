@@ -28,26 +28,8 @@ elif [[ "$HOSTNAME" == "snowpi" ]]; then
     PEER_URL="freezer (Tailscale)"
 fi
 
-# ── Banner ─────────────────────────────────────
-clear 2>/dev/null || true
-echo ""
-echo "██████╗  ██████╗ ████████╗███████╗██╗   ██╗███╗   ██╗ ██████╗"
-echo "██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝╚██╗ ██╔╝████╗  ██║██╔════╝"
-echo "██║  ██║██║   ██║   ██║   ███████╗ ╚████╔╝ ██╔██╗ ██║██║     "
-echo "██║  ██║██║   ██║   ██║   ╚════██║  ╚██╔╝  ██║╚██╗██║██║     "
-echo "██████╔╝╚██████╔╝   ██║   ███████║   ██║   ██║ ╚████║╚██████╗"
-echo "╚═════╝  ╚═════╝    ╚═╝   ╚══════╝   ╚═╝   ╚═╝  ╚═══╝ ╚═════╝"
-echo ""
-echo "  ┌─ Host:  $HOSTNAME"
-echo "  ├─ Repo:  $REPO_NAME"
-echo "  ├─ Push:  $CLOUD_URL"
-echo "  ├─ Peer:  $PEER_URL"
-if [[ "$HOSTNAME" == "freezer" ]]; then
-    echo "  └─ GH:    github.com/Snowiseverything/snowdots (public, sanitized)"
-else
-    echo "  └─ GH:    —"
-fi
-echo "───────────────────────────────────────────────"
+# ── Header ──────────────────────────────────────
+echo "dotsync | $HOSTNAME | $REPO_NAME | ↻ $CLOUD_URL | ↻ $PEER_URL"
 
 # ── Sync ───────────────────────────────────────
 CHANGES=$(git status --porcelain)
@@ -61,39 +43,19 @@ if [ "$CHANGE_COUNT" -gt 0 ]; then
     git commit -m "$MSG"
 fi
 
-echo "📥 Pulling from $CLOUD_URL..."
+echo "📡 Syncing..."
 git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || echo "⚠️  Pull failed"
-
-echo "🚀 Pushing to $CLOUD_URL..."
-git push "$CLOUD_REMOTE" main 2>/dev/null
-
-echo "📡 Pushing to $PEER_URL..."
-git push "$PEER_REMOTE" main 2>/dev/null || echo "⚠️  Peer offline"
+git push "$CLOUD_REMOTE" main 2>/dev/null &
+git push "$PEER_REMOTE" main 2>/dev/null &
+wait
 
 # ── Sync Summary ──────────────────────────────
-echo ""
-echo "  ◈ Sync Summary ──────────────────────────"
-echo "    $CLOUD_URL    ✅ Synced  (private)"
-if [ "$CHANGE_COUNT" -gt 0 ]; then
-    echo "    files                         $CHANGE_COUNT changed"
-fi
-if [[ "$HOSTNAME" == "freezer" ]]; then
-    echo "    github.com/Snowiseverything     ⏸️  Pending (ask below)"
-fi
-echo "    $PEER_URL            ✅ Pushed"
-echo "  ────────────────────────────────────────"
+echo "  ✅ $CLOUD_URL | $PEER_URL"
 
 cd ~
 
 # Auto-heal symlinks
 ln -sf "$REPO/scripts/dotsync" "$HOME/.local/bin/dotsync"
-
-# Machine-specific audit
-if [[ "$HOSTNAME" == "freezer" ]]; then
-    [ -f "$REPO/scripts/snow-audit.sh" ] && bash "$REPO/scripts/snow-audit.sh"
-elif [[ "$HOSTNAME" == "snowpi" ]]; then
-    [ -f "$REPO/scripts/audit-dots.sh" ] && bash "$REPO/scripts/audit-dots.sh"
-fi
 
 # Ask about GitHub publish (Freezer only)
 if [[ "$HOSTNAME" == "freezer" ]]; then
