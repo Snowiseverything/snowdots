@@ -5,6 +5,7 @@
 # ── Shared: both machines ────────────────────
 set -x STARSHIP_CONFIG ~/.config/starship.toml
 starship init fish | source
+zoxide init fish | source
 
 source ~/.config/fish/aliases.fish
 
