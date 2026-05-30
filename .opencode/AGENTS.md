@@ -20,7 +20,8 @@
 - `setup-ollama.sh` - Install ollama-cuda, store models at `/mnt/games/ollama`
 - `resize-sda.sh` - Re-partition /dev/sda (unmounts before modifying)
 - `scripts/dot-mirror.sh` - Sync Dotfiles to external backup
-- `scripts/snow-audit.sh` - System audit
+- `scripts/snow-audit.sh` - System audit (`audit` alias)
+- `scripts/health.sh` - Combined Freezer + Snowpi health (`health` alias)
 
 ## Ollama
 ```bash

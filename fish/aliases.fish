@@ -117,7 +117,8 @@ abbr -a sbdel 'sudo btrfs subvolume delete' #eg  sudo btrfs subvolume delete /.s
 alias snowpi='ssh snow@192.168.1.35'
 
 # ── SnowDots Scripts ───────────────────────────
-alias saudit='~/scripts/snow-audit.sh'
+alias audit='~/scripts/snow-audit.sh'
+alias health='~/scripts/health.sh'
 alias wall-reset='~/scripts/wall-reset.sh'
 alias wall-sync='~/scripts/wall-sync.sh'
 alias rename-wall='~/scripts/rename-wallpapers.sh'

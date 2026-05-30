@@ -9,6 +9,7 @@ permission:
     "free *": allow
     "uptime": allow
     "snow-audit*": allow
+    "health*": allow
     "journalctl*": allow
     "lsblk": allow
     "ls *": allow

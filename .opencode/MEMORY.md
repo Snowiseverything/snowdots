@@ -40,6 +40,7 @@
 - Fixed btop neon green colors - made bracket letters purple (#e4b7f3)
 - Created "working" git tag on GitLab for rollback
 - Added local backup sync status to snow-audit.sh
+- Renamed `saudit` → `audit` alias. Created `health` alias for both-machine check
 - System check: All scripts work (dotsync, wall-sync, audit)
 - Found failed service: xdg-desktop-portal-hyprland (fixed with daemon-reload)
 - Reinstalled Vencord for Discord

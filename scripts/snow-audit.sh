@@ -8,87 +8,94 @@ BOLD='\033[1m'; NC='\033[0m'
 
 PRIMARY_REPO="$HOME/Dotfiles"
 
-echo -e "${BOLD}❄️  SnowDots Master Audit | Host: $HOSTNAME${NC}"
+echo -e "${BOLD}❄️  Audit | Host: $HOSTNAME${NC}"
 echo "---------------------------------------------------"
 
 # ── GIT SYNC STATUS ────────────────────────────
-echo -e "${BOLD}☁️  Remote Sync Status${NC}"
-if [ -d "$PRIMARY_REPO" ]; then
-    cd "$PRIMARY_REPO" || exit
+check_repo() {
+    local REPO="$1"
+    local LABEL="$2"
+    if [ ! -d "$REPO" ]; then return; fi
+    cd "$REPO" || return
 
-    if [[ "$HOSTNAME" == "snowpi" ]]; then
+    if [[ "$HOSTNAME" == "snowpi" ]] && [[ "$REPO" == "$HOME/Dotfiles" ]]; then
         CLOUD="origin"
         PEER="freezer"
+    elif [[ "$HOSTNAME" == "snowpi" ]] && [[ "$REPO" == "$HOME/Freezer-Dotfiles" ]]; then
+        CLOUD="origin"
+        PEER=""
     else
         CLOUD="gitlab"
         PEER="snowpi"
     fi
 
-    # Cloud (GitLab)
+    if [ "$LABEL" != "main" ]; then echo ""; fi
+    echo -e "  ${BOLD}$LABEL${NC} ($(basename "$REPO"))"
+
     git fetch "$CLOUD" main 2>/dev/null
     CL_BEHIND=$(git rev-list HEAD.."$CLOUD"/main --count 2>/dev/null)
-    CL_AHEAD=$(git rev-list "$CLOUD"/main..HEAD --count 2>/dev/null)
+    CL_AHEAD=$(git rev-list "$CLOUD"/main..HEAD --count 2>/dev/null || echo 0)
+
     if [ "$CL_AHEAD" -eq 0 ] && [ "$CL_BEHIND" -eq 0 ]; then
-        printf "  %-12s: ${BOLD}Synced${NC}\n" "GitLab"
+        echo "    GitLab: Synced"
     else
-        [ "$CL_AHEAD" -gt 0 ] && printf "  %-12s: ${BOLD}${CL_AHEAD} ahead${NC}\n" "GitLab"
-        [ "$CL_BEHIND" -gt 0 ] && printf "  %-12s: ${BOLD}${CL_BEHIND} behind${NC}\n" "GitLab"
+        [ "$CL_AHEAD" -gt 0 ] && echo "    GitLab: ${CL_AHEAD} ahead"
+        [ "$CL_BEHIND" -gt 0 ] && echo "    GitLab: ${CL_BEHIND} behind"
     fi
 
-    # GitHub (Freezer only)
-    if [[ "$HOSTNAME" == "freezer" ]] && git remote get-url github &>/dev/null; then
+    # GitHub (Freezer main repo only)
+    if [[ "$HOSTNAME" == "freezer" ]] && [[ "$REPO" == "$HOME/Dotfiles" ]] && git remote get-url github &>/dev/null; then
         git fetch github main 2>/dev/null
         GH_BEHIND=$(git rev-list HEAD..github/main --count 2>/dev/null || echo 0)
         GH_AHEAD=$(git rev-list github/main..HEAD --count 2>/dev/null || echo 0)
         if [ "$GH_AHEAD" -eq 0 ] && [ "$GH_BEHIND" -eq 0 ]; then
-            printf "  %-12s: ${BOLD}Synced (sanitized)${NC}\n" "GitHub"
+            echo "    GitHub: Synced (sanitized)"
         elif [ "$GH_AHEAD" -gt 0 ] && [ "$GH_BEHIND" -gt 0 ]; then
-            printf "  %-12s: ${BOLD}Diverged${NC} (+${GH_AHEAD}/-${GH_BEHIND})\n" "GitHub"
+            echo "    GitHub: Diverged (+${GH_AHEAD}/-${GH_BEHIND})"
         elif [ "$GH_AHEAD" -gt 0 ]; then
-            printf "  %-12s: ${BOLD}${GH_AHEAD} ahead${NC} (to publish)\n" "GitHub"
+            echo "    GitHub: ${GH_AHEAD} ahead (to publish)"
         else
-            printf "  %-12s: ${BOLD}${GH_BEHIND} behind${NC}\n" "GitHub"
+            echo "    GitHub: ${GH_BEHIND} behind"
         fi
     fi
 
-    # Peer
-    if git remote get-url "$PEER" &>/dev/null; then
-        printf "  %-12s: ${BOLD}Configured${NC}\n" "Peer"
+    if [ -n "$PEER" ] && git remote get-url "$PEER" &>/dev/null; then
+        echo "    Peer: Configured"
     fi
 
-    # Local file changes
     STATUS=$(git status --short)
     if [ -n "$STATUS" ]; then
-        echo ""
-        echo -e "  ${BOLD}Uncommitted Changes:${NC}"
+        echo "    Uncommitted:"
         echo "$STATUS" | while read -r line; do
             MODE=$(echo "$line" | awk '{print $1}')
             FILE=$(echo "$line" | awk '{print $2}')
-            SIZE=$([ -f "$FILE" ] && du -sh "$FILE" 2>/dev/null | awk '{print $1}' || echo "-")
             case $MODE in
-                M| M) echo "    󰏫 Mod: $FILE ($SIZE)" ;;
-                A|\?\?) echo "    󰐕 Add: $FILE ($SIZE)" ;;
-                D| D) echo "    󰍶 Del: $FILE" ;;
+                M| M) echo "      󰏫 $FILE" ;;
+                A|\?\?) echo "      󰐕 $FILE" ;;
+                D| D) echo "      󰍶 $FILE" ;;
             esac
         done
     fi
+}
 
-    # Local Backup (Freezer only)
-    if [[ "$HOSTNAME" == "freezer" ]]; then
-        BACKUP_DIR="/mnt/backups/System-Mirror/home-dots"
-        if [ -d "$BACKUP_DIR" ]; then
-            LAST_SYNC=$(stat -c %Y "$BACKUP_DIR" 2>/dev/null)
-            NOW=$(date +%s)
-            AGE_MIN=$(( (NOW - LAST_SYNC) / 60 ))
-            echo ""
-            printf "  %-12s: " "Local Backup"
-            if [ "$AGE_MIN" -lt 60 ]; then
-                echo -e "${BOLD}$AGE_MIN min ago${NC}"
-            elif [ "$AGE_MIN" -lt 1440 ]; then
-                echo -e "${BOLD}$((AGE_MIN / 60)) hr ago${NC}"
-            else
-                echo -e "${BOLD}$((AGE_MIN / 1440)) days ago${NC}"
-            fi
+echo -e "${BOLD}☁️  Git Status${NC}"
+check_repo "$HOME/Dotfiles" "main"
+if [[ "$HOSTNAME" == "snowpi" ]]; then
+    check_repo "$HOME/Freezer-Dotfiles" "peer"
+fi
+
+# Local Backup (Freezer only)
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    BACKUP_DIR="/mnt/backups/System-Mirror/home-dots"
+    if [ -d "$BACKUP_DIR" ]; then
+        LAST_SYNC=$(stat -c %Y "$BACKUP_DIR" 2>/dev/null)
+        NOW=$(date +%s)
+        AGE_MIN=$(( (NOW - LAST_SYNC) / 60 ))
+        echo ""
+        printf "  %-12s: " "Backup"
+        if [ "$AGE_MIN" -lt 60 ]; then echo "${BOLD}$AGE_MIN min ago${NC}"
+        elif [ "$AGE_MIN" -lt 1440 ]; then echo "${BOLD}$((AGE_MIN / 60)) hr ago${NC}"
+        else echo "${BOLD}$((AGE_MIN / 1440)) days ago${NC}"
         fi
     fi
 fi

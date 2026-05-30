@@ -5,7 +5,7 @@ NC='\033[0m'
 echo -e "${BOLD}❄️  SnowDots Command Reference${NC}"
 echo "---------------------------------------"
 echo -e "${BOLD}Maintenance:${NC}"
-echo "  saudit      - Master System Audit (System, Git, Visuals)"
+echo "  audit       - System Audit (System, Git, Services)"
 echo "  fix-me.sh   - Deep System Repair (Mirrors, Updates, Limine)"
 echo "  dotsync     - Sync all dotfiles to GitLab + peers + local"
 echo -e "\n${BOLD}Visuals & Wallpapers:${NC}"
