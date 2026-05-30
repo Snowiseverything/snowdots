@@ -69,6 +69,10 @@ input_path = '/home/snow/Dotfiles/matugen/templates/opencode.json'
 output_path = '/home/snow/.config/opencode/themes/matugen.json'
 reload = true
 
+[templates.sddm_silent]
+input_path = '/home/snow/Dotfiles/matugen/templates/sddm-silent.conf'
+output_path = '/home/snow/.cache/skwd-wall/sddm-silent.conf'
+
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true
