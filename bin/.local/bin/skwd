@@ -1,0 +1,15 @@
+case "$1" in
+    wall)
+        if [[ "$2" == "toggle" ]]; then
+            # This opens a file picker (fuzzel/rofi style) to select a wallpaper
+            # We assume your wallpapers are in ~/Pictures/Wallpapers
+            SELECTED=$(find ~/Pictures/Wallpapers -type f | fuzzel -d -p "Select Wallpaper: ")
+            if [[ -n "$SELECTED" ]]; then
+                awww img "$SELECTED"
+            fi
+        fi
+        ;;
+    *)
+        echo "Usage: skwd wall toggle"
+        ;;
+esac

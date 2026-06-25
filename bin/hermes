@@ -1,0 +1,4 @@
+#!/bin/bash
+source ~/.hermes/hermes-agent/venv/bin/activate 2>/dev/null
+export $(grep -v '^#' ~/.hermes/.env | grep -v '^$' | xargs)
+exec hermes "$@"

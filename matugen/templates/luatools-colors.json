@@ -1,0 +1,21 @@
+{
+  "value": "matugen",
+  "name": "Matugen",
+  "bgPrimary": "{{colors.surface_container_low.default.hex}}",
+  "bgSecondary": "{{colors.surface_container.default.hex}}",
+  "bgTertiary": "rgba({{colors.surface_container.default.rgb}}, 0.95)",
+  "bgHover": "rgba({{colors.surface_bright.default.rgb}}, 0.95)",
+  "bgContainer": "rgba({{colors.surface_container_low.default.rgb}}, 0.8)",
+  "bgContainerGradient": "rgba({{colors.surface_container_low.default.rgb}}, 0.85), {{colors.surface_container.default.hex}}",
+  "accent": "{{colors.primary.default.hex}}",
+  "accentLight": "{{colors.primary_fixed_dim.default.hex}}",
+  "accentDark": "{{colors.primary_fixed.default.hex}}",
+  "border": "rgba({{colors.primary.default.rgb}}, 0.3)",
+  "borderHover": "rgba({{colors.primary.default.rgb}}, 0.8)",
+  "text": "{{colors.on_surface.default.hex}}",
+  "textSecondary": "{{colors.on_surface_variant.default.hex}}",
+  "gradient": "linear-gradient(135deg, {{colors.primary_fixed_dim.default.hex}} 0%, {{colors.primary.default.hex}} 100%)",
+  "gradientLight": "linear-gradient(135deg, {{colors.tertiary.default.hex}} 0%, {{colors.primary_fixed_dim.default.hex}} 100%)",
+  "shadow": "rgba({{colors.primary.default.rgb}}, 0.4)",
+  "shadowHover": "rgba({{colors.primary.default.rgb}}, 0.6)"
+}

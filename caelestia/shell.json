@@ -1,0 +1,86 @@
+{
+    "appearance": {
+        "font": {
+            "body": {
+                "family": "Noto Sans"
+            },
+            "clock": "JetBrainsMono Nerd Font",
+            "headline": {
+                "family": "Noto Sans"
+            },
+            "label": {
+                "family": "Noto Sans"
+            },
+            "mono": {
+                "family": "JetBrainsMono Nerd Font"
+            },
+            "scale": 0.95,
+            "title": {
+                "family": "Noto Sans"
+            }
+        },
+        "transparency": {
+            "enabled": true
+        }
+    },
+    "background": {
+        "enabled": false,
+        "wallpaperEnabled": true
+    },
+    "bar": {
+        "clock": {
+            "background": false,
+            "showDate": false,
+            "showIcon": true
+        },
+        "excludedScreens": [
+        ],
+        "persistent": true,
+        "popouts": {
+            "activeWindow": true,
+            "statusIcons": true
+        },
+        "showOnHover": false,
+        "status": {
+            "showAudio": true,
+            "showKbLayout": false,
+            "showMicrophone": false
+        },
+        "tray": {
+            "background": false,
+            "compact": true,
+            "recolour": false
+        },
+        "workspaces": {
+            "occupiedBg": false,
+            "shown": 5
+        }
+    },
+    "dashboard": {
+        "performance": {
+            "showBattery": false,
+            "showGpu": true
+        }
+    },
+    "launcher": {
+        "enabled": true,
+        "showOnHover": false
+    },
+    "paths": {
+        "mediaGif": "~/.config/quickshell/caelestia/assets/bongocat.gif",
+        "sessionGif": "~/.config/quickshell/caelestia/assets/kurukuru.gif"
+    },
+    "services": {
+        "audioIncrement": 0.05,
+        "brightnessIncrement": 0.05,
+        "lyricsBackend": "Auto",
+        "maxVolume": 1,
+        "useFahrenheit": false,
+        "weatherLocation": "Erbil"
+    },
+    "utilities": {
+        "toasts": {
+            "nowPlaying": true
+        }
+    }
+}

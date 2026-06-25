@@ -1,0 +1,248 @@
+/* YouTube - Material You 3 - Standalone */
+:root {
+    color-scheme: dark;
+    --md-sys-color-primary: #94cdf7;
+    --md-sys-color-on-primary: #00344d;
+    --md-sys-color-primary-container: #004c6e;
+    --md-sys-color-on-primary-container: #c8e6ff;
+    --md-sys-color-secondary: #b7c9d9;
+    --md-sys-color-on-secondary: #21323f;
+    --md-sys-color-tertiary: #cec0e8;
+    --md-sys-color-on-tertiary: #352b4b;
+    --md-sys-color-surface: #101417;
+    --md-sys-color-on-surface: #dfe3e8;
+    --md-sys-color-surface-variant: #41474d;
+    --md-sys-color-on-surface-variant: #c1c7ce;
+    --md-sys-color-background: #101417;
+    --md-sys-color-on-background: #dfe3e8;
+    --md-sys-color-outline: #8b9198;
+    --md-sys-color-error: #ffb4ab;
+    --md-sys-color-on-error: #690005;
+    accent-color: #94cdf7;
+}
+
+/* Base overrides */
+body {
+    background-color: var(--md-sys-color-background) !important;
+    color: var(--md-sys-color-on-background) !important;
+}
+
+a {
+    color: var(--md-sys-color-primary) !important;
+}
+
+button, [role="button"], [role="tab"], [role="menuitem"] {
+    border-radius: 8px !important;
+}
+
+a:hover {
+    color: var(--md-sys-color-secondary) !important;
+}
+
+[aria-selected="true"], [aria-current="page"], [aria-current="true"],
+.active {
+    background-color: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+}
+
+/* Top bar */
+ytd-masthead, #topbar, #masthead-container {
+    background: var(--md-sys-color-surface) !important;
+    border: none !important;
+}
+
+/* Search */
+#search-input, ytd-searchbox {
+    border-radius: 24px !important;
+    background: var(--md-sys-color-surface-variant) !important;
+    border: 1px solid var(--md-sys-color-outline) !important;
+}
+
+/* Search button */
+#search-icon-legacy {
+    border-radius: 0 24px 24px 0 !important;
+}
+
+/* Sidebar */
+ytd-guide-renderer, #guide-content {
+    background: var(--md-sys-color-background) !important;
+}
+
+/* Selected sidebar item */
+ytd-guide-entry-renderer[aria-selected="true"] {
+    background: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+    border-radius: 12px !important;
+}
+
+/* Sidebar item hover */
+ytd-guide-entry-renderer:hover {
+    background: var(--md-sys-color-surface-variant) !important;
+    border-radius: 12px !important;
+}
+
+/* Video cards */
+ytd-video-renderer, ytd-rich-item-renderer {
+    background: transparent !important;
+}
+
+/* Thumbnails */
+ytd-thumbnail, #thumbnail {
+    border-radius: 12px !important;
+}
+
+/* Video title */
+#video-title {
+    color: var(--md-sys-color-on-background) !important;
+}
+
+/* Metadata */
+ytd-video-meta-block, #metadata-line {
+    color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* Channel link */
+ytd-channel-name a {
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+/* Subscribe button */
+#subscribe-button ytd-subscribe-button-renderer {
+    --yt-spec-brand-button-background: var(--md-sys-color-primary) !important;
+}
+#subscribe-button paper-button,
+ytd-subscribe-button-renderer paper-button {
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+    border-radius: 24px !important;
+}
+
+/* Like/dislike buttons */
+#top-level-buttons ytd-toggle-button-renderer,
+#top-level-buttons-computed ytd-toggle-button-renderer {
+    border-radius: 24px !important;
+}
+
+/* Like/dislike default state */
+ytd-toggle-button-renderer[is-icon-button] {
+    background: var(--md-sys-color-surface-variant) !important;
+    border-radius: 24px !important;
+    padding: 0 12px !important;
+}
+
+/* Like button ACTIVE (pressed = liked) */
+ytd-toggle-button-renderer[is-icon-button][aria-pressed="true"] {
+    background: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-primary) !important;
+}
+
+/* Like icon when active */
+ytd-toggle-button-renderer[is-icon-button][aria-pressed="true"] yt-icon,
+ytd-toggle-button-renderer[is-icon-button][aria-pressed="true"] #button yt-icon,
+ytd-toggle-button-renderer[is-icon-button][aria-pressed="true"] path {
+    color: var(--md-sys-color-primary) !important;
+    fill: var(--md-sys-color-primary) !important;
+}
+
+/* Like button text when active */
+ytd-toggle-button-renderer[is-icon-button][aria-pressed="true"] #button-text,
+ytd-toggle-button-renderer[is-icon-button][aria-pressed="true"] #text {
+    color: var(--md-sys-color-primary) !important;
+}
+
+/* Dislike button ACTIVE */
+ytd-toggle-button-renderer[is-icon-button][aria-pressed="true"][aria-label*="dislike"] {
+    background: var(--md-sys-color-surface-variant) !important;
+    color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* Segmented like/dislike container */
+ytd-segmented-like-dislike-button-renderer {
+    border-radius: 24px !important;
+    overflow: hidden !important;
+}
+
+/* Mobile like button */
+ytd-menu-renderer ytd-toggle-button-renderer {
+    border-radius: 24px !important;
+}
+
+/* Comments */
+#comments, ytd-comments {
+    background: transparent !important;
+}
+
+/* Comment text */
+#content-text {
+    color: var(--md-sys-color-on-background) !important;
+}
+
+/* Chips / category filter */
+ytd-chips-wrapper, #chips-wrapper {
+    background: var(--md-sys-color-background) !important;
+}
+
+/* Chip button */
+yt-chip-cloud-chip-renderer {
+    border-radius: 12px !important;
+    background: var(--md-sys-color-surface-variant) !important;
+    color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* Active chip */
+yt-chip-cloud-chip-renderer[aria-selected="true"] {
+    background: var(--md-sys-color-primary) !important;
+    color: var(--md-sys-color-on-primary) !important;
+}
+
+/* Video progress bar */
+.ytp-play-progress {
+    background: var(--md-sys-color-primary) !important;
+}
+
+/* Video description area */
+#meta, #description, ytd-video-secondary-info-renderer {
+    background: var(--md-sys-color-surface) !important;
+    border-radius: 12px !important;
+}
+
+/* Icons */
+yt-icon {
+    color: var(--md-sys-color-on-surface-variant) !important;
+}
+
+/* Create button */
+ytd-topbar-menu-button-renderer[aria-label*="Create"] {
+    color: var(--md-sys-color-primary) !important;
+}
+
+/* Shorts shelf */
+ytd-reel-shelf-renderer {
+    background: var(--md-sys-color-surface) !important;
+    border-radius: 16px !important;
+}
+
+/* Notification count */
+#notification-count {
+    background: var(--md-sys-color-error) !important;
+    color: var(--md-sys-color-on-error) !important;
+}
+
+/* Live badge */
+.yt-badge[aria-label*="Live"], ytd-badge-supported-renderer[aria-label*="Live"] {
+    background: var(--md-sys-color-error) !important;
+    color: var(--md-sys-color-on-error) !important;
+}
+
+/* New badge */
+.yt-badge[aria-label*="New"] {
+    background: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-primary) !important;
+}
+
+/* Video action buttons (Save to playlist, Share, etc) */
+#action-button, ytd-button-renderer[aria-label*="Share"],
+ytd-button-renderer[aria-label*="Clip"] {
+    background: var(--md-sys-color-surface-variant) !important;
+    border-radius: 24px !important;
+}

@@ -1,0 +1,6 @@
+[Unit]
+Description=Snowpi health check - switch DNS/NTP on snowpi up/down
+
+[Service]
+Type=oneshot
+ExecStart=/home/snow/scripts/snowpi-health.sh

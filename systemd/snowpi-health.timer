@@ -1,0 +1,9 @@
+[Unit]
+Description=Check snowpi health every 15s
+
+[Timer]
+OnBootSec=10
+OnUnitActiveSec=15
+
+[Install]
+WantedBy=timers.target

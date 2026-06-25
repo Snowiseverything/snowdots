@@ -1,0 +1,67 @@
+# Main Layout optimized for SnowPi
+format = """
+$username\
+$hostname\
+$localip\
+$shlvl\
+$directory\
+$git_branch\
+$git_status\
+$docker_context\
+$nodejs\
+$python\
+$cmd_duration\
+$line_break\
+$status\
+$character"""
+
+[os]
+disabled = true
+# Hardcoded for the RPi icon in your SnowPi-Dotfiles repo
+format = "[$symbol]($style)"
+style = "bold white"
+
+[os.symbols]
+Debian = "󰐿 "
+Raspbian = "󰐿 "
+Unknown = "󰐿 "
+
+[username]
+format = " [╭─ $user]($style)@"
+style_user = "bold red"
+style_root = "bold red"
+show_always = true
+
+[hostname]
+format = "[$hostname]($style) in "
+style = "bold dimmed red"
+ssh_only = false
+
+[directory]
+style = "purple"
+truncation_length = 0
+truncate_to_repo = true
+truncation_symbol = "repo: "
+
+[docker_context]
+symbol = " "
+# Enhanced for Self-Hosting: Shows when you are in a dir with a Dockerfile/Compose
+format = "via [$symbol$context]($style) "
+style = "blue bold"
+only_with_files = true
+disabled = false
+
+[character]
+success_symbol = " [╰─λ](bold red)"
+error_symbol = " [×](bold red)"
+
+[cmd_duration]
+min_time = 1
+format = "took [$duration]($style)"
+
+[git_status]
+style = "white"
+ahead = "⇡${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+behind = "⇣${count}"
+deleted = "x"

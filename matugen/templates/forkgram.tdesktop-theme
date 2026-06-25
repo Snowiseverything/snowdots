@@ -1,0 +1,61 @@
+# Forkgram theme — matugen
+# Auto-generated from wallpaper
+
+windowBg = #{{colors.surface.default.hex_stripped}}
+windowFg = #{{colors.on_surface.default.hex_stripped}}
+windowBold = #{{colors.primary.default.hex_stripped}}
+windowSubTextFg = #{{colors.on_surface_variant.default.hex_stripped}}
+
+mediaInBg = #{{colors.surface_container.default.hex_stripped}}
+mediaInFg = #{{colors.on_surface.default.hex_stripped}}
+mediaInBubbleBg = #{{colors.primary_container.default.hex_stripped}}
+mediaInBubbleFg = #{{colors.on_primary_container.default.hex_stripped}}
+mediaInBubbleShadow = #{{colors.shadow.default.hex_stripped}}
+mediaOutBg = #{{colors.primary.default.hex_stripped}}
+mediaOutFg = #{{colors.on_primary.default.hex_stripped}}
+mediaOutBubbleBg = #{{colors.primary.default.hex_stripped}}
+mediaOutBubbleFg = #{{colors.on_primary.default.hex_stripped}}
+mediaOutBubbleShadow = #{{colors.shadow.default.hex_stripped}}
+
+msgInBg = #{{colors.surface_container_low.default.hex_stripped}}
+msgInFg = #{{colors.on_surface.default.hex_stripped}}
+msgInServiceFg = #{{colors.on_surface_variant.default.hex_stripped}}
+msgInShadow = #{{colors.shadow.default.hex_stripped}}
+msgInDateFg = #{{colors.on_surface_variant.default.hex_stripped}}
+
+msgOutBg = #{{colors.primary_container.default.hex_stripped}}
+msgOutFg = #{{colors.on_primary_container.default.hex_stripped}}
+msgOutServiceFg = #{{colors.on_primary_container.default.hex_stripped}}
+msgOutShadow = #{{colors.shadow.default.hex_stripped}}
+msgOutDateFg = #{{colors.on_primary_container.default.hex_stripped}}
+
+historyToDownBg = #{{colors.primary_container.default.hex_stripped}}
+historyToDownFg = #{{colors.on_primary_container.default.hex_stripped}}
+historyToDownShadow = #{{colors.shadow.default.hex_stripped}}
+historyToDownHoverBg = #{{colors.primary.default.hex_stripped}}
+historyToDownHoverFg = #{{colors.on_primary.default.hex_stripped}}
+
+menuBg = #{{colors.surface_container.default.hex_stripped}}
+menuIcons = #{{colors.on_surface_variant.default.hex_stripped}}
+menuFg = #{{colors.on_surface.default.hex_stripped}}
+menuHoverFg = #{{colors.on_primary_container.default.hex_stripped}}
+
+trayCounterBg = #{{colors.primary.default.hex_stripped}}
+trayCounterFg = #{{colors.on_primary.default.hex_stripped}}
+trayCounterBgMute = #{{colors.surface_container_high.default.hex_stripped}}
+trayCounterFgMute = #{{colors.on_surface_variant.default.hex_stripped}}
+
+callBg = #{{colors.primary.default.hex_stripped}}
+callFg = #{{colors.on_primary.default.hex_stripped}}
+callHoverBg = #{{colors.primary_container.default.hex_stripped}}
+callHoverFg = #{{colors.on_primary_container.default.hex_stripped}}
+callAnswerBg = #{{colors.tertiary.default.hex_stripped}}
+callAnswerHoverBg = #{{colors.tertiary_container.default.hex_stripped}}
+callCancelBg = #{{colors.error.default.hex_stripped}}
+callCancelHoverBg = #{{colors.error_container.default.hex_stripped}}
+
+lightBoxBg = #{{colors.scrim.default.hex_stripped}}
+lightBoxFg = #{{colors.on_surface.default.hex_stripped}}
+
+scrollBarBg = #{{colors.primary.default.hex_stripped}}
+scrollBarBgOver = #{{colors.primary_container.default.hex_stripped}}

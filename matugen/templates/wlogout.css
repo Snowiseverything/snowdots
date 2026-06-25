@@ -1,0 +1,43 @@
+window {
+    font-family: Iosevka Nerd Font Propo;
+    font-size: 16pt;
+    color: #{{colors.on_surface.default.hex_stripped}};
+    background-color: alpha(#{{colors.surface.default.hex_stripped}}, 0.75);
+}
+
+button {
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20%;
+    background-color: transparent;
+    transition: all 0.3s ease-in;
+    box-shadow: 0 0 10px 2px transparent;
+    border-radius: 36px;
+    margin: 10px;
+}
+
+button:focus {
+    box-shadow: none;
+    outline-style: none;
+    background-size: 20%;
+}
+
+button:hover {
+    background-size: 50%;
+    outline-style: none;
+    box-shadow: 0 0 10px 3px rgba(0,0,0,0.4);
+    background-color: #{{colors.primary.default.hex_stripped}};
+    color: transparent;
+    transition: all 0.3s cubic-bezier(.55, 0.0, .28, 1.682), box-shadow 0.5s ease-in;
+}
+
+#shutdown { background-image: image(url("./icons/power.png")); }
+#shutdown:hover { background-image: image(url("./icons/power-hover.png")); }
+#logout { background-image: image(url("./icons/logout.png")); }
+#logout:hover { background-image: image(url("./icons/logout-hover.png")); }
+#reboot { background-image: image(url("./icons/restart.png")); }
+#reboot:hover { background-image: image(url("./icons/restart-hover.png")); }
+#lock { background-image: image(url("./icons/lock.png")); }
+#lock:hover { background-image: image(url("./icons/lock-hover.png")); }
+#sleep { background-image: image(url("./icons/sleep.png")); }
+#sleep:hover { background-image: image(url("./icons/sleep-hover.png")); }
