@@ -1,0 +1,16 @@
+# Pre-commit hook for Dotfiles
+# Lint and format staged files before committing.
+
+STAGED_SH=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.sh$' || true)
+STAGED_MD=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(md|json|yaml|yml)$' || true)
+
+if [ -n "$STAGED_SH" ]; then
+  echo "Checking shell scripts..."
+  echo "$STAGED_SH" | xargs -d '\n' shellcheck 2>/dev/null || echo "shellcheck not installed or found issues"
+fi
+
+if [ -n "$STAGED_MD" ] && command -v npx >/dev/null 2>&1; then
+  echo "Formatting markdown/config files..."
+  echo "$STAGED_MD" | xargs -d '\n' npx prettier --write --ignore-unknown 2>/dev/null || true
+  echo "$STAGED_MD" | xargs -d '\n' git add
+fi

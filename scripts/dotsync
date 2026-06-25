@@ -1,0 +1,73 @@
+#!/bin/bash
+# --------------------------------------------------------------------------
+# SnowSync v13 — Separate Repos Edition
+# --------------------------------------------------------------------------
+
+HOSTNAME=$(hostname)
+REPO="$HOME/Dotfiles"
+
+if [ ! -d "$REPO" ]; then
+    echo "❌ Dotfiles repo not found at $REPO"
+    exit 1
+fi
+
+cd "$REPO" || exit 1
+
+# Machine-specific config
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    REPO_NAME="snowdots"
+    CLOUD_REMOTE="gitlab"
+    CLOUD_URL="gitlab.com/sn0wman/snowdots"
+    PEER_REMOTE="snowpi"
+    PEER_URL="snowpi (LAN)"
+elif [[ "$HOSTNAME" == "snowpi" ]]; then
+    REPO_NAME="snowpi-dotfiles"
+    CLOUD_REMOTE="origin"
+    CLOUD_URL="gitlab.com/sn0wman/snowpi-dotfiles"
+    PEER_REMOTE="freezer"
+    PEER_URL="freezer (Tailscale)"
+fi
+
+# ── Header ──────────────────────────────────────
+echo "dotsync | $HOSTNAME | $REPO_NAME | ↻ $CLOUD_URL | ↻ $PEER_URL"
+
+# ── Sync ───────────────────────────────────────
+CHANGES=$(git status --porcelain)
+CHANGE_COUNT=$(echo "$CHANGES" | grep -c . || true)
+
+if [ "$CHANGE_COUNT" -gt 0 ]; then
+    FIRST_CHANGE=$(echo "$CHANGES" | head -1 | sed 's/^.. //' | sed 's/\/.*//')
+    MSG="sync ($HOSTNAME): $FIRST_CHANGE"
+    echo "📤 Committing $CHANGE_COUNT file(s): $MSG"
+    commit-message-skill --dotfiles "$MSG"
+fi
+
+echo "📡 Syncing..."
+git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || echo "⚠️  Pull failed"
+git push "$CLOUD_REMOTE" main 2>/dev/null &
+git push "$PEER_REMOTE" main 2>/dev/null &
+wait
+
+# ── Sync Summary ──────────────────────────────
+echo "  ✅ $CLOUD_URL | $PEER_URL"
+
+cd ~
+
+# Auto-heal symlinks
+ln -sf "$REPO/scripts/dotsync" "$HOME/.local/bin/dotsync"
+
+# Ask about GitHub publish (Freezer only)
+if [[ "$HOSTNAME" == "freezer" ]]; then
+    echo ""
+    read -rp "📢 Publish sanitized version to GitHub? [y/N] " publish_gh
+    case "$publish_gh" in
+        [yY]|[yY][eE][sS])
+            bash "$REPO/scripts/publish-public.sh"
+            ;;
+        *)
+            echo "⏭️  Skipped GitHub publish"
+            ;;
+    esac
+fi
+
+echo "✅ Done"

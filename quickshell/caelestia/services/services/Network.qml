@@ -248,7 +248,7 @@ Singleton {
     }
 
     function cidrToSubnetMask(cidr: string): string {
-        // Convert CIDR notation (e.g., "24") to subnet mask (e.g., "0.0.0.0")
+        // Convert CIDR notation (e.g., "24") to subnet mask (e.g., "255.255.255.0")
         const cidrNum = parseInt(cidr);
         if (isNaN(cidrNum) || cidrNum < 0 || cidrNum > 32) {
             return "";

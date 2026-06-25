@@ -1,0 +1,25 @@
+{
+  "name": "dotfiles",
+  "version": "1.0.0",
+  "description": "Hyprland dotfiles for Arch Linux. Snow-themed, material-you colored, multi-machine.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.sh": "shellcheck",
+    "*.{md,json,yml,yaml}": "prettier --write"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "prettier": "^3.8.4"
+  }
+}

@@ -1,0 +1,83 @@
+#!/bin/bash
+# -----------------------------------------------------------------------
+# ❄️  snow-dots — SnowDots CLI
+#     https://github.com/Snowiseverything/snowdots
+#
+# Commands:
+#   snow-dots help          Show this help
+#   snow-dots install       Run interactive installer
+#   snow-dots backup        Backup current dotfiles
+#   snow-dots restore       Restore from backup
+#   snow-dots list          List available backups
+# -----------------------------------------------------------------------
+set -e
+
+BOLD=$'\033[1m'
+CYAN=$'\033[0;36m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+RED=$'\033[0;31m'
+NC=$'\033[0m'
+SNOWFLAKE='❄️'
+
+SCRIPTS_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+help_text() {
+    echo ""
+    echo -e "  ${BOLD}${SNOWFLAKE} SnowDots — Dotfiles Manager${NC}"
+    echo ""
+    echo -e "  ${CYAN}Usage:${NC} snow-dots ${YELLOW}<command>${NC}"
+    echo ""
+    echo "  Commands:"
+    echo -e "    ${GREEN}help${NC}      Show this help"
+    echo -e "    ${GREEN}install${NC}   Run the interactive dotfiles installer"
+    echo -e "    ${GREEN}backup${NC}    Backup current config to .dotfiles-backup-*"
+    echo -e "    ${GREEN}restore${NC}   Restore config from a backup"
+    echo -e "    ${GREEN}list${NC}      List available backups"
+    echo ""
+    echo "  Example:"
+    echo -e "    ${CYAN}snow-dots install${NC}"
+    echo -e "    ${CYAN}snow-dots backup${NC}"
+    echo -e "    ${CYAN}snow-dots restore${NC}"
+    echo -e "    ${CYAN}snow-dots restore ~/.dotfiles-backup-20260520-120000${NC}"
+    echo ""
+}
+
+case "${1:-help}" in
+    help|-h|--help)
+        help_text
+        ;;
+    install)
+        exec bash "$SCRIPTS_DIR/snow-dots.sh"
+        ;;
+    backup)
+        exec bash "$SCRIPTS_DIR/backup-dots.sh"
+        ;;
+    restore)
+        shift
+        exec bash "$SCRIPTS_DIR/restore-dots.sh" "$@"
+        ;;
+    list)
+        echo -e ""
+        echo -e "  ${BOLD}${SNOWFLAKE} Available Backups${NC}"
+        echo -e ""
+        found=0
+        for dir in "$HOME"/.dotfiles-backup-*; do
+            if [ -d "$dir" ]; then
+                size=$(du -sh "$dir" 2>/dev/null | cut -f1)
+                echo -e "  ${CYAN}$dir${NC}  (${size})"
+                found=1
+            fi
+        done
+        if [ "$found" -eq 0 ]; then
+            echo "  No backups found."
+            echo "  Run 'snow-dots backup' first."
+        fi
+        echo ""
+        ;;
+    *)
+        echo -e "  ${RED}✗${NC} Unknown command: ${YELLOW}$1${NC}"
+        echo "  Run 'snow-dots help' for usage."
+        exit 1
+        ;;
+esac

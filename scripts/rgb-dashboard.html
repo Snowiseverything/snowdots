@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RGB Control</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui; background: #1a1a2e; color: #fff; padding: 20px; }
+        h1 { margin-bottom: 20px; }
+        .card { background: #16213e; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+        .row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .color-btn { width: 48px; height: 48px; border-radius: 24px; border: 3px solid #333; cursor: pointer; }
+        .color-btn.active { border-color: #fff; }
+        .color-btn:hover { transform: scale(1.1); }
+        button { background: #0f3460; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        button:hover { background: #1a508b; }
+        .slider { width: 100%; margin: 10px 0; }
+        .status { color: #aaa; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>RGB Control</h1>
+    <div class="card">
+        <h3>Quick Colors</h3>
+        <div class="row">
+            <button class="color-btn" style="background:#ff6600" onclick="setColor('ff6600')"></button>
+            <button class="color-btn" style="background:#00aaff" onclick="setColor('00aaff')"></button>
+            <button class="color-btn" style="background:#ff0066" onclick="setColor('ff0066')"></button>
+            <button class="color-btn" style="background:#00ff88" onclick="setColor('00ff88')"></button>
+            <button class="color-btn" style="background:#ffaa00" onclick="setColor('ffaa00')"></button>
+            <button class="color-btn" style="background:#aa00ff" onclick="setColor('aa00ff')"></button>
+        </div>
+        <input type="color" id="colorPicker" class="slider" onchange="setColor(this.value.replace('#',''))">
+    </div>
+    <div class="card">
+        <h3>Brightness: <span id="briVal">50</span>%</h3>
+        <input type="range" id="brightness" min="0" max="100" value="50" class="slider" oninput="document.getElementById('briVal').textContent=this.value">
+    </div>
+    <div class="card">
+        <h3>Actions</h3>
+        <button onclick="setColor(document.getElementById('colorPicker').value.replace('#',''))">Set Color</button>
+        <button onclick="fetch('/sync',{method:'POST'})">Sync Wallpaper</button>
+    </div>
+    <div class="status" id="status">Loading...</div>
+    <script>
+        const API = '';
+        async function setColor(hex) {
+            const bri = document.getElementById('brightness').value;
+            await fetch(API+'/all', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({color:hex, brightness:parseInt(bri)})});
+            updateStatus();
+        }
+        async function updateStatus() {
+            const r = await fetch(API+'/status');
+            const d = await r.json();
+            document.getElementById('status').textContent = `OpenRGB: ${d.openrgb.color} | Keyboard: ${d.keyboard.color} | Govee: ${d.govee.color}`;
+        }
+        updateStatus();
+        setInterval(updateStatus, 5000);
+    </script>
+</body>
+</html>
