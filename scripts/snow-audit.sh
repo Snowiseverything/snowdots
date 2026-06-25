@@ -105,7 +105,7 @@ fi
 echo -e "\n${BOLD}󰍹 System${NC}"
 echo -e "  Uptime    : ${BOLD}$(uptime -p | sed 's/up //')${NC}"
 TEMP=$(cat /sys/class/thermal/thermal_zone1/temp /sys/class/thermal/thermal_zone0/temp 2>/dev/null | head -1)
-[ -n "$TEMP" ] && echo -e "  Temp      : ${BOLD}$((TEMP/1000))°C${NC}"
+[ -n "$TEMP" ] && echo -e "  CPU Temp  : ${BOLD}$((TEMP/1000))°C${NC}"
 
 # ── NETWORK STATUS ─────────────────────────────
 echo -e "\n${BOLD}󰇾 Network${NC}"
@@ -142,8 +142,9 @@ elif [[ "$HOSTNAME" == "snowpi" ]]; then
 fi
 if command -v docker &>/dev/null; then
     DOCKER_COUNT=$(docker ps -q 2>/dev/null | wc -l)
-    DOCKER_NAMES=$(docker ps --format '{{.Names}}' 2>/dev/null | tr '\n' ' ')
-    printf "  %-12s: ${BOLD}%d container(s)${NC} %s\n" "Docker" "$DOCKER_COUNT" "$DOCKER_NAMES"
+    DOCKER_NAMES=$(docker ps --format '{{.Names}}' 2>/dev/null | sed 's/^[^-]*-//' | tr '\n' ' ')
+    printf "  %-12s: ${BOLD}%d container(s)${NC}\n" "Docker" "$DOCKER_COUNT"
+    [ -n "$DOCKER_NAMES" ] && printf "    %s\n" "$DOCKER_NAMES"
 fi
 
 echo "---------------------------------------------------"

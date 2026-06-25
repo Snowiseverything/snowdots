@@ -117,15 +117,73 @@ abbr -a sbdel 'sudo btrfs subvolume delete' #eg  sudo btrfs subvolume delete /.s
 alias snowpi='ssh snow@100.83.33.67'
 
 # ── SnowDots Scripts ───────────────────────────
-alias audit='~/scripts/snow-audit.sh'
-alias health='~/scripts/health.sh'
-alias wall-reset='~/scripts/wall-reset.sh'
-alias wall-sync='~/scripts/wall-sync.sh'
-alias rename-wall='~/scripts/rename-wallpapers.sh'
-alias night-light='~/scripts/night-light.sh'
-alias sun-sched='~/scripts/sun-schedule.sh'
-alias snow-ctl='~/scripts/fuzzel-control.sh'
-alias fix-me='~/Dotfiles/scripts/fix-me.sh'
+# All scripts in PATH (~/Dotfiles/scripts + ~/.local/bin)
+# Aliases strip .sh/.py for convenience + short names for long scripts
+alias audit='snow-audit.sh'
+alias health='health.sh'
+alias wall-reset='wall-reset.sh'
+alias wall-sync='wall-sync.sh'
+alias rename-wall='rename-wallpapers.sh'
+alias night-light='night-light.sh'
+alias sun-sched='sun-schedule.sh'
+alias snow-ctl='fuzzel-control.sh'
+alias fix-me='fix-me.sh'
+alias publish='publish-public.sh'
+alias rgb='rgb-sync.sh'
+alias fav='fav-wall.sh'
+alias shot='shot-smart.sh'
+alias snow='snow-help.sh'
+alias steam='steam-launch.sh'
+alias block='toggle-adult-block.sh'
+alias mad68='mad68-rgb.py'
+alias govee='govee-led.py'
+alias launcher='app-launcher.sh'
+alias wall='wall-sync.sh'
+alias wall-r='wall-reset.sh'
+
+function scripts --description "List all SnowDots script aliases with descriptions"
+    set -l b (set_color -o)
+    set -l bl (set_color 2563eb)
+    set -l d (set_color 555555)
+    set -l g (set_color 4ade80)
+    set -l c (set_color 22d3ee)
+    set -l r (set_color normal)
+
+    printf '%s\n' "  ╭──────────────────────────────────────────────────────────╮"
+    printf '  │  %sSnowDots Scripts%s  %s(call by name or alias)%s               │\n' $b $r $d $r
+    printf '%s\n' "  ├──────────────────────────────────────────────────────────┤"
+
+    set -l entries \
+        "audit|snow-audit.sh|System audit & health overview" \
+        "health|health.sh|Quick health check" \
+        "fix-me|fix-me.sh|Auto-fix common issues" \
+        "snow|snow-help.sh|Show snowdots help menu" \
+        "publish|publish-public.sh|Push rice-only mirror → GitHub" \
+        "wall|wall-sync.sh|Sync wallpaper via matugen" \
+        "wall-r|wall-reset.sh|Reset to last wallpaper" \
+        "wall-reset|wall-reset.sh|Reset wallpaper" \
+        "wall-sync|wall-sync.sh|Sync wallpaper colors" \
+        "fav|fav-wall.sh|Set as favorite wallpaper" \
+        "rename-wall|rename-wallpapers.sh|Bulk rename wallpapers" \
+        "rgb|rgb-sync.sh|Sync all RGB to wallpaper accent" \
+        "mad68|mad68-rgb.py|MAD68 HE keyboard RGB control" \
+        "govee|govee-led.py|Govee LED strip (via HA)" \
+        "night-light|night-light.sh|Toggle night light filter" \
+        "sun-sched|sun-schedule.sh|Sunrise/sunset schedule" \
+        "shot|shot-smart.sh|Smart screenshot (region/window)" \
+        "steam|steam-launch.sh|Launch Steam with optimizations" \
+        "block|toggle-adult-block.sh|Toggle adult content blocking" \
+        "snow-ctl|fuzzel-control.sh|Control panel via fuzzel" \
+        "launcher|app-launcher.sh|App launcher helper" \
+
+    for entry in $entries
+        set -l parts (string split "|" $entry)
+        printf '  │  %s%-12s%s %s%-24s%s %s\n' $bl $parts[1] $r $d $parts[2] $r $parts[3]
+    end
+
+    printf '%s\n' "  ╰──────────────────────────────────────────────────────────╯"
+    printf '\n  %sUsage:%s  scripts | grep <keyword>   or   scripts | fzf\n' $g $r
+end
 # ── OpenCode ────────────────────────────────────
 alias oc='opencode'
 alias oc-sync='~/scripts/oc-sync.sh'
