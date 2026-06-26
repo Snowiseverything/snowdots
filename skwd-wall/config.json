@@ -1,5 +1,5 @@
 {
-  "animations": false,
+  "animations": true,
   "features": {
     "matugen": true,
     "ollama": false,
@@ -88,15 +88,15 @@
     "backend": "steamcmd"
   },
   "transition": {
-    "enabled": false,
+    "enabled": true,
     "shader": "chromatic-bloom",
     "lastShader": "chromatic-bloom",
-    "durationMs": 800
+    "durationMs": 600
   },
   "paper": {
     "engine": "skwd-paper",
     "awww": {
-      "transitionType": "fade"
+      "transitionType": "wipe"
     }
   },
   "performance": {
