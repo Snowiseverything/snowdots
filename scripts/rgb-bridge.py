@@ -8,10 +8,13 @@ Port: 5070
 
 Endpoints:
   GET  /status                    — current state of all devices
+  GET  /wallpapers                — list available wallpaper files
   POST /openrgb                   — set OpenRGB color
   POST /keyboard                  — set MAD68 keyboard color
   POST /all                       — set all devices at once
   POST /sync                      — trigger rgb-sync.sh (wallpaper colors)
+  POST /wallpaper                 — trigger wall-sync.sh (re-apply current wallpaper + colors)
+  POST /wallpaper/set             — set wallpaper by filename (e.g. {"name": "wallpaper.jpg"})
   GET  /ping                      — health check
 
 Body format (JSON):
@@ -29,15 +32,24 @@ from pathlib import Path
 PORT = 5070
 MAD68_SCRIPT = Path.home() / ".local/bin/mad68-rgb.py"
 SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/rgb-sync.sh"
+WALL_SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/wall-sync.sh"
 GOVEE_SCRIPT = Path.home() / "Dotfiles/scripts/govee-led.py"
 
 # ── State tracking ──────────────────────────────────────────────────────
+def current_wallpaper_name() -> str:
+    cache_file = Path.home() / ".cache/skwd-wall/last_applied_wall.txt"
+    if cache_file.exists():
+        return cache_file.read_text().strip().split("/")[-1] or "none"
+    return "none"
+
+
 state = {
     "openrgb": {"color": "000000", "brightness": 50, "mode": "static"},
     "keyboard": {"color": "000000"},
     "govee": {"color": "000000", "brightness": 80},
     "synced": False,
     "last_sync": None,
+    "wallpaper": current_wallpaper_name(),
 }
 
 
@@ -80,6 +92,47 @@ def set_govee(color: str, brightness: int = 80):
         return True
     except Exception as e:
         print(f"Govee error: {e}", file=sys.stderr)
+        return False
+
+
+WALLPAPER_DIR = Path.home() / "Pictures/Wallpapers"
+
+
+def list_wallpapers() -> list[str]:
+    """List wallpaper files in the wallpapers directory."""
+    if not WALLPAPER_DIR.exists():
+        return []
+    try:
+        files = sorted(WALLPAPER_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
+        return [f.name for f in files if f.suffix.lower() in (".jpg", ".jpeg", ".png")]
+    except Exception:
+        return []
+
+
+def set_wallpaper(name: str) -> bool:
+    """Set a specific wallpaper by filename and run wall-sync.sh."""
+    path = WALLPAPER_DIR / name
+    if not path.exists():
+        return False
+    cache_dir = Path.home() / ".cache/skwd-wall"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    (cache_dir / "last_applied_wall.txt").write_text(str(path))
+    ok = trigger_wallpaper()
+    state["wallpaper"] = name
+    return ok
+
+
+def trigger_wallpaper():
+    """Run wall-sync.sh to apply wallpaper and refresh colors."""
+    try:
+        subprocess.run(
+            ["bash", str(WALL_SYNC_SCRIPT)],
+            timeout=60, capture_output=True,
+        )
+        state["wallpaper"] = current_wallpaper_name()
+        return True
+    except Exception as e:
+        print(f"Wallpaper error: {e}", file=sys.stderr)
         return False
 
 
@@ -171,6 +224,8 @@ class RGBHandler(BaseHTTPRequestHandler):
             self._json(state)
         elif self.path == "/ping":
             self._json({"status": "ok"})
+        elif self.path == "/wallpapers":
+            self._json({"wallpapers": list_wallpapers()})
         elif self.path == "/recent":
             self._json_recent()
         elif self.path == "/" or self.path == "/dashboard":
@@ -245,6 +300,21 @@ class RGBHandler(BaseHTTPRequestHandler):
                 return
             ok = set_govee(color, brightness)
             self._json({"ok": ok, **state.get("govee", {})})
+
+        elif self.path == "/wallpaper":
+            ok = trigger_wallpaper()
+            self._json({"ok": ok})
+
+        elif self.path == "/wallpaper/set":
+            name = body.get("name", body.get("wallpaper", ""))
+            if not name:
+                self._json({"error": "wallpaper name required"}, 400)
+                return
+            ok = set_wallpaper(name)
+            if ok:
+                self._json({"ok": True, "wallpaper": name})
+            else:
+                self._json({"error": "wallpaper not found", "name": name}, 404)
 
         elif self.path == "/sync":
             ok = trigger_sync()

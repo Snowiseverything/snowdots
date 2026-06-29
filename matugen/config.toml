@@ -44,6 +44,10 @@ output_path = '/home/snow/.local/share/Steam/steamui/skins/Material-Theme/experi
 input_path = '/home/snow/Dotfiles/matugen/templates/vencord.css'
 output_path = '/home/snow/.config/Vencord/themes/matugen.theme.css'
 
+[templates.vencord-caelestia]
+input_path = '/home/snow/Dotfiles/matugen/templates/vencord-caelestia.css'
+output_path = '/home/snow/.config/Vencord/themes/caelestia-matugen.theme.css'
+
 [templates.brave]
 input_path = '/home/snow/Dotfiles/matugen/templates/brave.css'
 output_path = '/home/snow/.config/BraveSoftware/Brave-Browser/current-theme.css'
@@ -98,6 +102,11 @@ output_path = '/home/snow/.config/rofi/launchers/styles/shared/colors.rasi'
 [templates.forkgram]
 input_path = '/home/snow/Dotfiles/matugen/templates/forkgram.tdesktop-palette'
 output_path = '/home/snow/.cache/skwd-wall/forkgram.tdesktop-palette'
+
+[templates.toofan]
+input_path = '/home/snow/Dotfiles/matugen/templates/toofan.go'
+output_path = '/home/snow/.cache/skwd-wall/toofan.go'
+post_hook = '/home/snow/Dotfiles/scripts/toofan-theme.sh'
 
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"

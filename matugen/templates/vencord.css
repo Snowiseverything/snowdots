@@ -39,6 +39,11 @@
 	--active: {{colors.primary.default.hex}};
 	--message-hover: {{colors.primary_container.default.hex}};
 
+	--border-thickness: 1px;
+	--border: {{colors.outline.default.hex}};
+	--border-light: {{colors.outline.default.hex}};
+	--button-border: transparent;
+
 	--spacing: 12px;
 	--roundness-xl: 22px;
 	--roundness-l: 20px;

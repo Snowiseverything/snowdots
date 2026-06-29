@@ -15,19 +15,16 @@ Item {
     required property int centerWidth
     readonly property color bgColour: Colours.tPalette.m3surfaceContainerHighest
 
-    implicitWidth: Math.round(centerWidth * 0.7)
-    implicitHeight: {
-        shape.height; // Force update when shape height changes
-        return shape.pathBounds().height;
-    }
+    implicitWidth: centerWidth
+    implicitHeight: Math.round(centerWidth * 0.55)
 
-    MaterialShape {
+    Rectangle {
         id: shape
 
         anchors.centerIn: parent
-        implicitSize: root.implicitWidth
-
-        shape: MaterialShape.ClamShell
+        width: root.implicitWidth
+        height: root.implicitHeight
+        radius: Tokens.rounding.large
         color: Qt.alpha(root.bgColour, 1)
         opacity: root.bgColour.a
         layer.enabled: true
@@ -46,7 +43,9 @@ Item {
         id: pfp
 
         anchors.fill: shape
-        path: `${Paths.home}/.face`
+        anchors.margins: Tokens.padding.small
+        path: `${Paths.home}/.cache/skwd-wall/current-wallpaper`
+        fillMode: Image.PreserveAspectCrop
 
         layer.enabled: true
         layer.effect: Mask {

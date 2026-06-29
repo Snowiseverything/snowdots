@@ -327,6 +327,11 @@ if [ -f "$HOME/.local/state/caelestia/scheme.json" ] && [ -d "/etc/brave/policie
     "$HOME/Dotfiles/scripts/brave-theme.sh" >> "$LOG_FILE" 2>&1 || log "Brave theme update failed"
 fi
 
+# Rebuild toofan with matugen theme
+if [ -x "$HOME/Dotfiles/scripts/toofan-theme.sh" ]; then
+    "$HOME/Dotfiles/scripts/toofan-theme.sh" >> "$LOG_FILE" 2>&1 || log "toofan theme rebuild failed"
+fi
+
 # Notification after all syncs complete
 WALL_NAME=$(basename "$WALLPAPER")
 if command -v notify-send &> /dev/null; then

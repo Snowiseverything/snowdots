@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rename unnamed OpenCode sessions based on first user message.
+"""Rename unnamed OpenCode sessions based on first assistant response.
 
 Usage:
   opencode-rename           # rename all unnamed sessions
@@ -10,26 +10,29 @@ import os
 import sqlite3
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 DB = Path.home() / ".local/share/opencode/opencode.db"
 DAT_DIR = Path.home() / ".config/ai.opencode.desktop"
-DELETED_ID = object()  # sentinel
+DELETED_ID = object()
+
 
 def get_unnamed(db):
     cur = db.execute("""
-        SELECT s.id, s.title
+        SELECT s.id, s.title, s.time_created
         FROM session s
         WHERE s.title LIKE 'New session - %' OR s.title LIKE 'New chat - %'
     """)
     return cur.fetchall()
 
-def get_first_user_text(db, session_id):
+
+def get_first_assistant_text(db, session_id):
     cur = db.execute("""
         SELECT json_extract(p.data, '$.text')
         FROM part p
         JOIN message m ON p.message_id = m.id
-        WHERE m.session_id = ? AND json_extract(m.data, '$.role') = 'user' AND json_extract(p.data, '$.type') = 'text'
+        WHERE m.session_id = ? AND json_extract(m.data, '$.role') = 'assistant' AND json_extract(p.data, '$.type') IN ('text', 'reasoning')
         ORDER BY m.time_created ASC, p.time_created ASC
         LIMIT 1
     """, (session_id,))
@@ -38,12 +41,22 @@ def get_first_user_text(db, session_id):
         return row[0].strip()
     return None
 
-def make_title(text):
+
+def make_title(text, timestamp_ms):
     text = text.strip().replace("\n", " ").replace("\r", "")
     text = " ".join(text.split())
-    if len(text) <= 55:
-        return text
-    return text[:55].rstrip(",;:. ") + "..."
+    dt = datetime.fromtimestamp(timestamp_ms / 1000)
+    date = dt.strftime("(%Y-%m-%d)")
+    # Reserve 12 chars for date suffix " (YYYY-MM-DD)"
+    max_body = 55 - len(date) - 1
+    if max_body < 20:
+        max_body = 20
+    if len(text) <= max_body:
+        body = text
+    else:
+        body = text[:max_body].rstrip(",;:. ") + "..."
+    return f"{body} {date}"
+
 
 def clean_dat_cache(renamed_ids):
     """Remove stale references to renamed sessions from .dat cache files."""
@@ -96,6 +109,7 @@ def clean_dat_cache(renamed_ids):
             fname.write_text(json.dumps(data, indent=2) + "\n")
             print(f"  Cleaned cache: {fname.name}")
 
+
 def rename_all():
     if not DB.exists():
         print(f"DB not found: {DB}")
@@ -108,13 +122,25 @@ def rename_all():
         db.close()
         return
 
+    used_titles = set()
     renamed = []
-    for sid, old_title in unnamed:
-        text = get_first_user_text(db, sid)
+
+    for sid, old_title, time_created in unnamed:
+        text = get_first_assistant_text(db, sid)
         if not text:
-            print(f"  SKIP {sid}: no user message found")
+            print(f"  SKIP {sid}: no assistant response found")
             continue
-        title = make_title(text)
+        title = make_title(text, time_created)
+
+        # Deduplicate: append #N if title already used
+        if title in used_titles:
+            base = title
+            n = 2
+            while f"{base} #{n}" in used_titles:
+                n += 1
+            title = f"{base} #{n}"
+
+        used_titles.add(title)
         db.execute("UPDATE session SET title = ? WHERE id = ?", (title, sid))
         renamed.append(sid)
         print(f"  {old_title[:40]:40s} -> {title}")
@@ -129,6 +155,7 @@ def rename_all():
     else:
         print("Nothing to rename.")
 
+
 def watch():
     print("Watching for new sessions every 30s...")
     while True:
@@ -137,6 +164,7 @@ def watch():
         except Exception as e:
             print(f"Error: {e}", file=sys.stderr)
         time.sleep(30)
+
 
 if __name__ == "__main__":
     if "--watch" in sys.argv:
