@@ -25,7 +25,7 @@ print('%02x%02x%02x' % (int(r_l*255), int(g_l*255), int(b_l*255)))
 
 [ -z "$LED_COLOR" ] && exit 0
 
-# Run all RGB updates in parallel
+# Run all RGB updates in parallel (OpenRGB server runs as user service for fast client mode)
 openrgb --mode static --color "$LED_COLOR" --brightness 50 &>/dev/null &
 python3 "$HOME/.local/bin/mad68-rgb.py" "$LED_COLOR" 70 &>/dev/null &
 python3 "$HOME/Dotfiles/scripts/govee-led.py" "$LED_COLOR" 80 2>&1 | sed 's/^/[Govee] /' &

@@ -1,0 +1,173 @@
+# RGB Bridge Integration — deploy to Home Assistant
+# Bridge: http://100.87.27.79:5070 (Freezer PC)
+# Controls: OpenRGB, MAD68 Keyboard, Govee LED Strip
+
+rest_command:
+  # ── Wallpaper (POST for rest_command compatibility) ──────────────
+  wallpapers_refresh:
+    url: "http://100.87.27.79:5070/wallpapers"
+    method: POST
+    content_type: "application/json"
+  wallpaper:
+    url: "http://100.87.27.79:5070/wallpaper"
+    method: POST
+    content_type: "application/json"
+  wallpaper_set:
+    url: "http://100.87.27.79:5070/wallpaper/set"
+    method: POST
+    content_type: "application/json"
+    payload: '{"name": "{{ name }}"}'
+
+  # ── RGB Control ─────────────────────────────────────────────────
+  rgb_all:
+    url: "http://100.87.27.79:5070/all"
+    method: POST
+    content_type: "application/json"
+    payload: '{"color": "{{ color }}", "brightness": {{ brightness }}}'
+  rgb_brightness:
+    url: "http://100.87.27.79:5070/brightness"
+    method: POST
+    content_type: "application/json"
+    payload: '{"brightness": {{ brightness }}}'
+  rgb_openrgb:
+    url: "http://100.87.27.79:5070/openrgb"
+    method: POST
+    content_type: "application/json"
+    payload: '{"color": "{{ color }}", "brightness": {{ brightness }}}'
+  rgb_keyboard:
+    url: "http://100.87.27.79:5070/keyboard"
+    method: POST
+    content_type: "application/json"
+    payload: '{"color": "{{ color }}"}'
+  rgb_govee:
+    url: "http://100.87.27.79:5070/govee"
+    method: POST
+    content_type: "application/json"
+    payload: '{"color": "{{ color }}", "brightness": {{ brightness }}}'
+  rgb_sync:
+    url: "http://100.87.27.79:5070/sync"
+    method: POST
+
+rest:
+  - resource: "http://100.87.27.79:5070/status"
+    scan_interval: 10
+    sensor:
+      - name: "Freezer RGB"
+        unique_id: "freezer_rgb_status"
+        value_template: "{{ value_json.openrgb.color }}"
+        json_attributes:
+          - openrgb
+          - keyboard
+          - govee
+
+input_boolean:
+  rgb_sync_mode:
+    name: "Sync RGB with Wallpaper"
+    icon: "mdi:wallpaper"
+    initial: true
+
+input_number:
+  rgb_brightness:
+    name: "RGB Brightness"
+    icon: "mdi:brightness-6"
+    min: 0
+    max: 100
+    step: 5
+    initial: 50
+
+input_color:
+  rgb_color:
+    name: "RGB Color"
+    icon: "mdi:palette"
+    initial: "ffb3b0"
+    hs_color: true
+
+input_select:
+  wallpaper:
+    name: "Wallpaper"
+    icon: "mdi:image"
+    options:
+      - ""
+
+script:
+  refresh_wallpapers:
+    alias: "Refresh Wallpaper List"
+    icon: mdi:refresh
+    sequence:
+      - action: rest_command.wallpapers_refresh
+        response_variable: wp_response
+      - action: input_select.set_options
+        target:
+          entity_id: input_select.wallpaper
+        data:
+          options: >
+            {% set content = wp_response.get('content', '[]') %}
+            {{ content if content is string else '[]' }}
+
+  apply_wallpaper:
+    alias: "Apply Wallpaper"
+    icon: mdi:image
+    sequence:
+      - variables:
+          name: "{{ states('input_select.wallpaper') }}"
+      - action: rest_command.wallpaper_set
+        data:
+          name: "{{ name }}"
+      - action: input_select.set_options
+        target:
+          entity_id: input_select.wallpaper
+        data:
+          options: >
+            {% set resp = wait_for_trigger('rest_command.wallpapers_refresh') %}
+            {{ '' }}
+
+  set_rgb_brightness:
+    alias: "Set RGB Brightness"
+    icon: mdi:brightness-6
+    sequence:
+      - variables:
+          b: "{{ states('input_number.rgb_brightness') | int(50) }}"
+      - action: rest_command.rgb_brightness
+        data:
+          brightness: "{{ b }}"
+
+  set_rgb_color:
+    alias: "Set RGB Color"
+    icon: mdi:palette
+    sequence:
+      - variables:
+          c: "{{ state_attr('input_color.rgb_color', 'rgb_color') | default([255,179,176]) }}"
+          b: "{{ states('input_number.rgb_brightness') | int(50) }}"
+          hex: "{{ '%02x%02x%02x' | format(c[0], c[1], c[2]) }}"
+      - action: rest_command.rgb_all
+        data:
+          color: "{{ hex }}"
+          brightness: "{{ b }}"
+
+automation:
+  - alias: "Change Wallpaper"
+    id: "change_wallpaper"
+    trigger:
+      - platform: state
+        entity_id: input_select.wallpaper
+    condition:
+      - condition: template
+        value_template: "{{ states('input_select.wallpaper') != '' }}"
+    action:
+      - action: script.apply_wallpaper
+
+  - alias: "RGB Brightness Changed"
+    id: "rgb_brightness_changed"
+    trigger:
+      - platform: state
+        entity_id: input_number.rgb_brightness
+    action:
+      - action: script.set_rgb_brightness
+
+  - alias: "RGB Color Changed"
+    id: "rgb_color_changed"
+    trigger:
+      - platform: state
+        entity_id: input_color.rgb_color
+    action:
+      - action: script.set_rgb_color

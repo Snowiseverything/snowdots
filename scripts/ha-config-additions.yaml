@@ -1,0 +1,76 @@
+# ── Add these to your HA rgb_lights.yaml ──────────────────────────
+# 1. Add to rest_command:
+rest_command:
+  wallpaper:
+    url: "http://100.87.27.79:5070/wallpaper"
+    method: POST
+    content_type: "application/json"
+  wallpaper_set:
+    url: "http://100.87.27.79:5070/wallpaper/set"
+    method: POST
+    content_type: "application/json"
+    payload: '{"name": "{{ name }}"}'
+  wallpapers_refresh:
+    url: "http://100.87.27.79:5070/wallpapers"
+    method: POST
+    content_type: "application/json"
+  rgb_brightness:
+    url: "http://100.87.27.79:5070/brightness"
+    method: POST
+    content_type: "application/json"
+    payload: '{"brightness": {{ brightness }}}'
+
+# 2. Add to input_select (if not already there):
+input_select:
+  wallpaper:
+    name: "Wallpaper"
+    icon: "mdi:image"
+    options:
+      - ""
+
+# 3. Replace the script section with:
+script:
+  refresh_wallpapers:
+    alias: "Refresh Wallpaper List"
+    icon: mdi:refresh
+    sequence:
+      - action: rest_command.wallpapers_refresh
+        response_variable: wp_response
+      - action: input_select.set_options
+        target:
+          entity_id: input_select.wallpaper
+        data:
+          options: >
+            {{ (wp_response.content | from_json).wallpapers }}
+
+  apply_wallpaper:
+    alias: "Apply Wallpaper"
+    icon: mdi:image
+    sequence:
+      - variables:
+          name: "{{ states('input_select.wallpaper') }}"
+      - condition: template
+        value_template: "{{ name != '' and name != none }}"
+      - action: rest_command.wallpaper_set
+        data:
+          name: "{{ name }}"
+
+  set_rgb_brightness:
+    alias: "Set RGB Brightness (all devices)"
+    icon: mdi:brightness-6
+    sequence:
+      - variables:
+          b: "{{ states('input_number.rgb_brightness') | int(50) }}"
+      - action: rest_command.rgb_brightness
+        data:
+          brightness: "{{ b }}"
+
+# 4. Add automation for brightness slider:
+automation:
+  - alias: "RGB Brightness Changed"
+    id: "rgb_brightness_changed"
+    trigger:
+      - platform: state
+        entity_id: input_number.rgb_brightness
+    action:
+      - action: script.set_rgb_brightness

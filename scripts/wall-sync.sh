@@ -124,10 +124,10 @@ mkdir -p "$HOME/.local/state/caelestia/wallpaper"
 echo "$WALLPAPER" > "$HOME/.local/state/caelestia/wallpaper/path.txt"
 ln -sf "$WALLPAPER" "$CACHE_DIR/current-wallpaper"
 
-# 4. Set wallpaper with awww fast fade, then sync colors
-# Skip awww for steam/WE wallpapers (they're rendered by skwd-paper, not awww)
+# 4. Set wallpaper via skwd daemon (handles both static and video wallpapers)
+# Steam/WE wallpapers are handled by skwd's steam wallpaper system
 if [ "$IS_STEAM" = false ]; then
-    awww img "$WALLPAPER" --transition-type fade --transition-duration 0.3 --transition-fps 60 2>/dev/null || true
+    skwd wall apply "{\"path\":\"$WALLPAPER\"}" 2>/dev/null || true
 fi
 
 # Generate colors after wallpaper transition — so they match

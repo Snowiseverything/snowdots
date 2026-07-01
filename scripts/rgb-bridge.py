@@ -42,6 +42,13 @@ def current_wallpaper_name() -> str:
         return cache_file.read_text().strip().split("/")[-1] or "none"
     return "none"
 
+def current_wallpaper_path() -> str | None:
+    cache_file = Path.home() / ".cache/skwd-wall/last_applied_wall.txt"
+    if cache_file.exists():
+        path = cache_file.read_text().strip()
+        return path if path and Path(path).exists() else None
+    return None
+
 
 state = {
     "openrgb": {"color": "000000", "brightness": 50, "mode": "static"},
@@ -99,14 +106,23 @@ WALLPAPER_DIR = Path.home() / "Pictures/Wallpapers"
 
 
 def list_wallpapers() -> list[str]:
-    """List wallpaper files in the wallpapers directory."""
+    """List all wallpaper files (including subdirectories like effects/)."""
     if not WALLPAPER_DIR.exists():
         return []
+    valid_ext = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+    wallpapers = []
     try:
-        files = sorted(WALLPAPER_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True)
-        return [f.name for f in files if f.suffix.lower() in (".jpg", ".jpeg", ".png")]
+        for entry in sorted(WALLPAPER_DIR.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+            if entry.is_file() and entry.suffix.lower() in valid_ext:
+                wallpapers.append(entry.name)
+        for subdir in sorted(WALLPAPER_DIR.iterdir()):
+            if subdir.is_dir() and not subdir.name.startswith("."):
+                for entry in sorted(subdir.iterdir(), key=lambda p: p.stat().st_mtime, reverse=True):
+                    if entry.is_file() and entry.suffix.lower() in valid_ext:
+                        wallpapers.append(f"{subdir.name}/{entry.name}")
     except Exception:
-        return []
+        pass
+    return wallpapers
 
 
 def set_wallpaper(name: str) -> bool:
@@ -117,18 +133,23 @@ def set_wallpaper(name: str) -> bool:
     cache_dir = Path.home() / ".cache/skwd-wall"
     cache_dir.mkdir(parents=True, exist_ok=True)
     (cache_dir / "last_applied_wall.txt").write_text(str(path))
-    ok = trigger_wallpaper()
+    ok = trigger_wallpaper(wallpaper_path=str(path))
     state["wallpaper"] = name
     return ok
 
 
-def trigger_wallpaper():
-    """Run wall-sync.sh to apply wallpaper and refresh colors."""
+def trigger_wallpaper(wallpaper_path: str | None = None):
+    """Run wall-sync.sh to apply wallpaper and refresh colors.
+    
+    Args:
+        wallpaper_path: Path to the wallpaper to apply. If None, wall-sync.sh
+                        will auto-detect from the cache file.
+    """
     try:
-        subprocess.run(
-            ["bash", str(WALL_SYNC_SCRIPT)],
-            timeout=60, capture_output=True,
-        )
+        cmd = ["bash", str(WALL_SYNC_SCRIPT)]
+        if wallpaper_path:
+            cmd.append(wallpaper_path)
+        subprocess.run(cmd, timeout=60, capture_output=True)
         state["wallpaper"] = current_wallpaper_name()
         return True
     except Exception as e:
@@ -225,13 +246,46 @@ class RGBHandler(BaseHTTPRequestHandler):
         elif self.path == "/ping":
             self._json({"status": "ok"})
         elif self.path == "/wallpapers":
-            self._json({"wallpapers": list_wallpapers()})
+            names = list_wallpapers()
+            self._json({
+                "wallpapers": names,
+                "wallpapers_detailed": [
+                    {"name": n, "thumbnail": f"http://localhost:5070/wallpaper/image/{n}"}
+                    for n in names
+                ]
+            })
+        elif self.path.startswith("/wallpaper/image/"):
+            name = self.path.split("/wallpaper/image/")[-1]
+            self._serve_wallpaper_image(name)
         elif self.path == "/recent":
             self._json_recent()
         elif self.path == "/" or self.path == "/dashboard":
             self._serve_html()
         else:
             self._json({"error": "not found"}, 404)
+
+    def _serve_wallpaper_image(self, name: str):
+        """Serve a wallpaper image file for HA thumbnails."""
+        path = WALLPAPER_DIR / name
+        if not path.exists() or not path.is_file():
+            self._json({"error": "not found", "name": name}, 404)
+            return
+        ext = path.suffix.lower()
+        mime = {
+            ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+            ".png": "image/png", ".gif": "image/gif",
+            ".webp": "image/webp",
+        }.get(ext, "application/octet-stream")
+        try:
+            data = path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "max-age=3600")
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception as e:
+            self._json({"error": str(e)}, 500)
 
     def _json_recent(self):
         cache = Path.home() / ".cache/rgb-colors.json"
@@ -302,7 +356,7 @@ class RGBHandler(BaseHTTPRequestHandler):
             self._json({"ok": ok, **state.get("govee", {})})
 
         elif self.path == "/wallpaper":
-            ok = trigger_wallpaper()
+            ok = trigger_wallpaper(wallpaper_path=current_wallpaper_path())
             self._json({"ok": ok})
 
         elif self.path == "/wallpaper/set":
@@ -315,6 +369,33 @@ class RGBHandler(BaseHTTPRequestHandler):
                 self._json({"ok": True, "wallpaper": name})
             else:
                 self._json({"error": "wallpaper not found", "name": name}, 404)
+
+        elif self.path == "/wallpapers":
+            names = list_wallpapers()
+            self._json({
+                "wallpapers": names,
+                "wallpapers_detailed": [
+                    {"name": n, "thumbnail": f"http://localhost:5070/wallpaper/image/{n}"}
+                    for n in names
+                ]
+            })
+
+        elif self.path == "/brightness":
+            b = brightness
+            current_color = state["openrgb"].get("color", "000000")
+            results = [None, None, None]
+            def run_openrgb_b():
+                results[0] = set_openrgb(current_color, b)
+            def run_keyboard_b():
+                results[1] = set_keyboard(current_color, b)
+            def run_govee_b():
+                results[2] = set_govee(current_color, b)
+            t1 = threading.Thread(target=run_openrgb_b)
+            t2 = threading.Thread(target=run_keyboard_b)
+            t3 = threading.Thread(target=run_govee_b)
+            t1.start(); t2.start(); t3.start()
+            t1.join(timeout=8); t2.join(timeout=8); t3.join(timeout=8)
+            self._json({"ok": all(r for r in results if r is not None), "brightness": b})
 
         elif self.path == "/sync":
             ok = trigger_sync()
