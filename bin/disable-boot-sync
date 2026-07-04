@@ -1,0 +1,1 @@
+touch ~/.local/state/boot-sync/skip && echo "boot-sync skipped until file removed"

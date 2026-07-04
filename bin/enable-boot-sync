@@ -1,0 +1,1 @@
+rm -f ~/.local/state/boot-sync/skip ~/.local/state/boot-sync/failures && echo "boot-sync re-enabled"
