@@ -18,14 +18,10 @@ if [[ "$HOSTNAME" == "freezer" ]]; then
     REPO_NAME="snowdots"
     CLOUD_REMOTE="gitlab"
     CLOUD_URL="gitlab.com/sn0wman/snowdots"
-    PEER_REMOTE="snowpi"
-    PEER_URL="snowpi (LAN)"
 elif [[ "$HOSTNAME" == "snowpi" ]]; then
     REPO_NAME="snowpi-dotfiles"
     CLOUD_REMOTE="origin"
     CLOUD_URL="gitlab.com/sn0wman/snowpi-dotfiles"
-    PEER_REMOTE="freezer"
-    PEER_URL="freezer (Tailscale)"
 fi
 
 # ── Header ──────────────────────────────────────
@@ -44,12 +40,14 @@ fi
 
 echo "📡 Syncing..."
 git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || echo "⚠️  Pull failed"
-git push "$CLOUD_REMOTE" main 2>/dev/null &
-git push "$PEER_REMOTE" main 2>/dev/null &
+git push "$CLOUD_REMOTE" main 2>/dev/null
 wait
 
+# ── Run full system mirror ──
+~/scripts/dot-mirror.sh 2>/dev/null || true
+
 # ── Sync Summary ──────────────────────────────
-echo "  ✅ $CLOUD_URL | $PEER_URL"
+echo "  ✅ $CLOUD_URL"
 
 cd ~
 
