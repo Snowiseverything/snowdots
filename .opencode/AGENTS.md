@@ -91,6 +91,31 @@ ollama run llama3
 ## Dotfiles
 Bare git repo at `~/.dotfiles`. Managed via scripts in `/home/snow/scripts/`.
 
+## Backup & Restore Strategy
+
+### Sync chain
+- `dotsync` → git push GitLab → runs `dot-mirror.sh` → rsyncs to Snowpi
+- `boot-sync` (systemd timer) → runs dotsync → rsyncs session DB to Snowpi
+
+### What's backed up
+| Data | GitLab | Snowpi | Local |
+|------|:---:|:---:|:---:|
+| Dotfiles | ✅ | ✅ | ✅ |
+| AGENTS.md + MEMORY.md | ✅ | ✅ | ✅ |
+| Session DB | ❌ | ✅ | ✅ |
+| Projects | ❌ | ✅ | ✅ |
+| Root configs | ❌ | ✅ | ✅ |
+| SSH keys | ❌ | ❌ | ✅ |
+| Wallpapers | ❌ | ❌ | ✅ |
+| Package lists | ❌ | ✅ | ✅ |
+
+### Full PC restore
+1. Install CachyOS + base packages: `pacman -S --needed - < pkglist.txt`
+2. `git clone git@gitlab.com:sn0wman/snowdots.git ~/Dotfiles`
+3. Run `~/Dotfiles/scripts/dotsync` to populate `~/.opencode/` + restore configs
+4. Restore SSH, wallpapers, projects from local mirror: `~/scripts/restore-dots.sh`
+5. Pull session DB from Snowpi: `rsync snow@100.83.33.67:/mnt/backups/freezer-mirror/opencode-db-backup/opencode.db ~/.local/share/opencode/`
+
 ## Memory System (CRITICAL)
 **AT START OF EVERY SESSION:** Read `~/.opencode/MEMORY.md` first.
 
