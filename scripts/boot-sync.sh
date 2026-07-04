@@ -18,9 +18,12 @@ fi
 echo "[$(date)] dotsync..." | tee -a "$LOG"
 ~/Dotfiles/scripts/dotsync 2>&1 | tee -a "$LOG" || echo "[$(date)] ⚠️  dotsync had issues" | tee -a "$LOG"
 
-# ── Rsync (configs, agents, projects) ──
-echo "[$(date)] oc-sync..." | tee -a "$LOG"
-~/scripts/oc-sync.sh 2>&1 | tee -a "$LOG" || echo "[$(date)] ⚠️  oc-sync had issues" | tee -a "$LOG"
+# ── Rsync session DB to Snowpi backup ──
+echo "[$(date)] session-db..." | tee -a "$LOG"
+rsync --partial --append-verify -avz \
+  "$HOME/.local/share/opencode/opencode.db" \
+  snow@100.83.33.67:/home/snow/.local/share/opencode/opencode.db.freezer-backup \
+  2>&1 | tee -a "$LOG" || echo "[$(date)] ⚠️  session-db rsync failed" | tee -a "$LOG"
 
 # ── OpenCode auto-fix git issues (60s timeout) ──
 echo "[$(date)] OC check..." | tee -a "$LOG"
