@@ -1,29 +1,42 @@
 #!/usr/bin/env python3
-"""Control Govee LED strip via BLE on Snowpi (closer to the light).
+"""Control Govee LED strip via Home Assistant API.
 
 Usage:
   govee-led.py <hex_color>               # set color (e.g. ff00ff)
   govee-led.py --brightness <0-100>      # set brightness
   govee-led.py on | off                  # power on/off
-  govee-led.py discover                  # scan for Govee BLE devices
+  govee-led.py discover                  # scan for HA Govee entities
 """
-import sys, subprocess
+import sys, urllib.request, json
+from pathlib import Path
 
-SNOWPI = "snow@100.83.33.67"
-ADDR = "C6:32:38:31:2F:48"
+CONFIG = Path.home() / ".config/govee-led.toml"
+HA_URL = "http://100.83.33.67:8123"
+HA_TOKEN = ""
+ENTITY = "light.govee_h6102_2f48"
 
-def make_cmd(data):
-    return data.hex()
+# Read token from config file
+if CONFIG.exists():
+    for line in CONFIG.read_text().splitlines():
+        if "=" in line:
+            k, v = line.split("=", 1)
+            k, v = k.strip(), v.strip().strip('"')
+            if k == "ha_token":
+                HA_TOKEN = v
+            elif k == "entity":
+                ENTITY = v
 
-def ssh_ble(*cmds):
-    result = subprocess.run(
-        ["ssh", SNOWPI, "python3", "/tmp/govee-helper.py", *cmds],
-        capture_output=True, text=True, timeout=35
+def ha_call(endpoint, data=None):
+    req = urllib.request.Request(
+        f"{HA_URL}/api/{endpoint}",
+        data=json.dumps(data).encode() if data else None,
+        headers={
+            "Authorization": f"Bearer {HA_TOKEN}",
+            "Content-Type": "application/json",
+        },
     )
-    if result.returncode != 0:
-        print(f"BLE error: {(result.stderr or result.stdout).strip()}", file=sys.stderr)
-        return False
-    return True
+    with urllib.request.urlopen(req, timeout=10) as resp:
+        return json.loads(resp.read())
 
 def main():
     args = sys.argv[1:]
@@ -32,33 +45,30 @@ def main():
         return
 
     if args[0] == "discover":
-        r = subprocess.run(["ssh", SNOWPI, "python3", "-c", """
-import asyncio
-from bleak import BleakScanner
-async def s():
-    for d in await BleakScanner.discover(timeout=5):
-        if d.name and "Govee" in d.name:
-            print(d.address, d.name)
-asyncio.run(s())
-"""], capture_output=True, text=True, timeout=15)
-        print(r.stdout.strip() or r.stderr.strip())
+        r = ha_call("states")
+        for s in r:
+            if "govee" in s.get("entity_id", "").lower():
+                eid = s["entity_id"]
+                state = s.get("state", "?")
+                color = s.get("attributes", {}).get("rgb_color", "?")
+                print(f"{eid}: {state} rgb={color}")
         return
 
     if args[0] == "on":
-        ok = ssh_ble(make_cmd(bytes([0x33, 0x01, 0x00])))
-        print("Power on" if ok else "Failed")
+        ha_call(f"services/light/turn_on", {"entity_id": ENTITY})
+        print("Power on")
         return
 
     if args[0] == "off":
-        ok = ssh_ble(make_cmd(bytes([0x33, 0x01, 0x01])))
-        print("Power off" if ok else "Failed")
+        ha_call(f"services/light/turn_off", {"entity_id": ENTITY})
+        print("Power off")
         return
 
     if args[0] == "--brightness":
         b = int(args[1]) if len(args) > 1 else 50
-        level = max(0, min(100, b))
-        ok = ssh_ble(make_cmd(bytes([0x33, 0x04, level])))
-        print(f"Brightness {b}%" if ok else "Failed")
+        pct = max(1, min(100, b))
+        ha_call(f"services/light/turn_on", {"entity_id": ENTITY, "brightness_pct": pct})
+        print(f"Brightness {pct}%")
         return
 
     r = g = b = 0
@@ -69,14 +79,9 @@ asyncio.run(s())
     if len(args) > 1:
         brightness = int(args[1])
 
-    level = max(0, min(100, brightness))
-    color = make_cmd(bytes([0x33, 0x05, 0x15, 0x01, r, g, b, 0, 0, 0, 0, 0, 0, 0xFF, 0x7F, 0, 0, 0, 0]))
-
-    ok = ssh_ble(color)
-    if ok:
-        print(f"Set #{r:02x}{g:02x}{b:02x} at {brightness}% via Snowpi")
-    else:
-        sys.exit(1)
+    pct = max(1, min(100, brightness))
+    ha_call(f"services/light/turn_on", {"entity_id": ENTITY, "rgb_color": [r, g, b], "brightness_pct": pct})
+    print(f"Set #{r:02x}{g:02x}{b:02x} at {pct}% via HA")
 
 if __name__ == "__main__":
     main()
