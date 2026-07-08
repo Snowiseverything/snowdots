@@ -34,6 +34,14 @@ fi
 
 FAILED=0
 
+# ── Service health checks ──
+for svc in openrgb-server.service rgb-bridge.service; do
+  if ! systemctl --user is-active --quiet "$svc" 2>/dev/null; then
+    echo "[$(date)] Starting $svc..." | tee -a "$LOG"
+    systemctl --user start "$svc" 2>&1 | tee -a "$LOG" || echo "[$(date)] ⚠️  Failed to start $svc" | tee -a "$LOG"
+  fi
+done
+
 # ── Git sync (60s timeout) ──
 echo "[$(date)] dotsync..." | tee -a "$LOG"
 timeout 60 ~/Dotfiles/scripts/dotsync 2>&1 | tee -a "$LOG" || { echo "[$(date)] ⚠️  dotsync failed/timed out" | tee -a "$LOG"; FAILED=1; }
