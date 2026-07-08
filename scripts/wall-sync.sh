@@ -134,6 +134,8 @@ fi
 # For steam/WE, use preview image if available; otherwise skip matugen
 matugen image "$WALLPAPER" --source-color-index 0 2>> "$LOG_FILE" || log_error "matugen failed"
 bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >> "$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
+ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
+[ -n "$ACCENT" ] && [ "$ACCENT" != "null" ] && echo "$ACCENT" > "$CACHE_DIR/last_synced_accent"
 
 # 5. UI Refresh & Borders
 # Refresh border colors directly from the generated skwd-wall cache
