@@ -86,8 +86,8 @@ MAD68_NUM_SLOTS = 80
 MAD68_KEYS_PER_PACKET = 8
 MAD68_NUM_CHUNKS = 5
 MAD68_SUB_OFFSETS = (0x00, 0x08)
-MAD68_FRAME_DELAY = 0.10
-MAD68_PACKET_DELAY = 0.005
+MAD68_FRAME_DELAY = 0.030  # match OpenRGB's 30ms per-frame timing
+MAD68_PACKET_DELAY = 0      # keyboard handles back-to-back writes fine
 
 
 def _mad68_send_color(dev, r, g, b):
