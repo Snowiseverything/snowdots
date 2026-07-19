@@ -161,13 +161,14 @@ def main():
         brightness = int(args[1])
 
     last = read_last()
-    fr, fg, fb = last if last else (0, 0, 0)
-
-    if fr == r and fg == g and fb == b:
-        write_last(r, g, b)
-        return
-
-    frames = interpolate(fr, fg, fb, r, g, b)
+    if last is None:
+        frames = [(r, g, b)]  # boot: no previous color → instant set, no animation
+    else:
+        fr, fg, fb = last
+        if fr == r and fg == g and fb == b:
+            write_last(r, g, b)
+            return
+        frames = interpolate(fr, fg, fb, r, g, b)
 
     threads = [
         threading.Thread(target=fade_openrgb, args=(frames,)),
