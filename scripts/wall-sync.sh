@@ -124,14 +124,17 @@ mkdir -p "$HOME/.local/state/caelestia/wallpaper"
 echo "$WALLPAPER" > "$HOME/.local/state/caelestia/wallpaper/path.txt"
 ln -sf "$WALLPAPER" "$CACHE_DIR/current-wallpaper"
 
-# 4. Set wallpaper via skwd daemon (handles both static and video wallpapers)
-# Steam/WE wallpapers are handled by skwd's steam wallpaper system
-if [ "$IS_STEAM" = false ]; then
-    skwd wall apply "{\"path\":\"$WALLPAPER\"}" 2>/dev/null || true
+# Generate colors and sync RGB
+# Wallpaper is already applied by skwd-wall's postProcessing hook.
+# Only re-apply if this is a standalone run (no arg AND wallpaper differs)
+if [ -z "$ORIG_ARG" ]; then
+    CURRENT=$(awww query 2>/dev/null | grep -oP 'image: \K.*' | tr -d '[:space:]')
+    if [ "$CURRENT" != "$WALLPAPER" ]; then
+        skwd wall apply "{\"path\":\"$WALLPAPER\"}" 2>/dev/null || true
+    fi
 fi
 
-# Generate colors after wallpaper transition — so they match
-# For steam/WE, use preview image if available; otherwise skip matugen
+# Generate colors and sync RGB
 matugen image "$WALLPAPER" --source-color-index 0 2>> "$LOG_FILE" || log_error "matugen failed"
 bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >> "$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
 ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
@@ -198,11 +201,13 @@ if [ -f "$FUZZEL_GEN" ]; then
     fi
 fi
 
-# Update Cursor Colors (matugen dynamic)
-if [ -f "$HOME/Dotfiles/scripts/cursor-colors.sh" ]; then
-    "$HOME/Dotfiles/scripts/cursor-colors.sh" >> "$LOG_FILE" 2>&1 || log_error "Cursor colors failed"
-    log "Cursor colors updated"
-fi
+# Update GTK theme colors (material-gnome-theme)
+python3 "$HOME/Dotfiles/scripts/matugen-gtk.py" >> "$LOG_FILE" 2>&1 || log_error "GTK theme colors failed"
+log "GTK theme colors updated"
+
+# Update Cursor Colors (matugen dynamic Bibata)
+python3 "$HOME/Dotfiles/scripts/bibata-matugen.py" >> "$LOG_FILE" 2>&1 || log_error "Cursor colors failed"
+log "Cursor colors updated via Bibata-Matugen"
 
 # Update Btop Theme (matugen dynamic)
 BTOP_TEMPLATE="$HOME/Dotfiles/matugen/templates/btop.theme"

@@ -8,3 +8,6 @@ fastfetch/config.jsonc
 
 # opencode session memory — excluded from public mirror
 .opencode/
+
+# Bibata source clone (build dependency, re-clone from GitHub)
+scripts/bibata-src/

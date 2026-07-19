@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Control Govee LED strip via Home Assistant API.
+"""Control Govee LED strip via direct BLE (Freezer) with HA fallback.
 
 Usage:
   govee-led.py <hex_color>               # set color (e.g. ff00ff)
+  govee-led.py <hex_color> <brightness>  # set color + brightness (0-100)
   govee-led.py --brightness <0-100>      # set brightness
   govee-led.py on | off                  # power on/off
-  govee-led.py discover                  # scan for HA Govee entities
+  govee-led.py discover                  # scan for Govee BLE devices
 """
-import sys, urllib.request, json
+import sys, asyncio, json, urllib.request
 from pathlib import Path
 
 CONFIG = Path.home() / ".config/govee-led.toml"
@@ -15,7 +16,9 @@ HA_URL = "http://100.83.33.67:8123"
 HA_TOKEN = ""
 ENTITY = "light.govee_h6102_2f48"
 
-# Read token from config file
+GOVEE_ADDR = "C6:32:38:31:2F:48"
+WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
+
 if CONFIG.exists():
     for line in CONFIG.read_text().splitlines():
         if "=" in line:
@@ -25,6 +28,12 @@ if CONFIG.exists():
                 HA_TOKEN = v
             elif k == "entity":
                 ENTITY = v
+
+
+LAST_COLOR = Path("/tmp/govee-last-color")
+FADE_STEPS = 20
+FADE_DELAY_MS = 30
+
 
 def ha_call(endpoint, data=None):
     req = urllib.request.Request(
@@ -38,6 +47,92 @@ def ha_call(endpoint, data=None):
     with urllib.request.urlopen(req, timeout=10) as resp:
         return json.loads(resp.read())
 
+
+def make_cmd(data):
+    buf = bytearray(data + [0x00] * (19 - len(data)))
+    chk = 0
+    for b in buf:
+        chk ^= b
+    buf.append(chk)
+    return buf
+
+
+def _color_pkt(r, g, b):
+    return make_cmd([0x33, 0x05, 0x15, 0x01, r, g, b, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x7F])
+
+
+def read_last_color():
+    if LAST_COLOR.exists():
+        parts = LAST_COLOR.read_text().strip().split()
+        if len(parts) == 3:
+            return int(parts[0]), int(parts[1]), int(parts[2])
+    return None
+
+
+def write_last_color(r, g, b):
+    LAST_COLOR.write_text(f"{r} {g} {b}\n")
+
+
+async def _ble_write(cmd):
+    from bleak import BleakClient
+
+    try:
+        async with BleakClient(GOVEE_ADDR, timeout=8) as client:
+            await client.write_gatt_char(WRITE_CHAR, cmd, response=False)
+            return "ble"
+    except Exception:
+        return None
+
+
+async def ble_fade_color(fr, fg, fb, r, g, b):
+    from bleak import BleakClient
+
+    try:
+        async with BleakClient(GOVEE_ADDR, timeout=10) as client:
+            for i in range(1, FADE_STEPS + 1):
+                t = i / FADE_STEPS
+                ri = int(fr + (r - fr) * t)
+                gi = int(fg + (g - fg) * t)
+                bi = int(fb + (b - fb) * t)
+                await client.write_gatt_char(WRITE_CHAR, _color_pkt(ri, gi, bi), response=False)
+                await asyncio.sleep(FADE_DELAY_MS / 1000)
+        return "ble"
+    except Exception:
+        return None
+
+
+async def ble_set_color(r, g, b, brightness=100):
+    last = read_last_color()
+    if last:
+        result = await ble_fade_color(*last, r, g, b)
+    else:
+        result = await _ble_write(_color_pkt(r, g, b))
+    if result:
+        write_last_color(r, g, b)
+        if brightness != 100:
+            await asyncio.sleep(0.05)
+            await ble_brightness(brightness)
+    return result
+
+
+async def ble_on():
+    return await _ble_write(make_cmd([0x33, 0x01, 0x01]))
+
+
+async def ble_off():
+    return await _ble_write(make_cmd([0x33, 0x01, 0x00]))
+
+
+async def ble_brightness(pct):
+    level = max(1, min(100, pct))
+    return await _ble_write(make_cmd([0x33, 0x04, level]))
+
+
+def set_via_ha(endpoint, data, msg):
+    ha_call(endpoint, data)
+    print(f"{msg} via HA")
+
+
 def main():
     args = sys.argv[1:]
     if not args:
@@ -45,6 +140,18 @@ def main():
         return
 
     if args[0] == "discover":
+        try:
+            from bleak import BleakScanner
+
+            async def scan():
+                devices = await BleakScanner.discover(timeout=5)
+                for d in devices:
+                    if d.name and "Govee" in d.name:
+                        print(f"{d.address} {d.name}")
+                print("---")
+            asyncio.run(scan())
+        except Exception:
+            pass
         r = ha_call("states")
         for s in r:
             if "govee" in s.get("entity_id", "").lower():
@@ -55,20 +162,32 @@ def main():
         return
 
     if args[0] == "on":
+        result = asyncio.run(ble_on())
+        if result == "ble":
+            print("Power on via BLE")
+            return
         ha_call(f"services/light/turn_on", {"entity_id": ENTITY})
-        print("Power on")
+        print("Power on via HA")
         return
 
     if args[0] == "off":
+        result = asyncio.run(ble_off())
+        if result == "ble":
+            print("Power off via BLE")
+            return
         ha_call(f"services/light/turn_off", {"entity_id": ENTITY})
-        print("Power off")
+        print("Power off via HA")
         return
 
     if args[0] == "--brightness":
         b = int(args[1]) if len(args) > 1 else 50
+        result = asyncio.run(ble_brightness(b))
+        if result == "ble":
+            print(f"Brightness {b}% via BLE")
+            return
         pct = max(1, min(100, b))
         ha_call(f"services/light/turn_on", {"entity_id": ENTITY, "brightness_pct": pct})
-        print(f"Brightness {pct}%")
+        print(f"Brightness {pct}% via HA")
         return
 
     r = g = b = 0
@@ -79,9 +198,15 @@ def main():
     if len(args) > 1:
         brightness = int(args[1])
 
+    result = asyncio.run(ble_set_color(r, g, b, brightness))
+    if result == "ble":
+        print(f"Set #{r:02x}{g:02x}{b:02x} at {brightness}% via BLE")
+        return
+
     pct = max(1, min(100, brightness))
     ha_call(f"services/light/turn_on", {"entity_id": ENTITY, "rgb_color": [r, g, b], "brightness_pct": pct})
     print(f"Set #{r:02x}{g:02x}{b:02x} at {pct}% via HA")
+
 
 if __name__ == "__main__":
     main()
