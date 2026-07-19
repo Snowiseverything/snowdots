@@ -54,7 +54,7 @@ Singleton {
     }
 
     function formatTemp(temp: var): string {
-        return GlobalConfig.services.useFahrenheit ? `${temp !== undefined ? Math.round(toFahrenheit(temp)) : "--"}°F` : `${temp !== undefined ? Math.round(temp) : "--"}°C`;
+        return `${temp !== undefined ? Math.round(temp) : "--"}°C`;
     }
 
     function reload(): void {
@@ -145,8 +145,10 @@ Singleton {
             cc = {
                 weatherCode: json.current.weather_code,
                 weatherDesc: getWeatherCondition(json.current.weather_code),
-                tempC: json.current.temperature_2m,
-                feelsLikeC: json.current.apparent_temperature,
+                tempC: Math.round(json.current.temperature_2m),
+                tempF: Math.round(toFahrenheit(json.current.temperature_2m)),
+                feelsLikeC: Math.round(json.current.apparent_temperature),
+                feelsLikeF: Math.round(toFahrenheit(json.current.apparent_temperature)),
                 humidity: json.current.relative_humidity_2m,
                 windSpeed: json.current.wind_speed_10m,
                 isDay: json.current.is_day,
@@ -158,8 +160,10 @@ Singleton {
             for (let i = 0; i < json.daily.time.length; i++)
                 forecastList.push({
                     date: json.daily.time[i].replace(/-/g, "/"),
-                    maxTempC: json.daily.temperature_2m_max[i],
-                    minTempC: json.daily.temperature_2m_min[i],
+                    maxTempC: Math.round(json.daily.temperature_2m_max[i]),
+                    maxTempF: Math.round(toFahrenheit(json.daily.temperature_2m_max[i])),
+                    minTempC: Math.round(json.daily.temperature_2m_min[i]),
+                    minTempF: Math.round(toFahrenheit(json.daily.temperature_2m_min[i])),
                     weatherCode: json.daily.weather_code[i],
                     icon: Icons.getWeatherIcon(json.daily.weather_code[i])
                 });
@@ -177,6 +181,7 @@ Singleton {
                     timestamp: json.hourly.time[i],
                     hour: time.getHours(),
                     tempC: Math.round(json.hourly.temperature_2m[i]),
+                    tempF: Math.round(toFahrenheit(json.hourly.temperature_2m[i])),
                     precipChance: json.hourly.precipitation_probability[i],
                     weatherCode: json.hourly.weather_code[i],
                     icon: Icons.getWeatherIcon(json.hourly.weather_code[i])

@@ -45,35 +45,93 @@ def interpolate(fr, fg, fb, r, g, b):
 
 
 def fade_openrgb(frames):
+    from openrgb import OpenRGBClient
+    from openrgb.utils import RGBColor
+
+    client = None
+    for attempt in range(5):
+        try:
+            client = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
+            break
+        except Exception:
+            time.sleep(1)
+    if client is None:
+        print("OpenRGB: server not available after 5 retries", file=sys.stderr)
+        return
+
     try:
-        from openrgb import OpenRGBClient
-        from openrgb.utils import RGBColor
-
-        client = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
-
         for d in client.devices:
             if d.active_mode != 0:
                 d.set_mode(0)
+    except Exception:
+        pass
 
-        for ri, gi, bi in frames:
+    for ri, gi, bi in frames:
+        try:
             color = RGBColor(ri, gi, bi)
             for d in client.devices:
                 d.set_colors([color] * len(d.leds))
                 d.show()
-            time.sleep(FADE_DELAY_MS / 1000)
-    except Exception:
-        pass
+        except Exception:
+            pass
+        time.sleep(FADE_DELAY_MS / 1000)
+
+
+MAD68_VID = 0x373B
+MAD68_PID = 0x1058
+MAD68_INTERFACE = 1
+MAD68_REPORT_LEN = 33
+MAD68_RGB_USAGE_PAGE = 0xFF60
+MAD68_NUM_SLOTS = 80
+MAD68_KEYS_PER_PACKET = 8
+MAD68_NUM_CHUNKS = 5
+MAD68_SUB_OFFSETS = (0x00, 0x08)
+MAD68_FRAME_DELAY = 0.10
+MAD68_PACKET_DELAY = 0.005
+
+
+def _mad68_send_color(dev, r, g, b):
+    """Send a solid color to all slots using the MAD68 protocol (set+commit)."""
+    slots = [(r, g, b)] * MAD68_NUM_SLOTS
+    idx = 0
+    for chunk in range(MAD68_NUM_CHUNKS):
+        for sub in MAD68_SUB_OFFSETS:
+            pkt = bytearray(MAD68_REPORT_LEN)
+            pkt[0] = 0x00
+            pkt[1] = 0x07
+            pkt[2] = 0x42
+            pkt[3] = chunk
+            pkt[4] = sub
+            pkt[5] = MAD68_KEYS_PER_PACKET
+            for k in range(MAD68_KEYS_PER_PACKET):
+                cr, cg, cb = slots[idx]
+                pkt[6 + k * 3] = cr
+                pkt[7 + k * 3] = cg
+                pkt[8 + k * 3] = cb
+                idx += 1
+            dev.write(bytes(pkt))
+            time.sleep(MAD68_PACKET_DELAY)
+
+    commit = bytearray(MAD68_REPORT_LEN)
+    commit[0] = 0x00
+    commit[1] = 0x07
+    commit[2] = 0x41
+    commit[3] = 0x01
+    commit[5] = 0x90
+    commit[6] = 0xFF
+    commit[8] = 0xEE
+    commit[9] = 0xD2
+    dev.write(bytes(commit))
+    time.sleep(MAD68_PACKET_DELAY)
 
 
 def fade_mad68(frames, brightness_pct):
     try:
         import hid
 
-        VID, PID, INTERFACE = 0x373B, 0x1058, 1
-        brightness = max(0, min(255, int(brightness_pct * 255 / 100)))
         target = None
-        for d in hid.enumerate(VID, PID):
-            if d.get("interface_number") == INTERFACE:
+        for d in hid.enumerate(MAD68_VID, MAD68_PID):
+            if d.get("usage_page") == MAD68_RGB_USAGE_PAGE:
                 target = d["path"]
                 break
         if not target:
@@ -81,9 +139,8 @@ def fade_mad68(frames, brightness_pct):
         dev = hid.device()
         dev.open_path(target)
         for ri, gi, bi in frames:
-            data = bytearray([7, 65, 2, 0, 0x96, ri, gi, bi, brightness, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-            dev.write(bytes(data))
-            time.sleep(FADE_DELAY_MS / 1000)
+            _mad68_send_color(dev, ri, gi, bi)
+            time.sleep(MAD68_FRAME_DELAY)
         dev.close()
     except Exception:
         pass

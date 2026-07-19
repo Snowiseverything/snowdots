@@ -1,7 +1,21 @@
 Host snowpi
     HostName 100.83.33.67
     User snow
-    Port 22
-    SetEnv TERM=xterm-256color
-    CheckHostIP no
-    StrictHostKeyChecking accept-new
+    IdentitiesOnly yes
+
+Host freezer
+    HostName 100.87.27.79
+    User snow
+    IdentitiesOnly yes
+
+Host snowpi-init
+    HostName 192.168.0.100
+    User root
+    IdentitiesOnly yes
+    HostKeyAlias snowpi-init
+
+Host freezer-init
+    HostName 192.168.0.111
+    User root
+    IdentitiesOnly yes
+    HostKeyAlias freezer-init

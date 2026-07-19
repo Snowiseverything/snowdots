@@ -73,6 +73,7 @@
         "lyricsBackend": "Auto",
         "maxVolume": 1,
         "useFahrenheit": false,
+        "useFahrenheitPerformance": false,
         "weatherLocation": "Erbil"
     },
     "utilities": {

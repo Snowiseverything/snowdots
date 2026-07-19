@@ -204,7 +204,7 @@ Item {
 
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
-                            text: GlobalConfig.services.useFahrenheit ? forecastItem.modelData.maxTempF + "°" + " / " + forecastItem.modelData.minTempF + "°" : forecastItem.modelData.maxTempC + "°" + " / " + forecastItem.modelData.minTempC + "°"
+                            text: forecastItem.modelData.maxTempC + "° / " + forecastItem.modelData.minTempC + "°"
                             font: Tokens.font.body.builders.small.weight(Font.DemiBold).build()
                             color: Colours.palette.m3tertiary
                         }
