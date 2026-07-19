@@ -163,10 +163,6 @@ def main():
     last = read_last()
     fr, fg, fb = last if last else (0, 0, 0)  # boot: fade from black
 
-    if fr == r and fg == g and fb == b:
-        write_last(r, g, b)
-        return
-
     frames = interpolate(fr, fg, fb, r, g, b)
 
     threads = [
