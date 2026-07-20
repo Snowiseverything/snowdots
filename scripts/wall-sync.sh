@@ -136,7 +136,6 @@ fi
 
 # Generate colors and sync RGB
 matugen image "$WALLPAPER" --source-color-index 0 2>> "$LOG_FILE" || log_error "matugen failed"
-bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >> "$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
 ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
 [ -n "$ACCENT" ] && [ "$ACCENT" != "null" ] && echo "$ACCENT" > "$CACHE_DIR/last_synced_accent"
 
@@ -158,6 +157,11 @@ if [ -f "$CACHE_DIR/hyprland-colors.conf" ]; then
 else
     log_error "hyprland-colors.conf not found"
 fi
+
+# Sync RGB after hyprctl reload so OpenRGB doesn't get reset
+bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >> "$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
+ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
+[ -n "$ACCENT" ] && [ "$ACCENT" != "null" ] && echo "$ACCENT" > "$CACHE_DIR/last_synced_accent"
 
 # Reload Kitty colors via pkill (more reliable than kitten)
 if pkill -USR1 kitty 2>/dev/null; then
