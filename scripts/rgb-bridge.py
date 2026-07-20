@@ -25,7 +25,7 @@ Example:
   curl -X POST http://localhost:5070/all -d '{"color":"ff0000","brightness":50}'
 """
 
-import json, os, subprocess, sys, threading
+import json, os, socket, subprocess, sys, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
@@ -34,6 +34,19 @@ MAD68_SCRIPT = Path.home() / ".local/bin/mad68-rgb.py"
 SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/rgb-sync.sh"
 WALL_SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/wall-sync.sh"
 GOVEE_SCRIPT = Path.home() / "Dotfiles/scripts/govee-led.py"
+DAEMON_SOCK = "/tmp/govee-daemon.sock"
+
+def _govee_via_socket(cmd: str) -> bool:
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(3)
+        s.connect(DAEMON_SOCK)
+        s.sendall((cmd + "\n").encode())
+        resp = s.recv(1024).decode().strip()
+        s.close()
+        return resp == "ok"
+    except Exception:
+        return False
 
 # ── State tracking ──────────────────────────────────────────────────────
 def current_wallpaper_name() -> str:
@@ -89,7 +102,10 @@ def set_keyboard(color: str, brightness: int = 70):
 
 
 def set_govee(color: str, brightness: int = 80):
-    """Set Govee LED strip via HA API."""
+    """Set Govee LED strip — try daemon socket first, fall back to HA API."""
+    if _govee_via_socket(color):
+        state["govee"] = {"color": color, "brightness": brightness}
+        return True
     try:
         subprocess.run(
             [sys.executable, str(GOVEE_SCRIPT), color, str(brightness)],
@@ -157,27 +173,53 @@ def trigger_wallpaper(wallpaper_path: str | None = None):
         return False
 
 
-def trigger_sync():
-    """Run rgb-sync.sh to apply wallpaper-matched colors."""
+def _compute_color() -> str:
+    """Read wallpaper accent and compute unified LED color."""
+    import colorsys, json as _json
+    colors_file = Path.home() / ".cache/skwd-wall/colors.json"
+    if not colors_file.exists():
+        return "000000"
     try:
-        subprocess.run(
-            ["bash", str(SYNC_SCRIPT)],
-            timeout=30, capture_output=True,
-        )
-        # Read the accent from colors.json and calculate unified LED color
-        import colorsys, json as _json
-        colors_file = Path.home() / ".cache/skwd-wall/colors.json"
-        if colors_file.exists():
-            data = _json.loads(colors_file.read_text())
-            accent = data.get("accent", "#000000").lstrip("#")
-            r, g, b = int(accent[0:2], 16) / 255.0, int(accent[2:4], 16) / 255.0, int(accent[4:6], 16) / 255.0
-            h, l, s = colorsys.rgb_to_hls(r, g, b)
-            rl, gl, bl = colorsys.hls_to_rgb(h, 0.45, 0.90)
-            color = '%02x%02x%02x' % (int(rl * 255), int(gl * 255), int(bl * 255))
-            state["openrgb"]["color"] = color
-            state["keyboard"]["color"] = color
-            state["govee"]["color"] = color
+        data = _json.loads(colors_file.read_text())
+        accent = data.get("accent", "#000000").lstrip("#")
+        r, g, b = int(accent[0:2], 16) / 255.0, int(accent[2:4], 16) / 255.0, int(accent[4:6], 16) / 255.0
+        h, l, s = colorsys.rgb_to_hls(r, g, b)
+        rl, gl, bl = colorsys.hls_to_rgb(h, 0.45, 0.90)
+        return '%02x%02x%02x' % (int(rl * 255), int(gl * 255), int(bl * 255))
+    except Exception:
+        return "000000"
+
+
+def trigger_sync():
+    """Sync PC devices + Govee via daemon socket (same crossfade timing)."""
+    color = _compute_color()
+    if color == "000000":
+        return False
+
+    def _govee_async(c):
+        if _govee_via_socket(f"fade {c} 80"):
+            state["govee"]["color"] = c
+            return
+        try:
+            subprocess.run(
+                [sys.executable, str(GOVEE_SCRIPT), c, "80"],
+                timeout=15, capture_output=True,
+            )
+            state["govee"]["color"] = c
+        except Exception:
+            pass
+
+    try:
         state["synced"] = True
+        t_govee = threading.Thread(target=_govee_async, args=(color,), daemon=True)
+        t_govee.start()
+        # PC devices via fade-rgb.py (crossfade, ~0.6s)
+        subprocess.run(
+            [sys.executable, str(Path.home() / "Dotfiles/scripts/fade-rgb.py"), color, "80"],
+            timeout=10, capture_output=True,
+        )
+        state["openrgb"]["color"] = color
+        state["keyboard"]["color"] = color
         return True
     except Exception as e:
         print(f"Sync error: {e}", file=sys.stderr)
@@ -407,6 +449,11 @@ class RGBHandler(BaseHTTPRequestHandler):
 
 # ── Main ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    # Clean up stale daemon socket from previous session
+    import os
+    if os.path.exists(DAEMON_SOCK):
+        os.unlink(DAEMON_SOCK)
+
     server = HTTPServer(("0.0.0.0", PORT), RGBHandler)
     print(f"RGB Bridge listening on http://0.0.0.0:{PORT}")
     try:

@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
-"""Fade PC RGB devices (OpenRGB + MAD68) smoothly.
+"""Fade PC RGB devices (OpenRGB + MAD68) smoothly."""
 
-Usage:
-  fade-rgb.py <hex_color>               # set color (e.g. ff00ff)
-  fade-rgb.py <hex_color> <brightness>  # set color + brightness (0-100)
-
-Govee LED runs separately via govee-led.py (BLE is slower).
-"""
 import sys, time, threading
 from pathlib import Path
 
@@ -59,13 +53,6 @@ def fade_openrgb(frames):
         print("OpenRGB: server not available after 5 retries", file=sys.stderr)
         return
 
-    try:
-        for d in client.devices:
-            if d.active_mode != 0:
-                d.set_mode(0)
-    except Exception:
-        pass
-
     for ri, gi, bi in frames:
         try:
             color = RGBColor(ri, gi, bi)
@@ -86,12 +73,11 @@ MAD68_NUM_SLOTS = 80
 MAD68_KEYS_PER_PACKET = 8
 MAD68_NUM_CHUNKS = 5
 MAD68_SUB_OFFSETS = (0x00, 0x08)
-MAD68_FRAME_DELAY = 0.030  # match OpenRGB's 30ms per-frame timing
-MAD68_PACKET_DELAY = 0      # keyboard handles back-to-back writes fine
+MAD68_FRAME_DELAY = .030
+MAD68_PACKET_DELAY = 0
 
 
 def _mad68_send_color(dev, r, g, b):
-    """Send a solid color to all slots using the MAD68 protocol (set+commit)."""
     slots = [(r, g, b)] * MAD68_NUM_SLOTS
     idx = 0
     for chunk in range(MAD68_NUM_CHUNKS):
@@ -128,7 +114,6 @@ def _mad68_send_color(dev, r, g, b):
 def fade_mad68(frames, brightness_pct):
     try:
         import hid
-
         target = None
         for d in hid.enumerate(MAD68_VID, MAD68_PID):
             if d.get("usage_page") == MAD68_RGB_USAGE_PAGE:
@@ -138,6 +123,7 @@ def fade_mad68(frames, brightness_pct):
             return
         dev = hid.device()
         dev.open_path(target)
+
         for ri, gi, bi in frames:
             _mad68_send_color(dev, ri, gi, bi)
             time.sleep(MAD68_FRAME_DELAY)
@@ -161,9 +147,14 @@ def main():
         brightness = int(args[1])
 
     last = read_last()
-    fr, fg, fb = last if last else (0, 0, 0)  # boot: fade from black
-
-    frames = interpolate(fr, fg, fb, r, g, b)
+    if last is None:
+        frames = [(r, g, b)]
+    else:
+        fr, fg, fb = last
+        if fr == r and fg == g and fb == b:
+            print(f"Already #{r:02x}{g:02x}{b:02x} at {brightness}%")
+            return
+        frames = interpolate(fr, fg, fb, r, g, b)
 
     threads = [
         threading.Thread(target=fade_openrgb, args=(frames,)),
