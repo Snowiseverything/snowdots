@@ -189,3 +189,50 @@
 - SDDM is SilentSDDM theme v1.4.2 at `/usr/share/sddm/themes/silent/`. Configs/ has catppuccin presets built in.
 - Phone images backed up at `/mnt/backups/NothingPhone/` (41G).
 - Setup script at `~/scripts/setup-sddm.sh` copies matugen config to theme dir (needs sudo).
+
+## 2026-07-23 — System maintenance, session DB fix, Snowpi cleanup
+
+### Session DB Fix
+- All 83 sessions moved to `global` project — visible from any directory
+- `proj_home_snow` + `proj_viymess` removed (conflicted with global)
+- Created `~/scripts/opencode-switch` — list sessions by number, pick & resume
+- Also in `~/Dotfiles/scripts/opencode-switch`
+
+### Freezer System State
+- **~130 packages pending** (needs `sudo pacman -Syu`):
+  - Hyprland 0.55.4 → 0.56.0
+  - Kernel 7.1.3 → 7.1.4
+  - Opencode 1.18.3 → 1.18.4
+  - QEMU full stack bump, lame 3→4
+- **15 orphaned packages** — can remove with `sudo pacman -Rns $(pacman -Qdtq)`
+- **Pacman cache:** 3.5G — `sudo paccache -rk2` keeps last 2 versions
+- **Btrfs:** fstrim.timer active (weekly). /mnt/data at 98% — needs attention (snapshot cleanup or expansion)
+
+### Snowpi Status (100.83.33.67)
+- **Uptime:** 9.5h, load 0.29
+- **Disk:** 86% (7.7G free of 57G)
+- **Memory:** 2.2G used / 5.5G available
+- **No pending updates** — fully up to date
+- **Failed service:** mnt-freezer.mount (NFS — Freezer was off, safe to ignore)
+- **Projects/:** 17G — needs cleaning (pull needed data to Freezer, remove from Snowpi)
+- **3 old kernels:** linux-image-6.12.75, 6.18.29, 6.18.33 (can purge)
+- **Docker:** 100M docker-ce, 86M containerd.io, 66M docker-buildx-plugin
+
+### Todo (needs sudo — run manually)
+```
+# Freezer
+sudo pacman -Syu
+sudo pacman -Rns $(pacman -Qdtq)  # remove orphans
+sudo paccache -rk2                 # clean pkg cache to last 2 versions
+sudo btrfs scrub start /           # annual btrfs scrub
+sudo btrfs scrub start /home
+sudo btrfs balance start -dusage=50 /mnt/data  # if space low
+
+# Snowpi
+ssh snow@100.83.33.67
+sudo apt-get purge linux-image-6.12.75+rpt-rpi-v8 linux-image-6.18.29+rpt-rpi-v8 linux-image-6.18.33+rpt-rpi-v8
+sudo apt-get autoremove --purge -y && sudo apt-get autoclean
+sudo docker system prune -af --volumes
+sudo journalctl --vacuum-size=100M
+# then remove Projects/ after confirming data safe on Freezer
+```

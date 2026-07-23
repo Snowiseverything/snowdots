@@ -6,9 +6,9 @@
 - **Desktop:** Hyprland + Wayland
 - **Shell:** Fish + Starship
 - **Editor:** `nano` only (do not use `micro`)
-- **AI:** Ollama (NVIDIA CUDA) running locally, accessible via LAN
+- **AI:** Ollama (NVIDIA CUDA) running locally via LAN
 - **GPU:** NVIDIA RTX 4070 SUPER 12GB, driver 610.43.02
-- **Kernel:** 7.1.2-1-cachyos-bore
+- **Kernel:** 7.1.3-2-cachyos-bore
 - **Network:** enp6s0 (e8:9c:25:df:0d:e7) — 192.168.0.111/24
 - **DNS:** systemd-resolved → Pi-Hole on Snowpi (192.168.1.35 / 100.83.33.67) + Tailscale MagicDNS (100.100.100.100)
 - **WoL:** Enabled via udev rule (81-wol.rules — `wol g`) on enp6s0
@@ -16,50 +16,49 @@
 ## Storage
 ```
 /dev/sda (931.5G external SSD)
-├── sda1: 650G → /mnt/games (ext4, also used for ollama models)
-├── sda2: 100G → /mnt/backups (btrfs)
-└── sda3: ~181.5G → /mnt/data (btrfs, extra storage)
+├── sda1: 650G → /mnt/games (ext4, ollama models)
+├── sda2: 100G → /mnt/backups (btrfs, compress=zstd:3, discard=async)
+└── sda3: ~181.5G → /mnt/data (btrfs, compress=zstd:3, discard=async)
 ```
+- **Rootfs** btrfs: compress=zstd:1, ssd, space_cache=v2, noatime
+- **/home** btrfs LUKS: compress=zstd:1, ssd, noatime
+- **fstrim.timer** enabled weekly
+- `/mnt/data` at 98% — nearly full
 
-## Active Projects (~/Projects/)
-
-### borsay-qallat (most active)
-- **Stack:** Supabase + Expo/React Native (mobile) + React/Vite + TypeScript (web)
-- **Docker:** Local supabase stack (auth, db, storage, realtime, etc.) via docker compose
-- **Status:** Active development — fixing onboarding, language persistence, scrolling issues
-
-### csgo-skins / dash-bot
-- CS:GO skin showcase (PHP) + Discord economy bot (Node.js)
-- Shared repo, dash-bot added recently
-
-### enter-the-wired
-- Game modding tools (accela mods, Steam tools)
-
-### odysseus (stopped)
-- Self-hosted AI workspace fork (was running via Docker, now stopped)
-- **Upstream:** github.com/pewdiepie-archdaemon/odysseus
-
-### commit-message-skill
-- OpenCode skill for generating commit messages
-
-### Other projects
-- **ClapFinder** — Android skill finder app (Gradle/Kotlin)
-- **linux-discord-rich-presence** — Discord RPC for Linux
-- **MAD-68-custom-animation** — Web tool for MAD68 keyboard RGB animations
-- **terminal-rain-lightning** — Terminal rain + lightning effect
-- **pi-dashboard** — Flask dashboard for Snowpi (RPi4)
-- **n8n** — n8n workflow automation (runs on Snowpi)
+## Active Projects
+- **borsay-qallat** — Supabase + Expo/React Native + React/Vite + TS (most active)
+- **csgo-skins** / **dash-bot** — PHP skin site + Discord economy bot
+- **enter-the-wired** — Game modding (accela mods, Steam)
+- **commit-message-skill** — OpenCode skill for commit messages
+- **ClapFinder** — Android skill finder (Gradle/Kotlin)
+- **linux-discord-rich-presence** — Discord RPC
+- **MAD-68-custom-animation** — Web tool for MAD68 RGB
+- **terminal-rain-lightning** — Terminal rain effect
+- **pi-dashboard** — Flask on Snowpi
+- **n8n** — Workflow automation on Snowpi
 - **maptoposter** — Map poster generator
 - **linux-wallpaperengine** — Wallpaper Engine for Linux
 - **attack-shark-x11-driver** — Attack Shark mouse X11 config
+- **opencode-discord-presence** — Discord RPC plugin for OC
 
-## Key Scripts (in /home/snow/scripts/)
-- `setup-ollama.sh` - Install ollama-cuda, store models at `/mnt/games/ollama`
-- `resize-sda.sh` - Re-partition /dev/sda (unmounts before modifying)
-- `dot-mirror.sh` - Sync Dotfiles to external backup
-- `snow-audit.sh` - System audit
-- `toggle-adult-block.sh` - Toggle StevenBlack adult blocklist on/off via /etc/hosts (Super+Shift+A)
-- `cache-adult-blocklist.sh` - Cache adult blocklist from GitHub (daily timer)
+## Key Scripts (~/scripts/)
+- `setup-ollama.sh` — Install ollama-cuda, models at `/mnt/games/ollama`
+- `resize-sda.sh` — Re-partition /dev/sda (unmounts first)
+- `dot-mirror.sh` — Sync Dotfiles to external backup
+- `snow-audit.sh` — System audit
+- `toggle-adult-block.sh` — Toggle StevenBlack porn blocklist (Super+Shift+A)
+- `cache-adult-blocklist.sh` — Cache blocklist from GitHub (daily)
+- `opencode-switch` — Session switcher: list all OC sessions, pick by number, resume
+- `boot-sync.sh` — Boot-time sync: pushes session DB + config to Snowpi
+- `setup-oc-sync.sh` — Symlink shared OC configs into `~/.opencode/`
+
+## OpenCode Session Management
+- All sessions stored in `~/.local/share/opencode/opencode.db`
+- Sessions visible from any directory via `global` project
+- **Session switcher:** `~/scripts/opencode-switch` — list 83 sessions, pick by number, auto-resume
+- **Quick resume:** `opencode -s <session_id>`
+- **With --mini flag:** `opencode -s <session_id> --mini` for lightweight TUI
+- Sessions auto-sync to Snowpi via `boot-sync.sh` timer
 
 ## Ollama
 ```bash
@@ -68,53 +67,52 @@ ollama run llama3
 ```
 
 ## Constraints
-- **No sudo via OpenCode:** Password prompts fail. Run scripts as user, sudo commands manually.
-- **Partition ops:** resize-sda.sh unmounts drives before modifying. Run manually.
+- **No sudo via OpenCode:** Password prompts fail. Run as user, sudo manually.
+- **Partition ops:** resize-sda.sh unmounts before modifying. Run manually.
 - **No micro editor:** Use nano only.
 
 ## Services
-- **Docker:** 10 containers (supabase stack + docker-studio + kong). Compose: `~/Projects/borsay-qallat/supabase/docker/docker-compose.yml`. Networks: docker_default (bridge).
-- **Docker commands:** `docker ps`, `docker compose -p docker up -d` (for supabase/kong/studio stack)
+- **Docker:** 10 containers (supabase + studio + kong). Compose: `~/Projects/borsay-qallat/supabase/docker/docker-compose.yml`
+- **Docker commands:** `docker ps`, `docker compose -p docker up -d`
 - **Systemd:** `systemctl status/start/restart <service>`
-- **Key active services:** tailscaled, iwd (wireless), docker, containerd, libvirtd, lactd, coolercontrold, sshd, sddm, nvidia-persistenced, smartd
+- **Key services:** tailscaled, iwd, docker, containerd, libvirtd, lactd, coolercontrold, sshd, sddm, nvidia-persistenced, smartd
 - **WiFi:** iwd (not wpa_supplicant)
 - **Bluetooth:** bluetooth.service + bluez
 
 ## Network
-- **Main PC (Freezer):** 192.168.0.111/24, enp6s0 (MAC: e8:9c:25:df:0d:e7), WoL enabled
+- **Freezer:** 192.168.0.111/24, enp6s0 (e8:9c:25:df:0d:e7), WoL enabled
 - **Snowpi (RPi4, DietPi):** 192.168.1.35 (Tailscale: 100.83.33.67)
-- **Tailscale:** tailscaled service, 100.x.x.x range
-- **DNS:** systemd-resolved (NetworkManager dns=systemd-resolved). Per-link DNS on enp6s0: 192.168.1.35 + 100.83.33.67 (both = Pi-Hole on Snowpi). Tailscale MagicDNS: 100.100.100.100 for tailnet hostnames
-- **WiFi:** iwd (wireless service)
+- **Tailscale:** tailscaled, 100.x.x.x range
+- **DNS:** systemd-resolved → Pi-Hole on Snowpi (192.168.1.35 + 100.83.33.67). MagicDNS: 100.100.100.100
 - **Virtual:** virbr0 (libvirt), docker bridge networks
 
 ## Dotfiles
-Bare git repo at `~/.dotfiles`. Managed via scripts in `/home/snow/scripts/`.
+Bare git repo at `~/.dotfiles`. Remotes: GitHub (sn0wmann1/snowdots), GitLab (sn0wman/snowdots), Snowpi (git-vault). Managed via `~/scripts/dotsync`.
 
 ## Backup & Restore Strategy
 
 ### Sync chain
-- `dotsync` → git push GitLab → runs `dot-mirror.sh` → rsyncs to Snowpi
-- `boot-sync` (systemd timer) → runs dotsync → rsyncs session DB to Snowpi
+`dotsync` → git push GitLab + GitHub → `dot-mirror.sh` → rsync to Snowpi
+`boot-sync` (systemd timer) → runs dotsync → rsyncs session DB to Snowpi
 
 ### What's backed up
-| Data | GitLab | Snowpi | Local |
-|------|:---:|:---:|:---:|
-| Dotfiles | ✅ | ✅ | ✅ |
-| AGENTS.md + MEMORY.md | ✅ | ✅ | ✅ |
-| Session DB | ❌ | ✅ | ✅ |
-| Projects | ❌ | ✅ | ✅ |
-| Root configs | ❌ | ✅ | ✅ |
-| SSH keys | ❌ | ❌ | ✅ |
-| Wallpapers | ❌ | ❌ | ✅ |
-| Package lists | ❌ | ✅ | ✅ |
+| Data | GitLab | GitHub | Snowpi | Local |
+|------|:---:|:---:|:---:|:---:|
+| Dotfiles | ✅ | ✅ | ✅ | ✅ |
+| AGENTS.md + MEMORY.md | ✅ | ✅ | ✅ | ✅ |
+| Session DB | ❌ | ❌ | ✅ | ✅ |
+| Projects | ❌ | ❌ | ✅ | ✅ |
+| Root configs | ❌ | ❌ | ✅ | ✅ |
+| SSH keys | ❌ | ❌ | ❌ | ✅ |
+| Wallpapers | ❌ | ❌ | ❌ | ✅ |
+| Package lists | ❌ | ❌ | ✅ | ✅ |
 
 ### Full PC restore
 1. Install CachyOS + base packages: `pacman -S --needed - < pkglist.txt`
 2. `git clone git@gitlab.com:sn0wman/snowdots.git ~/Dotfiles`
-3. Run `~/Dotfiles/scripts/dotsync` to populate `~/.opencode/` + restore configs
-4. Restore SSH, wallpapers, projects from local mirror: `~/scripts/restore-dots.sh`
-5. Pull session DB from Snowpi: `rsync snow@100.83.33.67:/mnt/backups/freezer-mirror/opencode-db-backup/opencode.db ~/.local/share/opencode/`
+3. `~/Dotfiles/scripts/dotsync` → populate `~/.opencode/` + restore configs
+4. `~/scripts/restore-dots.sh` → restore SSH, wallpapers, projects
+5. `rsync snow@100.83.33.67:/mnt/backups/freezer-mirror/opencode-db-backup/opencode.db ~/.local/share/opencode/`
 
 ## Memory System (CRITICAL)
 **AT START OF EVERY SESSION:** Read `~/.opencode/MEMORY.md` first.
