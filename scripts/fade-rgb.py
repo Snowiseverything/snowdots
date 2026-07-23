@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fade PC RGB devices (OpenRGB + MAD68) smoothly."""
 
-import sys, time, threading
+import sys, time
 from pathlib import Path
 
 LAST_COLOR = Path("/tmp/fade-rgb-last")
@@ -38,30 +38,61 @@ def interpolate(fr, fg, fb, r, g, b):
     return frames
 
 
-def fade_openrgb(frames):
-    from openrgb import OpenRGBClient
-    from openrgb.utils import RGBColor
+def fade_all(target_r, target_g, target_b, frames, brightness_pct):
+    """Fade OpenRGB + keyboard in a single interleaved loop."""
+    orgb = None
+    kb_dev = None
+    try:
+        from openrgb import OpenRGBClient
+        from openrgb.utils import RGBColor, ModeColors
 
-    client = None
-    for attempt in range(5):
-        try:
-            client = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
-            break
-        except Exception:
-            time.sleep(1)
-    if client is None:
-        print("OpenRGB: server not available after 5 retries", file=sys.stderr)
+        for attempt in range(5):
+            try:
+                orgb = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
+                break
+            except Exception:
+                time.sleep(1)
+
+        import hid
+        for d in hid.enumerate(MAD68_VID, MAD68_PID):
+            if d.get("usage_page") == MAD68_RGB_USAGE_PAGE:
+                kb_dev = hid.device()
+                kb_dev.open_path(d["path"])
+                break
+    except Exception:
+        pass
+
+    if orgb is None and kb_dev is None:
         return
 
     for ri, gi, bi in frames:
+        color = RGBColor(ri, gi, bi)
+
+        if orgb is not None:
+            for d in orgb.devices:
+                try:
+                    am = d.modes[d.active_mode]
+                    if am.color_mode == ModeColors.MODE_SPECIFIC:
+                        d.set_colors([color])
+                    else:
+                        d.set_colors([color] * len(d.leds))
+                    d.show()
+                except Exception:
+                    pass
+
+        if kb_dev is not None:
+            try:
+                _mad68_send_color(kb_dev, ri, gi, bi)
+            except Exception:
+                pass
+
+        time.sleep(FADE_DELAY_MS / 1000)
+
+    if kb_dev is not None:
         try:
-            color = RGBColor(ri, gi, bi)
-            for d in client.devices:
-                d.set_colors([color] * len(d.leds))
-                d.show()
+            kb_dev.close()
         except Exception:
             pass
-        time.sleep(FADE_DELAY_MS / 1000)
 
 
 MAD68_VID = 0x373B
@@ -146,28 +177,23 @@ def main():
     if len(args) > 1:
         brightness = int(args[1])
 
+    factor = max(0, min(100, brightness)) / 100.0
+    target_r, target_g, target_b = int(r * factor), int(g * factor), int(b * factor)
+
     last = read_last()
     if last is None:
-        frames = [(r, g, b)]
+        frames = [(target_r, target_g, target_b)]
     else:
         fr, fg, fb = last
-        if fr == r and fg == g and fb == b:
+        if fr == target_r and fg == target_g and fb == target_b:
             print(f"Already #{r:02x}{g:02x}{b:02x} at {brightness}%")
             return
-        frames = interpolate(fr, fg, fb, r, g, b)
+        frames = interpolate(fr, fg, fb, target_r, target_g, target_b)
 
-    threads = [
-        threading.Thread(target=fade_openrgb, args=(frames,)),
-        threading.Thread(target=fade_mad68, args=(frames, brightness)),
-    ]
-
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
+    fade_all(target_r, target_g, target_b, frames, brightness)
 
     write_last(r, g, b)
-    print(f"Faded #{r:02x}{g:02x}{b:02x} at {brightness}%")
+    print(f"Set #{r:02x}{g:02x}{b:02x} at {brightness}%")
 
 
 if __name__ == "__main__":

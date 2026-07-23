@@ -67,6 +67,7 @@ state = {
     "openrgb": {"color": "000000", "brightness": 50, "mode": "static"},
     "keyboard": {"color": "000000"},
     "govee": {"color": "000000", "brightness": 80},
+    "last_color": "000000",
     "synced": False,
     "last_sync": None,
     "wallpaper": current_wallpaper_name(),
@@ -74,13 +75,17 @@ state = {
 
 
 def set_openrgb(color: str, brightness: int = 50):
-    """Set OpenRGB color via CLI."""
+    """Set all OpenRGB devices via CLI (no --brightness flag, it breaks multi-device in 0.9+)."""
+    r, g, b = [int(color[i:i+2], 16) for i in (0, 2, 4)]
+    factor = max(0, min(100, brightness)) / 100.0
+    dimmed = '%02x%02x%02x' % (int(r * factor), int(g * factor), int(b * factor))
     try:
         subprocess.run(
-            ["openrgb", "--mode", "static", "--color", color, "--brightness", str(brightness)],
+            ["openrgb", "--mode", "static", "--color", dimmed],
             timeout=5, capture_output=True,
         )
         state["openrgb"] = {"color": color, "brightness": brightness, "mode": "static"}
+        state["last_color"] = color
         return True
     except Exception as e:
         print(f"OpenRGB error: {e}", file=sys.stderr)
@@ -95,6 +100,7 @@ def set_keyboard(color: str, brightness: int = 70):
             timeout=5, capture_output=True,
         )
         state["keyboard"] = {"color": color}
+        state["last_color"] = color
         return True
     except Exception as e:
         print(f"Keyboard error: {e}", file=sys.stderr)
@@ -105,6 +111,7 @@ def set_govee(color: str, brightness: int = 80):
     """Set Govee LED strip — try daemon socket first, fall back to HA API."""
     if _govee_via_socket(color):
         state["govee"] = {"color": color, "brightness": brightness}
+        state["last_color"] = color
         return True
     try:
         subprocess.run(
@@ -112,6 +119,7 @@ def set_govee(color: str, brightness: int = 80):
             timeout=10, capture_output=True,
         )
         state["govee"] = {"color": color, "brightness": brightness}
+        state["last_color"] = color
         return True
     except Exception as e:
         print(f"Govee error: {e}", file=sys.stderr)
@@ -196,13 +204,15 @@ def trigger_sync():
     if color == "000000":
         return False
 
+    bri = state["openrgb"].get("brightness", 50)
+
     def _govee_async(c):
-        if _govee_via_socket(f"fade {c} 80"):
+        if _govee_via_socket(f"fade {c} {bri}"):
             state["govee"]["color"] = c
             return
         try:
             subprocess.run(
-                [sys.executable, str(GOVEE_SCRIPT), c, "80"],
+                [sys.executable, str(GOVEE_SCRIPT), c, str(bri)],
                 timeout=15, capture_output=True,
             )
             state["govee"]["color"] = c
@@ -214,12 +224,15 @@ def trigger_sync():
         t_govee = threading.Thread(target=_govee_async, args=(color,), daemon=True)
         t_govee.start()
         # PC devices via fade-rgb.py (crossfade, ~0.6s)
-        subprocess.run(
-            [sys.executable, str(Path.home() / "Dotfiles/scripts/fade-rgb.py"), color, "80"],
-            timeout=10, capture_output=True,
+        result = subprocess.run(
+            [sys.executable, str(Path.home() / "Dotfiles/scripts/fade-rgb.py"), color, str(bri)],
+            timeout=10, capture_output=True, text=True,
         )
+        if result.returncode != 0:
+            print(f"fade-rgb stderr: {result.stderr}", file=sys.stderr)
         state["openrgb"]["color"] = color
         state["keyboard"]["color"] = color
+        state["last_color"] = color
         return True
     except Exception as e:
         print(f"Sync error: {e}", file=sys.stderr)
@@ -424,7 +437,7 @@ class RGBHandler(BaseHTTPRequestHandler):
 
         elif self.path == "/brightness":
             b = brightness
-            current_color = state["openrgb"].get("color", "000000")
+            current_color = state.get("last_color", "000000")
             results = [None, None, None]
             def run_openrgb_b():
                 results[0] = set_openrgb(current_color, b)

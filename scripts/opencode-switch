@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+DB="$HOME/.local/share/opencode/opencode.db"
+
+if [ ! -f "$DB" ]; then
+  echo "opencode DB not found at $DB"
+  exit 1
+fi
+
+entries=$(sqlite3 -separator $'\t' "$DB" "
+  SELECT s.id, s.title, s.time_created
+  FROM session s
+  ORDER BY s.time_created DESC
+")
+
+if [ -z "$entries" ]; then
+  echo "no sessions found"
+  exit 1
+fi
+
+echo "OpenCode sessions:"
+echo "--------------------"
+i=1
+declare -A ids
+declare -A titles
+
+while IFS=$'\t' read -r id title created; do
+  now=$(date +%s)
+  created_s=$((created / 1000))
+  ago=$((now - created_s))
+  if [ $ago -lt 60 ]; then rel="just now"
+  elif [ $ago -lt 3600 ]; then rel="$((ago / 60))m"
+  elif [ $ago -lt 86400 ]; then rel="$((ago / 3600))h"
+  else rel="$((ago / 86400))d"
+  fi
+  printf "%3d) %-65s %s\n" "$i" "${title:0:65}" "$rel"
+  ids[$i]=$id
+  titles[$i]=$title
+  i=$((i + 1))
+done <<< "$entries"
+
+echo "--------------------"
+max=$((i - 1))
+echo -n "Pick session (1-$max), [Enter]=new session, q=quit: "
+read -r sel
+
+if [ "$sel" = "q" ] || [ "$sel" = "Q" ]; then
+  exit 0
+fi
+
+if [ -z "$sel" ]; then
+  exec opencode --mini 2>/dev/null || exec opencode
+fi
+
+if ! [[ "$sel" =~ ^[0-9]+$ ]] || [ "$sel" -lt 1 ] || [ "$sel" -gt "$max" ]; then
+  echo "invalid selection"
+  exit 1
+fi
+
+sid="${ids[$sel]}"
+echo "resuming: ${titles[$sel]}"
+exec opencode -s "$sid" --mini 2>/dev/null || exec opencode -s "$sid"
