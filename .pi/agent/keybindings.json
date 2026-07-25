@@ -1,0 +1,6 @@
+{
+  "tui.editor.deleteToLineStart": ["ctrl+shift+k"],
+  "app.model.cycleForward": ["alt+p"],
+  "app.session.togglePath": ["ctrl+shift+p"],
+  "app.session.resume": ["ctrl+p"]
+}
