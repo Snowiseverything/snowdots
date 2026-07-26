@@ -1,0 +1,30 @@
+{
+    "label" : "lock",
+    "action" : "loginctl lock-session",
+    "text" : "Lock",
+    "keybind" : "l"
+}
+{
+    "label" : "sleep",
+    "action" : "systemctl suspend",
+    "text" : "Sleep",
+    "keybind" : "u"
+}
+{
+    "label" : "logout",
+    "action" : "loginctl terminate-user $USER",
+    "text" : "Logout",
+    "keybind" : "e"
+}
+{
+    "label" : "shutdown",
+    "action" : "/home/snow/.config/wlogout/confirm.sh shutdown",
+    "text" : "Shutdown",
+    "keybind" : "s"
+}
+{
+    "label" : "reboot",
+    "action" : "/home/snow/.config/wlogout/confirm.sh reboot",
+    "text" : "Reboot",
+    "keybind" : "r"
+}
