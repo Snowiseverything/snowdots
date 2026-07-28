@@ -94,6 +94,7 @@ output_path = '/home/snow/.config/hypr/hyprlock/matugen/matugen-hyprlock.conf'
 [templates.wlogout]
 input_path = '/home/snow/Dotfiles/matugen/templates/wlogout.css'
 output_path = '/home/snow/.config/wlogout/style.css'
+post_hook = '/home/snow/Dotfiles/scripts/wlogout-recolor-icons.sh'
 
 [templates.rofi]
 input_path = '/home/snow/Dotfiles/matugen/templates/rofi-colors.rasi'

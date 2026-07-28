@@ -12,3 +12,4 @@ fastfetch/config.jsonc
 
 # Bibata source clone (build dependency, re-clone from GitHub)
 scripts/bibata-src/
+wlogout/icons/

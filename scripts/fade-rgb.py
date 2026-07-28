@@ -38,13 +38,22 @@ def interpolate(fr, fg, fb, r, g, b):
     return frames
 
 
+def _direct(d):
+    """Switch device to Direct mode for per-frame smoothness. Returns True if switched."""
+    for m in d.modes:
+        if m.name and m.name.lower() == "direct":
+            d.set_mode(m.id)
+            return True
+    return False
+
+
 def fade_all(target_r, target_g, target_b, frames, brightness_pct):
     """Fade OpenRGB + keyboard in a single interleaved loop."""
     orgb = None
     kb_dev = None
     try:
         from openrgb import OpenRGBClient
-        from openrgb.utils import RGBColor, ModeColors
+        from openrgb.utils import RGBColor
 
         for attempt in range(5):
             try:
@@ -52,6 +61,10 @@ def fade_all(target_r, target_g, target_b, frames, brightness_pct):
                 break
             except Exception:
                 time.sleep(1)
+
+        if orgb is not None:
+            for d in orgb.devices:
+                _direct(d)
 
         import hid
         for d in hid.enumerate(MAD68_VID, MAD68_PID):
@@ -71,11 +84,7 @@ def fade_all(target_r, target_g, target_b, frames, brightness_pct):
         if orgb is not None:
             for d in orgb.devices:
                 try:
-                    am = d.modes[d.active_mode]
-                    if am.color_mode == ModeColors.MODE_SPECIFIC:
-                        d.set_colors([color])
-                    else:
-                        d.set_colors([color] * len(d.leds))
+                    d.set_colors([color] * len(d.leds))
                     d.show()
                 except Exception:
                     pass
@@ -87,6 +96,16 @@ def fade_all(target_r, target_g, target_b, frames, brightness_pct):
                 pass
 
         time.sleep(FADE_DELAY_MS / 1000)
+
+    # CLI finalize — correct channel order for all devices
+    if orgb is not None:
+        r_final, g_final, b_final = frames[-1] if frames else (target_r, target_g, target_b)
+        hex_final = f"{r_final:02x}{g_final:02x}{b_final:02x}"
+        import subprocess
+        subprocess.run(
+            ["openrgb", "--mode", "static", "--color", hex_final],
+            timeout=5, capture_output=True,
+        )
 
     if kb_dev is not None:
         try:

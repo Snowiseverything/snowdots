@@ -64,7 +64,7 @@ def current_wallpaper_path() -> str | None:
 
 
 state = {
-    "openrgb": {"color": "000000", "brightness": 50, "mode": "static"},
+    "openrgb": {"color": "000000", "brightness": 80, "mode": "static"},
     "keyboard": {"color": "000000"},
     "govee": {"color": "000000", "brightness": 80},
     "last_color": "000000",
@@ -74,7 +74,7 @@ state = {
 }
 
 
-def set_openrgb(color: str, brightness: int = 50):
+def set_openrgb(color: str, brightness: int = 80):
     """Set all OpenRGB devices via CLI (no --brightness flag, it breaks multi-device in 0.9+)."""
     r, g, b = [int(color[i:i+2], 16) for i in (0, 2, 4)]
     factor = max(0, min(100, brightness)) / 100.0
@@ -199,17 +199,17 @@ def _compute_color() -> str:
 
 
 def trigger_sync():
-    """Sync PC devices + Govee via daemon socket (same crossfade timing)."""
+    """Sync PC devices + Govee. Returns dict with ok + message."""
     color = _compute_color()
     if color == "000000":
-        return False
+        return {"ok": False, "message": "No accent color"}
 
-    bri = state["openrgb"].get("brightness", 50)
+    if color == state.get("last_color"):
+        return {"ok": True, "message": "Already synced to wallpaper"}
+
+    bri = state["openrgb"].get("brightness", 80)
 
     def _govee_async(c):
-        if _govee_via_socket(f"fade {c} {bri}"):
-            state["govee"]["color"] = c
-            return
         try:
             subprocess.run(
                 [sys.executable, str(GOVEE_SCRIPT), c, str(bri)],
@@ -233,10 +233,10 @@ def trigger_sync():
         state["openrgb"]["color"] = color
         state["keyboard"]["color"] = color
         state["last_color"] = color
-        return True
+        return {"ok": True, "message": "Colors synced to wallpaper"}
     except Exception as e:
         print(f"Sync error: {e}", file=sys.stderr)
-        return False
+        return {"ok": False, "message": f"Sync error: {e}"}
 
 
 def parse_color(body: dict) -> str | None:
@@ -364,7 +364,7 @@ class RGBHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         body = self._body()
-        brightness = body.get("brightness", 50)
+        brightness = body.get("brightness", 80)
 
         if self.path == "/openrgb":
             color = parse_color(body)
@@ -453,8 +453,8 @@ class RGBHandler(BaseHTTPRequestHandler):
             self._json({"ok": all(r for r in results if r is not None), "brightness": b})
 
         elif self.path == "/sync":
-            ok = trigger_sync()
-            self._json({"ok": ok})
+            result = trigger_sync()
+            self._json(result)
 
         else:
             self._json({"error": "not found"}, 404)

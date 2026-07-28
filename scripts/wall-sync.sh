@@ -209,6 +209,10 @@ fi
 python3 "$HOME/Dotfiles/scripts/matugen-gtk.py" >> "$LOG_FILE" 2>&1 || log_error "GTK theme colors failed"
 log "GTK theme colors updated"
 
+# Update Papirus folder icon colors (matugen dynamic)
+bash "$HOME/Dotfiles/scripts/papirus-folder-sync.sh" >> "$LOG_FILE" 2>&1 || log_error "Papirus folder colors failed"
+log "Papirus folder colors updated"
+
 # Update Cursor Colors (matugen dynamic Bibata)
 python3 "$HOME/Dotfiles/scripts/bibata-matugen.py" >> "$LOG_FILE" 2>&1 || log_error "Cursor colors failed"
 log "Cursor colors updated via Bibata-Matugen"

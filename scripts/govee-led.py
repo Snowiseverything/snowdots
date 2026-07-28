@@ -207,32 +207,44 @@ def main():
         return
 
     if args[0] == "on":
+        try:
+            ha_call(f"services/light/turn_on", {"entity_id": ENTITY})
+            print("Power on via HA")
+            return
+        except Exception:
+            pass
         result = asyncio.run(ble_on())
         if result == "ble":
             print("Power on via BLE")
             return
-        ha_call(f"services/light/turn_on", {"entity_id": ENTITY})
-        print("Power on via HA")
         return
 
     if args[0] == "off":
+        try:
+            ha_call(f"services/light/turn_off", {"entity_id": ENTITY})
+            print("Power off via HA")
+            return
+        except Exception:
+            pass
         result = asyncio.run(ble_off())
         if result == "ble":
             print("Power off via BLE")
             return
-        ha_call(f"services/light/turn_off", {"entity_id": ENTITY})
-        print("Power off via HA")
         return
 
     if args[0] == "--brightness":
         b = int(args[1]) if len(args) > 1 else 50
+        pct = max(1, min(100, b))
+        try:
+            ha_call(f"services/light/turn_on", {"entity_id": ENTITY, "brightness_pct": pct})
+            print(f"Brightness {pct}% via HA")
+            return
+        except Exception:
+            pass
         result = asyncio.run(ble_brightness(b))
         if result == "ble":
             print(f"Brightness {b}% via BLE")
             return
-        pct = max(1, min(100, b))
-        ha_call(f"services/light/turn_on", {"entity_id": ENTITY, "brightness_pct": pct})
-        print(f"Brightness {pct}% via HA")
         return
 
     r = g = b = 0
@@ -243,15 +255,19 @@ def main():
     if len(args) > 1:
         brightness = int(args[1])
 
-    # Try daemon socket (persistent BLE, instant if running)
+    # HA first — more reliable than BLE
     color_hex = f"{r:02x}{g:02x}{b:02x}"
+    try:
+        ha_fade_color(r, g, b, steps=5, brightness=brightness)
+        print(f"Set #{color_hex} at {brightness}% via HA")
+        return
+    except Exception:
+        pass
+
+    # Fallback to daemon socket (BLE, hit-or-miss)
     if _daemon_send(f"fade {color_hex} {brightness}"):
         print(f"Set #{color_hex} at {brightness}% via daemon")
         return
-
-    # HA with software crossfade (5 steps ≈ 150ms)
-    ha_fade_color(r, g, b, steps=5, brightness=brightness)
-    print(f"Set #{color_hex} at {brightness}% via HA")
 
 
 if __name__ == "__main__":
