@@ -175,12 +175,18 @@ hl.monitor({
 hl.config({
     decoration = {
         rounding = 10,
-        active_opacity = 0.985,
+        active_opacity = 0.93,
         inactive_opacity = 0.85,
         blur = {
             enabled = true,
-            size = 3,
-            passes = 2,
+            size = 8,
+            passes = 3,
+            new_optimizations = true,
+            noise = 0.01,
+            contrast = 0.9,
+            xray = true,
+            special = true,
+            popups = true,
         },
         shadow = {
             enabled = false,
