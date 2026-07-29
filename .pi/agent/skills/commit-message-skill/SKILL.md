@@ -37,13 +37,35 @@ scripts/{govee,rgb}: unify fade timing
 scripts,wlogout: update color palette
 ```
 
+## Output Format
+
+After writing the commit message, produce a one-line plain-English summary of
+the story told — what problem existed, what the fix does, and why it matters.
+
+Example:
+
+```
+scripts: fix connection leak in fade loop
+
+Each fade-rgb.py call opened a new OpenRGB TCP connection without closing
+it. After ~10 rapid wallpaper changes the connection pool exhausted,
+causing silent failures on subsequent syncs.
+
+Add explicit orgb.disconnect() after each fade loop completes.
+
+Fixes #42
+```
+
+> **Story told:** Repeated wallpaper changes silently broke RGB sync because
+> TCP connections leaked; closed connections after each fade to fix.
+
 ### Examples
 
-| Good | Bad |
-| ------ | ----- |
-| `scripts: fix connection leak in sync loop` | `fix: connection leak` (Conventional Commits) |
-| `hypr: update animation config for 0.56+` | `scripts: fixed the leak` (past tense) |
-| `quickshell: add scroll support to sidebar` | `sidebar: add scroll` (wrong area) |
+| Good                                        | Bad                                                                |
+| ------------------------------------------- | ------------------------------------------------------------------ |
+| `scripts: fix connection leak in sync loop` | `fix: connection leak` (Conventional Commits)                      |
+| `hypr: update animation config for 0.56+`   | `scripts: fixed the leak` (past tense)                             |
+| `quickshell: add scroll support to sidebar` | `sidebar: add scroll` (wrong area)                                 |
 | `docs: document multi-remote push workflow` | `docs: Document multi-remote push.` (capitalized, trailing period) |
 
 ## Workflow
