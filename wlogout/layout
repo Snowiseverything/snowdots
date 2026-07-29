@@ -1,18 +1,18 @@
 {
     "label" : "lock",
-    "action" : "loginctl lock-session",
+    "action" : "/home/snow/.config/wlogout/confirm.sh lock",
     "text" : "Lock",
     "keybind" : "l"
 }
 {
     "label" : "sleep",
-    "action" : "systemctl suspend",
+    "action" : "/home/snow/.config/wlogout/confirm.sh sleep",
     "text" : "Sleep",
     "keybind" : "u"
 }
 {
     "label" : "logout",
-    "action" : "loginctl terminate-user $USER",
+    "action" : "/home/snow/.config/wlogout/confirm.sh logout",
     "text" : "Logout",
     "keybind" : "e"
 }
