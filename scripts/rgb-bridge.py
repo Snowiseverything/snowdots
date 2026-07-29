@@ -25,7 +25,7 @@ Example:
   curl -X POST http://localhost:5070/all -d '{"color":"ff0000","brightness":50}'
 """
 
-import json, os, socket, subprocess, sys, threading
+import json, os, subprocess, sys, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
@@ -34,19 +34,7 @@ MAD68_SCRIPT = Path.home() / ".local/bin/mad68-rgb.py"
 SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/rgb-sync.sh"
 WALL_SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/wall-sync.sh"
 GOVEE_SCRIPT = Path.home() / "Dotfiles/scripts/govee-led.py"
-DAEMON_SOCK = "/tmp/govee-daemon.sock"
 
-def _govee_via_socket(cmd: str) -> bool:
-    try:
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.settimeout(3)
-        s.connect(DAEMON_SOCK)
-        s.sendall((cmd + "\n").encode())
-        resp = s.recv(1024).decode().strip()
-        s.close()
-        return resp == "ok"
-    except Exception:
-        return False
 
 # ── State tracking ──────────────────────────────────────────────────────
 def current_wallpaper_name() -> str:
@@ -108,11 +96,7 @@ def set_keyboard(color: str, brightness: int = 70):
 
 
 def set_govee(color: str, brightness: int = 80):
-    """Set Govee LED strip — try daemon socket first, fall back to HA API."""
-    if _govee_via_socket(color):
-        state["govee"] = {"color": color, "brightness": brightness}
-        state["last_color"] = color
-        return True
+    """Set Govee LED strip via HA API or direct BLE."""
     try:
         subprocess.run(
             [sys.executable, str(GOVEE_SCRIPT), color, str(brightness)],
@@ -199,13 +183,19 @@ def _compute_color() -> str:
 
 
 def trigger_sync():
-    """Sync PC devices + Govee. Returns dict with ok + message."""
+    """Sync PC devices + Govee. Returns dict with ok + message.
+
+    Sync ALWAYS runs (fade-rgb.py handles skip-if-same internally).
+    The response message tells the caller whether this was a fresh sync
+    or the color hadn't changed since the last bridge call.
+    """
     color = _compute_color()
     if color == "000000":
         return {"ok": False, "message": "No accent color"}
 
-    if color == state.get("last_color"):
-        return {"ok": True, "message": "Already synced to wallpaper"}
+    # Decide message BEFORE the sync: "Already synced" if color unchanged
+    already_synced = color == state.get("last_color")
+    message = "Already synced to wallpaper" if already_synced else "Colors synced to wallpaper"
 
     bri = state["openrgb"].get("brightness", 80)
 
@@ -233,7 +223,7 @@ def trigger_sync():
         state["openrgb"]["color"] = color
         state["keyboard"]["color"] = color
         state["last_color"] = color
-        return {"ok": True, "message": "Colors synced to wallpaper"}
+        return {"ok": True, "message": message}
     except Exception as e:
         print(f"Sync error: {e}", file=sys.stderr)
         return {"ok": False, "message": f"Sync error: {e}"}
@@ -462,11 +452,6 @@ class RGBHandler(BaseHTTPRequestHandler):
 
 # ── Main ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    # Clean up stale daemon socket from previous session
-    import os
-    if os.path.exists(DAEMON_SOCK):
-        os.unlink(DAEMON_SOCK)
-
     server = HTTPServer(("0.0.0.0", PORT), RGBHandler)
     print(f"RGB Bridge listening on http://0.0.0.0:{PORT}")
     try:

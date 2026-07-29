@@ -32,24 +32,9 @@ GOVEE_ADDR = "C6:32:38:31:2F:48"
 WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
 
 LAST_COLOR = Path("/tmp/govee-last-color")
-FADE_STEPS = 20
-FADE_DELAY_MS = 30
-DAEMON_SOCK = "/tmp/govee-daemon.sock"
+FADE_STEPS = 5
+FADE_DELAY_MS = 20
 
-
-def _daemon_send(cmd: str) -> bool:
-    """Send a command to the govee-daemon Unix socket. Returns True on success."""
-    import socket
-    try:
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.settimeout(3)
-        s.connect(DAEMON_SOCK)
-        s.sendall((cmd + "\n").encode())
-        resp = s.recv(1024).decode().strip()
-        s.close()
-        return resp == "ok"
-    except Exception:
-        return False
 
 
 def ha_call(endpoint, data=None):
@@ -61,7 +46,7 @@ def ha_call(endpoint, data=None):
             "Content-Type": "application/json",
         },
     )
-    with urllib.request.urlopen(req, timeout=10) as resp:
+    with urllib.request.urlopen(req, timeout=5) as resp:
         return json.loads(resp.read())
 
 
@@ -94,7 +79,7 @@ async def _ble_write(cmd):
     from bleak import BleakClient
 
     try:
-        async with BleakClient(GOVEE_ADDR, timeout=2) as client:
+        async with BleakClient(GOVEE_ADDR, timeout=10) as client:
             await client.write_gatt_char(WRITE_CHAR, cmd, response=False)
             return "ble"
     except Exception:
@@ -105,7 +90,7 @@ async def ble_fade_color(fr, fg, fb, r, g, b):
     from bleak import BleakClient
 
     try:
-        async with BleakClient(GOVEE_ADDR, timeout=2) as client:
+        async with BleakClient(GOVEE_ADDR, timeout=10) as client:
             for i in range(1, FADE_STEPS + 1):
                 t = i / FADE_STEPS
                 ri = int(fr + (r - fr) * t)
@@ -145,27 +130,8 @@ async def ble_brightness(pct):
     return await _ble_write(make_cmd([0x33, 0x04, level]))
 
 
-def ha_fade_color(r, g, b, steps=5, brightness=80):
-    """Fade via HA by reading current color and sending N interpolation steps."""
-    from time import sleep
-    try:
-        curr = ha_call(f"states/{ENTITY}")
-        attrs = curr.get("attributes", {})
-        cr, cg, cb = attrs.get("rgb_color", [0, 0, 0])
-    except Exception:
-        cr = cg = cb = 0
-
-    for i in range(1, steps + 1):
-        t = i / steps
-        ri = int(cr + (r - cr) * t)
-        gi = int(cg + (g - cg) * t)
-        bi = int(cb + (b - cb) * t)
-        ha_call("services/light/turn_on", {
-            "entity_id": ENTITY,
-            "rgb_color": [ri, gi, bi],
-        })
-        sleep(FADE_DELAY_MS / 1000)
-
+def ha_fade_color(r, g, b, steps=None, brightness=80):
+    """Set Govee color instantly via HA — no fade steps needed."""
     pct = max(1, min(100, brightness))
     ha_call("services/light/turn_on", {
         "entity_id": ENTITY,
@@ -184,6 +150,10 @@ def main():
     if not args:
         print((__doc__ or "").strip())
         return
+
+    fade_mode = "--fade" in args
+    if fade_mode:
+        args.remove("--fade")
 
     if args[0] == "discover":
         try:
@@ -256,19 +226,49 @@ def main():
     if len(args) > 1:
         brightness = int(args[1])
 
-    # HA first — more reliable than BLE
     color_hex = f"{r:02x}{g:02x}{b:02x}"
-    try:
-        ha_fade_color(r, g, b, steps=5, brightness=brightness)
-        print(f"Set #{color_hex} at {brightness}% via HA")
+
+    # Skip if already at target (avoids wasteful calls + flash)
+    last = read_last_color()
+    if last and last == (r, g, b):
+        print(f"Already #{color_hex} at {brightness}%")
         return
+
+    # Save original last_color for BLE fade interpolation, then
+    # write intent immediately — closes race window with concurrent calls
+    orig_last = last
+    write_last_color(r, g, b)
+
+    # ── HA first — fast local network call to Snowpi ─────────────────────
+    # Check if Govee is actually available before trusting HA
+    try:
+        ha_state = ha_call(f"states/{ENTITY}")
+        if ha_state.get("state") != "unavailable":
+            ha_fade_color(r, g, b, brightness=brightness)
+            print(f"Set #{color_hex} at {brightness}% via HA")
+            return
     except Exception:
         pass
 
-    # Fallback to daemon socket (BLE, hit-or-miss)
-    if _daemon_send(f"fade {color_hex} {brightness}"):
-        print(f"Set #{color_hex} at {brightness}% via daemon")
-        return
+    # ── HA unavailable or failed — fall back to direct BLE ───────────────
+    if fade_mode and orig_last:
+        result = asyncio.run(ble_fade_color(*orig_last, r, g, b))
+        if result == "ble":
+            print(f"Set #{color_hex} at {brightness}% via BLE fade")
+            return
+    else:
+        result = asyncio.run(ble_set_color(r, g, b, brightness))
+        if result == "ble":
+            print(f"Set #{color_hex} at {brightness}% via BLE")
+            return
+
+    # All paths exhausted — clear last_color so next call retries
+    # (device wasn't actually changed, skipping would be incorrect)
+    try:
+        LAST_COLOR.unlink()
+    except OSError:
+        pass
+    print(f"Set #{color_hex} FAILED (HA + BLE both unreachable)")
 
 
 if __name__ == "__main__":

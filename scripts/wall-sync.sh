@@ -1,19 +1,34 @@
 #!/bin/bash
 ###########################################################################
-##  SnowDots — SnowWallsync                              Version: v1.1.4 ##
-##  Last Edited: 2026-05-06                                              ##
+##  SnowDots — SnowWallsync                              Version: v1.2.0 ##
+##  Trailing-edge debounce: matugen + theme always run; RGB sync debounced ##
 ###########################################################################
 
-# Debounce: skip if run in last 5 seconds (prevents duplicate from skwd + matugen)
-DEBOUNCE_FILE="$HOME/.cache/skwd-wall/wall-sync-debounce"
-if [ -f "$DEBOUNCE_FILE" ]; then
-	LAST=$(cat "$DEBOUNCE_FILE")
-	NOW=$(date +%s)
-	if [ $((NOW - LAST)) -lt 5 ]; then
-		exit 0
+# ── Lock helpers ─────────────────────────────────────────────────────────
+ACQUIRE_LOCK() {
+	local lock="$1" pid
+	if [ -f "$lock" ]; then
+		pid=$(cat "$lock" 2>/dev/null)
+		# Stale check: if the PID is no longer alive, reclaim the lock
+		if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+			return 1 # lock held by live process
+		fi
 	fi
+	echo "$$" >"$lock"
+	return 0
+}
+RELEASE_LOCK() { rm -f "$1"; }
+
+# ── Re-entry guard ────────────────────────────────────────────────────────
+# skwd can re-trigger wall-sync recursively when matugen writes files.
+# Guard prevents duplicate runs within 20s of ourselves.
+RUN_FILE="$HOME/.cache/skwd-wall/wall-sync-running"
+if [ -f "$RUN_FILE" ]; then
+	STALE=$(($(date +%s) - $(stat -c %Y "$RUN_FILE" 2>/dev/null || echo 0)))
+	[ "$STALE" -lt 20 ] && exit 0
 fi
-date +%s >"$DEBOUNCE_FILE"
+date +%s >"$RUN_FILE"
+trap 'rm -f "$RUN_FILE"; RELEASE_LOCK "$TRAP_LOCK"' EXIT
 
 # Logging setup
 LOG_DIR="$HOME/.local/share/wall-sync/logs"
@@ -38,16 +53,7 @@ log "Args: $@"
 log "XDG_RUNTIME_DIR set to: $XDG_RUNTIME_DIR"
 
 # 1. Daemon Check
-# Ensure awww-daemon is running (used by skwd)
-if ! pgrep -x "awww-daemon" >/dev/null; then
-	log "Starting awww-daemon..."
-	rm -f "$XDG_RUNTIME_DIR/awww.socket"
-	awww-daemon --format xrgb &
-	sleep 0.5
-else
-	log "awww-daemon already running"
-fi
-
+# awww-daemon is deprecated — skwd handles wallpaper management.
 # Ensure skwd-daemon is running
 if ! pgrep -x "skwd-daemon" >/dev/null; then
 	log "Starting skwd-daemon..."
@@ -100,17 +106,33 @@ if [ -z "$WALLPAPER" ] || [ ! -f "$WALLPAPER" ] || [[ "$WALLPAPER" == *"lucy"* ]
 	if [ -f "$LAST_WALL_FILE" ]; then
 		WALLPAPER=$(cat "$LAST_WALL_FILE")
 	else
-		WALLPAPER="$HOME/Pictures/Wallpapers/044.jpg"
+		WALLPAPER="$HOME/Pictures/Wallpapers/044.webp"
 	fi
 fi
 
 # Validate wallpaper exists
 if [ ! -f "$WALLPAPER" ]; then
 	log_error "Wallpaper not found: $WALLPAPER, using fallback"
-	WALLPAPER="$HOME/Pictures/Wallpapers/044.jpg"
+	WALLPAPER="$HOME/Pictures/Wallpapers/044.webp"
 fi
 
 log "Using wallpaper: $WALLPAPER"
+
+# ── Same-wallpaper guard ──────────────────────────────────────────────────
+# Prevents skwd recursive flood (matugen writes files → skwd re-triggers
+# postProcessing). Only blocks when wallpaper on screen ALREADY matches
+# the target — i.e. this is a re-trigger, not an intentional change.
+STORED_ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
+LAST_SYNCED=$(cat "$CACHE_DIR/last_synced_accent" 2>/dev/null)
+CURRENT_WALL=$(readlink -f "$CACHE_DIR/current-wallpaper" 2>/dev/null)
+if [ "$WALLPAPER" = "$CURRENT_WALL" ] && [ -n "$STORED_ACCENT" ] && [ "$STORED_ACCENT" != "null" ]; then
+	# Wallpaper already on screen = recursive re-trigger. Block.
+	# Exception: allow through at boot (last_synced_accent cleared).
+	if [ -n "$LAST_SYNCED" ] && [ "$LAST_SYNCED" != "null" ]; then
+		log "Same wallpaper ($WALLPAPER), re-trigger guard. Exiting."
+		exit 0
+	fi
+fi
 
 # Save as the "Last Known Good" (save actual steam dir for WE, not preview path)
 if [ "$IS_STEAM" = true ] && [ -n "$STEAM_DIR" ]; then
@@ -124,18 +146,17 @@ mkdir -p "$HOME/.local/state/caelestia/wallpaper"
 echo "$WALLPAPER" >"$HOME/.local/state/caelestia/wallpaper/path.txt"
 ln -sf "$WALLPAPER" "$CACHE_DIR/current-wallpaper"
 
-# Generate colors and sync RGB
-# Wallpaper is already applied by skwd-wall's postProcessing hook.
-# Only re-apply if this is a standalone run (no arg AND wallpaper differs)
-if [ -z "$ORIG_ARG" ]; then
-	CURRENT=$(awww query 2>/dev/null | grep -oP 'image: \K.*' | tr -d '[:space:]')
-	if [ "$CURRENT" != "$WALLPAPER" ]; then
-		skwd wall apply "{\"path\":\"$WALLPAPER\"}" 2>/dev/null || true
-	fi
+# Generate colors from wallpaper palette
+matugen image "$WALLPAPER" --source-color-index 0 2>>"$LOG_FILE" || log_error "matugen failed"
+
+# ── Wallpaper change notification (immediate, before slow theme updates) ──
+WALL_NAME=$(basename "$WALLPAPER")
+if command -v notify-send &>/dev/null; then
+	notify-send -i "$WALLPAPER" "Wallpaper Changed" "Applied: $WALL_NAME" 2>/dev/null || true
 fi
 
-# Generate colors and sync RGB
-matugen image "$WALLPAPER" --source-color-index 0 2>>"$LOG_FILE" || log_error "matugen failed"
+# ── RGB sync (immediate, before UI updates to minimize color delay) ──────
+# (the trailing-edge debounce section continues below)
 
 # 5. UI Refresh & Borders
 # Refresh border colors directly from the generated skwd-wall cache
@@ -152,17 +173,67 @@ if [ -f "$CACHE_DIR/hyprland-colors.conf" ]; then
 	fi
 fi
 
-# Sync RGB after hyprctl reload so OpenRGB doesn't get reset
-# Sync RGB only if accent changed (skip unnecessary fades on wallpaper change)
-# wall-reset.sh (Super+Shift+W) bypasses this path and always syncs
+# ── Trailing-edge debounced RGB sync ──────────────────────────────────
+# matugen + UI updates always run; RGB sync debounces so rapid wallpaper
+# cycling only triggers sync for the FINAL wallpaper in a burst.
+
 LAST_ACCENT=$(cat "$CACHE_DIR/last_synced_accent" 2>/dev/null)
 CURRENT_ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
-if [ "$CURRENT_ACCENT" = "$LAST_ACCENT" ] && [ -n "$CURRENT_ACCENT" ] && [ "$CURRENT_ACCENT" != "null" ]; then
-	log "Accent unchanged ($CURRENT_ACCENT), skipping RGB sync"
+
+# Always record the pending accent for the delayed process
+echo "$CURRENT_ACCENT" >"$CACHE_DIR/pending-sync-accent"
+
+# Immediate sync: only if outside debounce window AND accent changed
+if [ -f "$CACHE_DIR/rgb-sync-debounce" ]; then
+	DEBOUNCE_TIME=$(cat "$CACHE_DIR/rgb-sync-debounce")
+	NOW=$(date +%s)
+	if [ $((NOW - DEBOUNCE_TIME)) -lt 3 ]; then
+		log "RGB sync debounced (within 3s window), pending accent saved"
+	else
+		if [ "$CURRENT_ACCENT" != "$LAST_ACCENT" ] && [ -n "$CURRENT_ACCENT" ] && [ "$CURRENT_ACCENT" != "null" ]; then
+			log "Accent changed, syncing RGB"
+			bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
+			echo "$CURRENT_ACCENT" >"$CACHE_DIR/last_synced_accent"
+		else
+			log "Accent unchanged ($CURRENT_ACCENT), skipping RGB sync"
+		fi
+	fi
 else
-	log "Accent changed or first run, syncing RGB"
-	bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
-	echo "$CURRENT_ACCENT" >"$CACHE_DIR/last_synced_accent"
+	if [ "$CURRENT_ACCENT" != "$LAST_ACCENT" ] && [ -n "$CURRENT_ACCENT" ] && [ "$CURRENT_ACCENT" != "null" ]; then
+		log "Accent changed, syncing RGB"
+		bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
+		echo "$CURRENT_ACCENT" >"$CACHE_DIR/last_synced_accent"
+	else
+		log "Accent unchanged ($CURRENT_ACCENT), skipping RGB sync"
+	fi
+fi
+
+# Update debounce timer (extends the window for subsequent calls)
+date +%s >"$CACHE_DIR/rgb-sync-debounce"
+
+# Background trailing-edge process: syncs the latest pending accent after
+# the debounce window expires (3s since the LAST call). Lock prevents
+# multiple delayed processes piling up.
+TRAP_LOCK="$CACHE_DIR/delayed-sync.lock"
+if ACQUIRE_LOCK "$TRAP_LOCK"; then
+	(
+		# Poll until debounce has been stale for >=3s
+		while true; do
+			DEBOUNCE=$(cat "$CACHE_DIR/rgb-sync-debounce" 2>/dev/null)
+			NOW=$(date +%s)
+			AGE=$((NOW - ${DEBOUNCE:-0}))
+			[ "$AGE" -ge 3 ] && break
+			sleep 0.5
+		done
+		PENDING=$(cat "$CACHE_DIR/pending-sync-accent" 2>/dev/null)
+		LAST=$(cat "$CACHE_DIR/last_synced_accent" 2>/dev/null)
+		if [ -n "$PENDING" ] && [ "$PENDING" != "$LAST" ] && [ "$PENDING" != "null" ] && [ "$PENDING" != "#000000" ]; then
+			log "Delayed trailing-edge sync: $PENDING"
+			bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || log_error "delayed rgb-sync failed"
+			echo "$PENDING" >"$CACHE_DIR/last_synced_accent"
+		fi
+		RELEASE_LOCK "$TRAP_LOCK"
+	) &
 fi
 
 # Reload Kitty colors via pkill (more reliable than kitten)
@@ -350,10 +421,5 @@ if [ -x "$HOME/Dotfiles/scripts/toofan-theme.sh" ]; then
 fi
 
 # Notification after all syncs complete
-WALL_NAME=$(basename "$WALLPAPER")
-if command -v notify-send &>/dev/null; then
-	notify-send -i "$WALLPAPER" "Wallpaper Changed" "Applied: $WALL_NAME" 2>/dev/null || true
-fi
-
 echo "Sync successful: $WALL_NAME"
 log "=== Wall-sync completed successfully ==="

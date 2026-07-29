@@ -5,8 +5,8 @@ import sys, time
 from pathlib import Path
 
 LAST_COLOR = Path("/tmp/fade-rgb-last")
-FADE_STEPS = 20
-FADE_DELAY_MS = 30
+FADE_STEPS = 10
+FADE_DELAY_MS = 20
 OPENRGB_HOST = "localhost"
 OPENRGB_PORT = 6742
 
@@ -38,33 +38,22 @@ def interpolate(fr, fg, fb, r, g, b):
     return frames
 
 
-def _direct(d):
-    """Switch device to Direct mode for per-frame smoothness. Returns True if switched."""
-    for m in d.modes:
-        if m.name and m.name.lower() == "direct":
-            d.set_mode(m.id)
-            return True
-    return False
-
-
-def fade_all(target_r, target_g, target_b, frames, brightness_pct):
-    """Fade OpenRGB + keyboard in a single interleaved loop."""
+def fade_all(target_r, target_g, target_b, frames, brightness_pct, last_color=None):
+    """Fade OpenRGB + keyboard without mode switch — no flash."""
     orgb = None
     kb_dev = None
     try:
         from openrgb import OpenRGBClient
         from openrgb.utils import RGBColor
 
-        for attempt in range(5):
+        for attempt in range(3):
             try:
                 orgb = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
                 break
             except Exception:
-                time.sleep(1)
+                time.sleep(0.5)
 
-        if orgb is not None:
-            for d in orgb.devices:
-                _direct(d)
+        # Stay in current mode (Static). No _direct() — mode switches cause flash.
 
         import hid
         for d in hid.enumerate(MAD68_VID, MAD68_PID):
@@ -97,15 +86,11 @@ def fade_all(target_r, target_g, target_b, frames, brightness_pct):
 
         time.sleep(FADE_DELAY_MS / 1000)
 
-    # CLI finalize — correct channel order for all devices
     if orgb is not None:
-        r_final, g_final, b_final = frames[-1] if frames else (target_r, target_g, target_b)
-        hex_final = f"{r_final:02x}{g_final:02x}{b_final:02x}"
-        import subprocess
-        subprocess.run(
-            ["openrgb", "--mode", "static", "--color", hex_final],
-            timeout=5, capture_output=True,
-        )
+        try:
+            orgb.disconnect()
+        except Exception:
+            pass
 
     if kb_dev is not None:
         try:
@@ -209,9 +194,9 @@ def main():
             return
         frames = interpolate(fr, fg, fb, target_r, target_g, target_b)
 
-    fade_all(target_r, target_g, target_b, frames, brightness)
+    fade_all(target_r, target_g, target_b, frames, brightness, last)
 
-    write_last(r, g, b)
+    write_last(target_r, target_g, target_b)
     print(f"Set #{r:02x}{g:02x}{b:02x} at {brightness}%")
 
 

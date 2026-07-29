@@ -4,7 +4,7 @@ COLORS_FILE="$HOME/.cache/skwd-wall/colors.json"
 
 ACCENT=$(jq -r '.accent' "$COLORS_FILE" 2>/dev/null)
 if [ -z "$ACCENT" ] || [ "$ACCENT" = "null" ] || [ "$ACCENT" = "#000000" ]; then
-    exit 0
+	exit 0
 fi
 
 LED_COLOR=$(python3 -c "
@@ -25,8 +25,12 @@ print('%02x%02x%02x' % (int(r_l*255), int(g_l*255), int(b_l*255)))
 
 [ -z "$LED_COLOR" ] && exit 0
 
-# Fade PC devices (OpenRGB + MAD68) and Govee LED in parallel
-python3 "$HOME/Dotfiles/scripts/fade-rgb.py" "$LED_COLOR" 80 2>&1 | sed 's/^/[PC] /' &
-python3 "$HOME/Dotfiles/scripts/govee-led.py" "$LED_COLOR" 80 2>&1 | sed 's/^/[Govee] /' &
+# Run PC and Govee fades in parallel with matching step timing
+# fade-rgb.py: 10 steps × 20ms = 200ms fade
+# govee-led.py --fade: 10 steps × 20ms = 200ms fade via daemon socket
+# Both finish at ~same time for synchronized color transition
+timeout 10 python3 "$HOME/Dotfiles/scripts/fade-rgb.py" "$LED_COLOR" 80 2>&1 | sed 's/^/[PC] /' &
+
+timeout 10 python3 "$HOME/Dotfiles/scripts/govee-led.py" "$LED_COLOR" 80 --fade 2>&1 | sed 's/^/[Govee] /' || echo "[Govee] failed or timed out" &
 
 wait

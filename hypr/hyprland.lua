@@ -103,6 +103,10 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("qs -c caelestia -d")
 
     -- Wallpaper (show immediately so desktop isn't blank)
+    -- Clear boot sync gate so OpenRGB always re-syncs at boot
+    -- last_synced_accent persists across reboots; wall-sync.sh skips
+    -- rgb-sync if the accent hasn't changed (correct at runtime, wrong at boot)
+    hl.exec_cmd("rm -f ~/.cache/skwd-wall/last_synced_accent")
     hl.exec_cmd("systemctl --user start skwd")
     hl.exec_cmd("~/Dotfiles/scripts/wall-reset.sh")
 
@@ -196,10 +200,16 @@ hl.config({
 
 -- Animations with bezier curves
 hl.curve("snappy", { type = "bezier", points = { {0.2, 0.1}, {0.2, 1} } })
+hl.curve("smooth", { type = "bezier", points = { {0.1, 0.8}, {0.15, 1} } })
 
-hl.animation({ leaf = "windows",   enabled = true, speed = 2.5,  bezier = "snappy" })
+hl.animation({ leaf = "windows",   enabled = true, speed = 3,    bezier = "snappy", style = "popin" })
+hl.animation({ leaf = "windowsMove",enabled = true, speed = 2.5,  bezier = "smooth" })
 hl.animation({ leaf = "fade",      enabled = true, speed = 2.5,  bezier = "snappy" })
-hl.animation({ leaf = "workspaces",enabled = true, speed = 2,    bezier = "default", style = "slidefade 20%" })
+hl.animation({ leaf = "fadeSwitch",enabled = true, speed = 2.5,  bezier = "snappy" })
+hl.animation({ leaf = "fadeIn",    enabled = true, speed = 2.5,  bezier = "snappy" })
+hl.animation({ leaf = "fadeOut",   enabled = true, speed = 2.5,  bezier = "snappy" })
+hl.animation({ leaf = "fadeLayers",enabled = true, speed = 2.5,  bezier = "snappy" })
+hl.animation({ leaf = "workspaces",enabled = true, speed = 3,    bezier = "smooth", style = "slidefade 30%" })
 hl.animation({ leaf = "border",    enabled = true, speed = 1,    bezier = "default" })
 
 hl.config({
