@@ -13,3 +13,7 @@ fastfetch/config.jsonc
 # Bibata source clone (build dependency, re-clone from GitHub)
 scripts/bibata-src/
 wlogout/icons/
+
+# Python cache
+__pycache__/
+scripts/__pycache__/

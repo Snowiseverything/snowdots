@@ -1,8 +1,8 @@
 window {
     font-family: Iosevka Nerd Font Propo;
     font-size: 16pt;
-    color: #e3e2e9;
-    background-color: alpha(#121318, 0.75);
+    color: #e1e1ef;
+    background-color: alpha(#10131c, 0.75);
 }
 
 button {

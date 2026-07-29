@@ -100,6 +100,10 @@ post_hook = '/home/snow/Dotfiles/scripts/wlogout-recolor-icons.sh'
 input_path = '/home/snow/Dotfiles/matugen/templates/rofi-colors.rasi'
 output_path = '/home/snow/.config/rofi/launchers/styles/shared/colors.rasi'
 
+[templates.cava]
+input_path = '/home/snow/Dotfiles/matugen/templates/cava-colors.conf'
+output_path = '/home/snow/.config/cava/config'
+
 [templates.forkgram]
 input_path = '/home/snow/Dotfiles/matugen/templates/forkgram.tdesktop-palette'
 output_path = '/home/snow/.cache/skwd-wall/forkgram.tdesktop-palette'
