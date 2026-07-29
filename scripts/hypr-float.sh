@@ -1,17 +1,13 @@
-########################################################################
-##  SnowDots — SnowHyprfloat                             Version: v1.0.0    ##
-##  Last Edited: 2026-05-02                                           ##
-########################################################################
-
 #!/bin/bash
+#
+#  SnowDots — SnowHyprfloat                             Version: v1.0.0
+#  Last Edited: 2026-07-29
+#
+
 FLOAT=$(hyprctl activewindow -j | jq -r '.floating')
 if [ "$FLOAT" = "true" ]; then
-    hyprctl dispatch togglefloating
+    hyprctl dispatch "hl.dsp.window.float()"
 else
-    W=$(hyprctl activewindow -j | jq -r '.size[0]')
-    H=$(hyprctl activewindow -j | jq -r '.size[1]')
-    hyprctl dispatch togglefloating
-    sleep 0.1
-    hyprctl dispatch resizewindowpixel exact $W $H
-    hyprctl dispatch centerwindow
+    hyprctl dispatch "hl.dsp.window.float()"
+    hyprctl dispatch "hl.dsp.window.center()"
 fi
