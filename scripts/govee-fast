@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+"""Govee BLE fast-daemon — holds one persistent BLE connection open.
+
+Minimal socket server at /tmp/govee-fast.sock.
+Accepts newline-delimited commands:
+  RRGGBB BRIGHTNESS     — set color immediately
+  fade RRGGBB BRIGHT    — smooth fade (10-step ease-in-out)
+
+Systemd unit: ~/.config/systemd/user/govee-fast.service
+"""
+
+import asyncio, os, sys
+
+GOVEE_ADDR = "C6:32:38:31:2F:48"
+SOCKET_PATH = "/tmp/govee-fast.sock"
+WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
+FADE_STEPS = 10
+FADE_DELAY = 0.020
+KEEPALIVE_S = 5
+
+
+def _crc(data: bytes) -> int:
+    c = 0
+    for b in data: c ^= b
+    return c
+
+def _pkt(r: int, g: int, b: int) -> bytes:
+    pl = bytes([0x05, 0x15, 0x01, r, g, b, 0, 0, 0, 0, 0, 0xFF, 0x7F, 0, 0, 0])
+    return bytes([0x33]) + pl + bytes([_crc(pl)])
+
+def _ease(t): return t * t * (3 - 2 * t)
+
+
+async def handle(client, reader, writer):
+    lr = lg = lb = 0
+    try:
+        while True:
+            line = await reader.readline()
+            if not line: break
+            parts = line.decode().strip().split()
+            if not parts: continue
+            try:
+                if parts[0] == "fade":
+                    tr = int(parts[1][0:2], 16); tg = int(parts[1][2:4], 16); tb = int(parts[1][4:6], 16)
+                    for i in range(1, FADE_STEPS + 1):
+                        t = _ease(i / FADE_STEPS)
+                        cr = int(lr + (tr - lr) * t)
+                        cg = int(lg + (tg - lg) * t)
+                        cb = int(lb + (tb - lb) * t)
+                        await client.write_gatt_char(WRITE_CHAR, _pkt(cr, cg, cb), response=False)
+                        await asyncio.sleep(FADE_DELAY)
+                    lr, lg, lb = tr, tg, tb
+                else:
+                    lr = int(parts[0][0:2], 16); lg = int(parts[0][2:4], 16); lb = int(parts[0][4:6], 16)
+                    await client.write_gatt_char(WRITE_CHAR, _pkt(lr, lg, lb), response=False)
+                writer.write(b"ok\n"); await writer.drain()
+            except Exception as e:
+                writer.write(f"error {e}\n".encode()); await writer.drain()
+    except Exception:
+        pass
+    finally:
+        writer.close()
+
+
+async def main():
+    from bleak import BleakClient
+    if os.path.exists(SOCKET_PATH): os.unlink(SOCKET_PATH)
+
+    # Start socket immediately (clients see "error" while BLE connects)
+    async def on_connect(r, w):
+        await handle(ble_client, r, w) if ble_client else (
+            w.write(b"error BLE down\n"), await w.drain(), w.close())
+
+    ble_client = None
+    server = await asyncio.start_unix_server(on_connect, SOCKET_PATH)
+    print(f"Socket ready on {SOCKET_PATH}", file=sys.stderr)
+
+    lr = lg = lb = 0
+    while True:
+        try:
+            print(f"Connecting to Govee {GOVEE_ADDR}...", file=sys.stderr)
+            async with BleakClient(GOVEE_ADDR, timeout=15) as c:
+                ble_client = c
+                print("Govee BLE connected", file=sys.stderr)
+                while c.is_connected:
+                    await asyncio.sleep(KEEPALIVE_S)
+                    if c.is_connected:
+                        try: await c.write_gatt_char(WRITE_CHAR, _pkt(lr, lg, lb), response=False)
+                        except Exception: break
+                print("Disconnected, reconnecting...", file=sys.stderr)
+        except Exception as e:
+            print(f"BLE error: {e}, retrying in 2s...", file=sys.stderr)
+        finally:
+            ble_client = None
+            await asyncio.sleep(2)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

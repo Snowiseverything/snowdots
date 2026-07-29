@@ -30,10 +30,26 @@ if CONFIG.exists():
 
 GOVEE_ADDR = "C6:32:38:31:2F:48"
 WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
+FAST_SOCK = "/tmp/govee-fast.sock"
 
 LAST_COLOR = Path("/tmp/govee-last-color")
 FADE_STEPS = 5
 FADE_DELAY_MS = 20
+
+
+def _fast_send(cmd: str) -> bool:
+    """Send to the fast-daemon socket. Returns True on 'ok' response."""
+    import socket
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.settimeout(2)
+        s.connect(FAST_SOCK)
+        s.sendall((cmd + "\n").encode())
+        resp = s.recv(1024).decode().strip()
+        s.close()
+        return resp == "ok"
+    except Exception:
+        return False
 
 
 
@@ -238,6 +254,11 @@ def main():
     # write intent immediately — closes race window with concurrent calls
     orig_last = last
     write_last_color(r, g, b)
+
+    # ── Fast socket daemon first (persistent BLE, ~5ms) ─────────────────
+    if _fast_send(f"fade {color_hex} {brightness}"):
+        print(f"Set #{color_hex} at {brightness}% via socket")
+        return
 
     # ── HA first — fast local network call to Snowpi ─────────────────────
     # Check if Govee is actually available before trusting HA
