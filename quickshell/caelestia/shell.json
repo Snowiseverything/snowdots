@@ -51,6 +51,11 @@
         "workspaces": {
             "occupiedBg": false,
             "shown": 5
+        },
+        "scrollActions": {
+            "workspaces": true,
+            "volume": true,
+            "brightness": true
         }
     },
     "dashboard": {
