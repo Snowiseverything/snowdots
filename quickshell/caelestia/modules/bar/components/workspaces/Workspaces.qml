@@ -101,6 +101,12 @@ StyledClippingRect {
                 else
                     Hypr.dispatch("togglespecialworkspace special");
             }
+            onWheel: event => {
+                if (event.angleDelta.y > 0)
+                    Hypr.dispatch("workspace r-1");
+                else
+                    Hypr.dispatch("workspace r+1");
+            }
         }
 
         Behavior on scale {
