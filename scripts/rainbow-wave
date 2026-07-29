@@ -1,0 +1,308 @@
+#!/usr/bin/env python3
+"""Rainbow wave — continuous hue cycling across all RGB devices.
+
+Usage:
+  rainbow-wave               # default: smooth sine, 10s full cycle
+  rainbow-wave --style fast  # rapid cycle, 3s
+  rainbow-wave --style pastel # soft pastels, 15s
+  rainbow-wave --style strobe # sharp hue jumps, 0.5s
+  rainbow-wave --style breathe # single-hue breathe, 8s
+  rainbow-wave --style chase  # rainbow moves across devices
+
+Ctrl+C to stop. Runs until interrupted.
+"""
+
+import colorsys
+import math
+import sys
+import time
+import asyncio
+from pathlib import Path
+
+# ── Config ────────────────────────────────────────────────────────────────
+OPENRGB_HOST = "localhost"
+OPENRGB_PORT = 6742
+MAD68_VID = 0x373B
+MAD68_PID = 0x1058
+MAD68_RGB_USAGE_PAGE = 0xFF60
+GOVEE_SCRIPT = Path.home() / "Dotfiles/scripts/govee-led.py"
+GOVEE_ADDR = "C6:32:38:31:2F:48"
+GOVEE_WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
+LAST_GO_VEE = Path("/tmp/govee-last-color")
+
+
+def _govee_crc(data: bytes) -> int:
+    crc = 0
+    for b in data:
+        crc ^= b
+    return crc
+
+
+def _govee_color_pkt(r: int, g: int, b: int) -> bytes:
+    payload = bytes([0x05, 0x15, 0x01, r, g, b,
+                     0x00, 0x00, 0x00, 0x00, 0x00,
+                     0xFF, 0x7F, 0x00, 0x00, 0x00])
+    return bytes([0x33]) + payload + bytes([_govee_crc(payload)])
+
+STYLES = {
+    "smooth": {"speed": 0.05, "cycle_s": 10, "sat": 0.90, "light": 0.45},
+    "fast":   {"speed": 0.02, "cycle_s": 3,  "sat": 0.95, "light": 0.50},
+    "pastel": {"speed": 0.08, "cycle_s": 15, "sat": 0.50, "light": 0.65},
+    "strobe": {"speed": 0.0,  "cycle_s": 0.5, "sat": 1.0,  "light": 0.55, "strobe": True},
+    "breathe":{"speed": 0.04, "cycle_s": 8,  "sat": 0.80, "light": 0.40, "breathe_hue": 0},
+    "chase":  {"speed": 0.03, "cycle_s": 6,  "sat": 1.0,  "light": 0.50, "chase": True},
+}
+
+
+def ease_sine(t: float) -> float:
+    """Smooth sinusoidal easing."""
+    return 0.5 - 0.5 * math.cos(t * math.pi * 2)
+
+
+def ease_smoothstep(t: float) -> float:
+    """Smoothstep (Hermite) easing — soft start/end."""
+    return t * t * (3 - 2 * t)
+
+
+def get_style(name: str) -> dict:
+    if name in STYLES:
+        return STYLES[name]
+    # Custom: parse "hue_offset,speed,cycle_s"
+    parts = name.split(",")
+    if len(parts) >= 3:
+        return {"speed": float(parts[1]), "cycle_s": float(parts[2]),
+                "sat": 0.90, "light": 0.45, "hue_offset": float(parts[0])}
+    return STYLES["smooth"]
+
+
+def send_govee(hex_color: str):
+    """Fire-and-forget via subprocess — for sync-back only."""
+    try:
+        import subprocess
+        subprocess.Popen(
+            [sys.executable, str(GOVEE_SCRIPT), hex_color, "80"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        pass
+
+
+async def _govee_ble_connect():
+    """Connect to Govee via BLE, return client or None."""
+    from bleak import BleakClient
+    try:
+        client = BleakClient(GOVEE_ADDR, timeout=5)
+        await asyncio.wait_for(client.connect(), timeout=5)
+        print("Govee: BLE connected")
+        return client
+    except Exception as e:
+        print(f"Govee: BLE unavailable ({type(e).__name__})")
+        return None
+
+
+async def _govee_ble_set(client, r: int, g: int, b: int):
+    """Send color to Govee over persistent BLE connection."""
+    pkt = _govee_color_pkt(r, g, b)
+    await client.write_gatt_char(GOVEE_WRITE_CHAR, pkt, response=False)
+
+
+def write_govee_last(r: int, g: int, b: int):
+    """Write govee last-color so sync-back restores from correct base."""
+    try:
+        LAST_GO_VEE.write_text(f"{r} {g} {b}\n")
+    except Exception:
+        pass
+
+
+def main():
+    style_name = "smooth"
+    if len(sys.argv) > 2 and sys.argv[1] == "--style":
+        style_name = sys.argv[2]
+    cfg = get_style(style_name)
+
+    print(f"Rainbow wave — {style_name} (cycle={cfg['cycle_s']}s, "
+          f"sat={cfg['sat']}, light={cfg['light']})")
+    print("Ctrl+C to stop")
+
+    # ── Open devices ──────────────────────────────────────────────────
+    orgb = None
+    kb_dev = None
+    try:
+        from openrgb import OpenRGBClient
+        from openrgb.utils import RGBColor
+        orgb = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
+        print("PC case: connected")
+    except Exception:
+        print("PC case: skipped")
+
+    try:
+        import hid
+        for d in hid.enumerate(MAD68_VID, MAD68_PID):
+            if d.get("usage_page") == MAD68_RGB_USAGE_PAGE:
+                kb_dev = hid.device()
+                kb_dev.open_path(d["path"])
+                print("Keyboard: connected")
+                break
+    except Exception:
+        print("Keyboard: skipped")
+
+    if orgb is None and kb_dev is None:
+        print("No devices found. Exiting.")
+        return
+
+    # ── Run async rainbow loop with BLE ───────────────────────────────
+    try:
+        asyncio.run(_rainbow_loop(orgb, kb_dev, cfg, style_name))
+    except KeyboardInterrupt:
+        print("\nStopped.")
+    finally:
+        if orgb is not None:
+            try:
+                orgb.disconnect()
+            except Exception:
+                pass
+        if kb_dev is not None:
+            try:
+                kb_dev.close()
+            except Exception:
+                pass
+
+        # Sync back to wallpaper color
+        import subprocess
+        subprocess.run(
+            ["bash", str(Path.home() / "Dotfiles/scripts/rgb-sync.sh")],
+            timeout=10, capture_output=True,
+        )
+        print("Restored wallpaper color.")
+
+
+async def _rainbow_loop(orgb, kb_dev, cfg: dict, style_name: str):
+    """Async rainbow loop with persistent BLE connection for Govee."""
+    from openrgb.utils import RGBColor
+
+    sat = cfg["sat"]
+    lightness = cfg["light"]
+    hue_offset = cfg.get("hue_offset", 0)
+    strobe = cfg.get("strobe", False)
+    chase = cfg.get("chase", False)
+    breathe_hue = cfg.get("breathe_hue", None)
+
+    # Connect Govee BLE (persistent for the session)
+    govee_client = await _govee_ble_connect()
+
+    last_r = last_g = last_b = -1  # force first write
+    start_t = time.monotonic()
+
+    try:
+        while True:
+            elapsed = time.monotonic() - start_t
+
+            # Compute hue based on style
+            if strobe:
+                hue = ((elapsed / cfg["cycle_s"]) % 1.0) * 360
+                hue = int(hue / 60) * 60
+                hue = hue % 360
+            elif breathe_hue is not None:
+                phase = (elapsed / cfg["cycle_s"]) % 1.0
+                hue = breathe_hue
+                factor = ease_sine(phase)
+                sat = 0.4 + 0.6 * factor
+                lightness = 0.25 + 0.30 * factor
+            elif chase:
+                hue = ((elapsed / cfg["cycle_s"] + hue_offset / 360) % 1.0) * 360
+                hue_offset += 5
+            else:
+                phase = (elapsed / cfg["cycle_s"]) % 1.0
+                hue = ease_sine(phase) * 360
+
+            r, g, b = colorsys.hls_to_rgb(hue / 360, lightness, sat)
+            ri = int(r * 255)
+            gi = int(g * 255)
+            bi = int(b * 255)
+
+            # Skip if color unchanged
+            if ri == last_r and gi == last_g and bi == last_b:
+                await asyncio.sleep(cfg["speed"])
+                continue
+
+            last_r, last_g, last_b = ri, gi, bi
+
+            # PC devices
+            if orgb is not None:
+                try:
+                    color = RGBColor(ri, gi, bi)
+                    for d in orgb.devices:
+                        d.set_colors([color] * len(d.leds))
+                        d.show()
+                except Exception:
+                    pass
+
+            # Keyboard
+            if kb_dev is not None:
+                try:
+                    _mad68_send_color(kb_dev, ri, gi, bi)
+                except Exception:
+                    pass
+
+            # Govee via persistent BLE
+            if govee_client is not None and govee_client.is_connected:
+                try:
+                    await _govee_ble_set(govee_client, ri, gi, bi)
+                    write_govee_last(ri, gi, bi)
+                except Exception:
+                    govee_client = None
+
+            await asyncio.sleep(cfg["speed"])
+
+    finally:
+        if govee_client is not None:
+            try:
+                await govee_client.disconnect()
+            except Exception:
+                pass
+
+
+# ── MAD68 helpers ─────────────────────────────────────────────────────────
+MAD68_NUM_SLOTS = 80
+MAD68_KEYS_PER_PACKET = 8
+MAD68_NUM_CHUNKS = 5
+MAD68_SUB_OFFSETS = (0x00, 0x08)
+MAD68_PACKET_DELAY = 0
+
+
+def _mad68_send_color(dev, r, g, b):
+    slots = [(r, g, b)] * MAD68_NUM_SLOTS
+    idx = 0
+    for chunk in range(MAD68_NUM_CHUNKS):
+        for sub in MAD68_SUB_OFFSETS:
+            pkt = bytearray(33)
+            pkt[0] = 0x00
+            pkt[1] = 0x07
+            pkt[2] = 0x42
+            pkt[3] = chunk
+            pkt[4] = sub
+            pkt[5] = MAD68_KEYS_PER_PACKET
+            for k in range(MAD68_KEYS_PER_PACKET):
+                cr, cg, cb = slots[idx]
+                pkt[6 + k * 3] = cr
+                pkt[7 + k * 3] = cg
+                pkt[8 + k * 3] = cb
+                idx += 1
+            dev.write(bytes(pkt))
+            time.sleep(MAD68_PACKET_DELAY)
+
+    commit = bytearray(33)
+    commit[0] = 0x00
+    commit[1] = 0x07
+    commit[2] = 0x41
+    commit[3] = 0x01
+    commit[5] = 0x90
+    commit[6] = 0xFF
+    commit[8] = 0xEE
+    commit[9] = 0xD2
+    dev.write(bytes(commit))
+    time.sleep(MAD68_PACKET_DELAY)
+
+
+if __name__ == "__main__":
+    main()
