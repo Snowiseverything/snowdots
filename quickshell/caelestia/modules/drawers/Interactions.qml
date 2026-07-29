@@ -56,6 +56,11 @@ CustomMouseArea {
             return;
         if (event.x < bar.implicitWidth) {
             bar.handleWheel(event.y, event.angleDelta);
+        } else if (panels.sidebar.visible && event.x > width - panels.sidebar.width) {
+            if (event.angleDelta.y > 0)
+                Hypr.dispatch("workspace r-1");
+            else
+                Hypr.dispatch("workspace r+1");
         }
     }
 
