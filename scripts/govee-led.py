@@ -16,9 +16,6 @@ HA_URL = "http://<tailscale-snowpi>:8123"
 HA_TOKEN = ""
 ENTITY = "light.govee_h6102_2f48"
 
-GOVEE_ADDR = "C6:32:38:31:2F:48"
-WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
-
 if CONFIG.exists():
     for line in CONFIG.read_text().splitlines():
         if "=" in line:
@@ -28,7 +25,11 @@ if CONFIG.exists():
                 HA_TOKEN = v
             elif k == "entity":
                 ENTITY = v
+            elif k == "ha_url":
+                HA_URL = v
 
+GOVEE_ADDR = "C6:32:38:31:2F:48"
+WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
 
 LAST_COLOR = Path("/tmp/govee-last-color")
 FADE_STEPS = 20
