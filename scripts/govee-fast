@@ -25,13 +25,20 @@ def _crc(data: bytes) -> int:
     return c
 
 def _pkt(r: int, g: int, b: int) -> bytes:
-    pl = bytes([0x05, 0x15, 0x01, r, g, b, 0, 0, 0, 0, 0, 0xFF, 0x7F, 0, 0, 0])
-    return bytes([0x33]) + pl + bytes([_crc(pl)])
+    """Build Govee color packet — must be exactly 20 bytes."""
+    data = bytearray([0x33, 0x05, 0x15, 0x01, r, g, b,
+                       0, 0, 0, 0, 0, 0xFF, 0x7F])
+    data += b'\x00' * (19 - len(data))  # pad to 19
+    chk = 0
+    for x in data:
+        chk ^= x
+    data.append(chk)
+    return bytes(data)
 
 def _ease(t): return t * t * (3 - 2 * t)
 
 
-async def handle(client, reader, writer):
+async def handle(client, reader, writer, color_state):
     lr = lg = lb = 0
     try:
         while True:
@@ -50,8 +57,10 @@ async def handle(client, reader, writer):
                         await client.write_gatt_char(WRITE_CHAR, _pkt(cr, cg, cb), response=False)
                         await asyncio.sleep(FADE_DELAY)
                     lr, lg, lb = tr, tg, tb
+                    color_state[0], color_state[1], color_state[2] = tr, tg, tb
                 else:
                     lr = int(parts[0][0:2], 16); lg = int(parts[0][2:4], 16); lb = int(parts[0][4:6], 16)
+                    color_state[0], color_state[1], color_state[2] = lr, lg, lb
                     await client.write_gatt_char(WRITE_CHAR, _pkt(lr, lg, lb), response=False)
                 writer.write(b"ok\n"); await writer.drain()
             except Exception as e:
@@ -68,14 +77,14 @@ async def main():
 
     # Start socket immediately (clients see "error" while BLE connects)
     async def on_connect(r, w):
-        await handle(ble_client, r, w) if ble_client else (
+        await handle(ble_client, r, w, color_state) if ble_client else (
             w.write(b"error BLE down\n"), await w.drain(), w.close())
 
     ble_client = None
+    color_state = [0, 0, 0]
     server = await asyncio.start_unix_server(on_connect, SOCKET_PATH)
     print(f"Socket ready on {SOCKET_PATH}", file=sys.stderr)
 
-    lr = lg = lb = 0
     while True:
         try:
             print(f"Connecting to Govee {GOVEE_ADDR}...", file=sys.stderr)
@@ -85,7 +94,7 @@ async def main():
                 while c.is_connected:
                     await asyncio.sleep(KEEPALIVE_S)
                     if c.is_connected:
-                        try: await c.write_gatt_char(WRITE_CHAR, _pkt(lr, lg, lb), response=False)
+                        try: await c.write_gatt_char(WRITE_CHAR, _pkt(color_state[0], color_state[1], color_state[2]), response=False)
                         except Exception: break
                 print("Disconnected, reconnecting...", file=sys.stderr)
         except Exception as e:
