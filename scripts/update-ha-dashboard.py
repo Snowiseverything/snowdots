@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 """Update HA dashboard to add Freezer RGB controls."""
 import json, os, subprocess, sys
+from pathlib import Path
 
 HA_URL = "http://<ha-ip>:8123"
-TOKEN = os.environ.get("HA_TOKEN", "")
+
+# Read token from same config as govee-led.py
+_config = Path.home() / ".config/govee-led.toml"
+TOKEN = ""
+if _config.exists():
+    for line in _config.read_text().splitlines():
+        if line.startswith("ha_token"):
+            TOKEN = line.split("=", 1)[1].strip().strip('"')
 
 # Read the current dashboard config
 config = subprocess.run(
