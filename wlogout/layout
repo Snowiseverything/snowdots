@@ -1,25 +1,30 @@
 {
     "label" : "lock",
     "action" : "/home/snow/.config/wlogout/confirm.sh lock",
-    "text" : "Lock"
+    "text" : "Lock",
+    "keybind" : "l"
 }
 {
     "label" : "sleep",
     "action" : "/home/snow/.config/wlogout/confirm.sh sleep",
-    "text" : "Sleep"
+    "text" : "Sleep",
+    "keybind" : "u"
 }
 {
     "label" : "logout",
     "action" : "/home/snow/.config/wlogout/confirm.sh logout",
-    "text" : "Logout"
+    "text" : "Logout",
+    "keybind" : "e"
 }
 {
     "label" : "shutdown",
     "action" : "/home/snow/.config/wlogout/confirm.sh shutdown",
-    "text" : "Shutdown"
+    "text" : "Shutdown",
+    "keybind" : "s"
 }
 {
     "label" : "reboot",
     "action" : "/home/snow/.config/wlogout/confirm.sh reboot",
-    "text" : "Reboot"
+    "text" : "Reboot",
+    "keybind" : "r"
 }

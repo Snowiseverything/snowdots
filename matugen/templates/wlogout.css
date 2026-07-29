@@ -16,12 +16,7 @@ button {
     margin: 10px;
 }
 
-button:focus {
-    box-shadow: none;
-    outline-style: none;
-    background-size: 20%;
-}
-
+button:focus,
 button:hover {
     background-size: 50%;
     outline-style: none;
