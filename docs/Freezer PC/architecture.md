@@ -2,15 +2,15 @@
 
 ## System Overview
 
-| Component | Detail |
-|-----------|--------|
-| **OS** | CachyOS (Arch-based), kernel 6.x |
-| **DE/WM** | Hyprland + Wayland |
-| **Shell** | Fish + Starship prompt |
+| Component      | Detail                                                               |
+| -------------- | -------------------------------------------------------------------- |
+| **OS**         | CachyOS (Arch-based), kernel 6.x                                     |
+| **DE/WM**      | Hyprland + Wayland                                                   |
+| **Shell**      | Fish + Starship prompt                                               |
 | **Config dir** | `~/Dotfiles/` (bare git repo at `~/.dotfiles`, managed by `dotsync`) |
-| **Hostname** | Freezer (192.168.0.111) |
-| **GPU** | NVIDIA (proprietary) |
-| **Keyboard** | MAD68 HE (PID 0x1058, 32-byte HID reports) |
+| **Hostname**   | Freezer (<local-ip>)                                              |
+| **GPU**        | NVIDIA (proprietary)                                                 |
+| **Keyboard**   | MAD68 HE (PID 0x1058, 32-byte HID reports)                           |
 
 ---
 
@@ -48,31 +48,31 @@ skwd-wall postProcessing: wall-sync.sh
 
 Located at `~/.config/matugen/config.toml` (source: `~/Dotfiles/matugen/config.toml`).
 
-| Template | Output | Applies to |
-|----------|--------|------------|
-| hyprland | `~/.cache/skwd-wall/hyprland-colors.conf` | Hyprland borders |
-| kitty | `~/.cache/skwd-wall/colors-kitty.conf` | Kitty terminal |
-| fuzzel | `~/.cache/skwd-wall/fuzzel-colors.ini` | Fuzzel launcher |
-| skwd | `~/.cache/skwd-wall/colors.json` | skwd GUI, scripts |
-| caelestia | `~/.local/state/caelestia/scheme.json` | Caelestia shell (auto-reloads) |
-| swaync | `~/.cache/skwd-wall/swaync.css` | Notification daemon |
-| steam | `~/.../steamui/skins/.../matugen.css` | Steam (Millennium skin) |
-| steam_transparency | `~/.../transparency.css` | Steam transparency |
-| steam_experimental | `~/.../experimental-import.css` | Steam header |
-| vencord | `~/.config/Vencord/themes/matugen.theme.css` | Discord (Vencord) |
-| brave | `~/.config/BraveSoftware/.../current-theme.css` | Brave browser |
-| brave-site | `~/.cache/skwd-wall/brave-theme.css` | Brave new tab |
-| gtk3 | `~/.config/gtk-3.0/gtk.css` | GTK3 apps |
-| gtk4 | `~/.config/gtk-4.0/gtk.css` | GTK4 apps |
-| luatools | `~/.cache/skwd-wall/luatools-colors.json` | Luatools (post_hook applies) |
-| spicetify | `~/.config/spicetify/Themes/Matugen/color.ini` | Spotify |
-| starship | `~/.config/starship.toml` | Shell prompt |
-| opencode | `~/.config/opencode/themes/matugen.json` | OpenCode AI |
-| sddm_silent | `~/.cache/skwd-wall/sddm-silent.conf` | SDDM (login screen) |
-| hyprlock | `~/.config/hypr/hyprlock/matugen/matugen-hyprlock.conf` | Lock screen |
-| wlogout | `~/.config/wlogout/style.css` | Power menu |
-| rofi | `~/.config/rofi/launchers/styles/shared/colors.rasi` | Rofi launcher |
-| forkgram | `~/.cache/skwd-wall/forkgram.tdesktop-palette` | Telegram |
+| Template           | Output                                                  | Applies to                     |
+| ------------------ | ------------------------------------------------------- | ------------------------------ |
+| hyprland           | `~/.cache/skwd-wall/hyprland-colors.conf`               | Hyprland borders               |
+| kitty              | `~/.cache/skwd-wall/colors-kitty.conf`                  | Kitty terminal                 |
+| fuzzel             | `~/.cache/skwd-wall/fuzzel-colors.ini`                  | Fuzzel launcher                |
+| skwd               | `~/.cache/skwd-wall/colors.json`                        | skwd GUI, scripts              |
+| caelestia          | `~/.local/state/caelestia/scheme.json`                  | Caelestia shell (auto-reloads) |
+| swaync             | `~/.cache/skwd-wall/swaync.css`                         | Notification daemon            |
+| steam              | `~/.../steamui/skins/.../matugen.css`                   | Steam (Millennium skin)        |
+| steam_transparency | `~/.../transparency.css`                                | Steam transparency             |
+| steam_experimental | `~/.../experimental-import.css`                         | Steam header                   |
+| vencord            | `~/.config/Vencord/themes/matugen.theme.css`            | Discord (Vencord)              |
+| brave              | `~/.config/BraveSoftware/.../current-theme.css`         | Brave browser                  |
+| brave-site         | `~/.cache/skwd-wall/brave-theme.css`                    | Brave new tab                  |
+| gtk3               | `~/.config/gtk-3.0/gtk.css`                             | GTK3 apps                      |
+| gtk4               | `~/.config/gtk-4.0/gtk.css`                             | GTK4 apps                      |
+| luatools           | `~/.cache/skwd-wall/luatools-colors.json`               | Luatools (post_hook applies)   |
+| spicetify          | `~/.config/spicetify/Themes/Matugen/color.ini`          | Spotify                        |
+| starship           | `~/.config/starship.toml`                               | Shell prompt                   |
+| opencode           | `~/.config/opencode/themes/matugen.json`                | OpenCode AI                    |
+| sddm_silent        | `~/.cache/skwd-wall/sddm-silent.conf`                   | SDDM (login screen)            |
+| hyprlock           | `~/.config/hypr/hyprlock/matugen/matugen-hyprlock.conf` | Lock screen                    |
+| wlogout            | `~/.config/wlogout/style.css`                           | Power menu                     |
+| rofi               | `~/.config/rofi/launchers/styles/shared/colors.rasi`    | Rofi launcher                  |
+| forkgram           | `~/.cache/skwd-wall/forkgram.tdesktop-palette`          | Telegram                       |
 
 ### matugen source color index = 0 (most prominent color)
 
@@ -82,12 +82,12 @@ Located at `~/.config/matugen/config.toml` (source: `~/Dotfiles/matugen/config.t
 
 ### Components
 
-| Component | Role |
-|-----------|------|
+| Component       | Role                                                                                                |
+| --------------- | --------------------------------------------------------------------------------------------------- |
 | **skwd-daemon** | Wallpaper picker, browser, downloader. Runs as systemd user service (`systemctl --user start skwd`) |
-| **skwd-wall** | GUI frontend for skwd. Config at `~/.config/skwd-wall/config.json` |
-| **awww-daemon** | Wallpaper setter (Wayland). Sets image with fade transitions |
-| **matugen** | Color extraction from wallpaper image. Runs on each wallpaper change |
+| **skwd-wall**   | GUI frontend for skwd. Config at `~/.config/skwd-wall/config.json`                                  |
+| **awww-daemon** | Wallpaper setter (Wayland). Sets image with fade transitions                                        |
+| **matugen**     | Color extraction from wallpaper image. Runs on each wallpaper change                                |
 
 ### Trigger chain
 
@@ -120,6 +120,7 @@ skwd-wall postProcessing: wall-sync.sh (debounced 5s)
 ### Hybrid: skwd-wall integrations + matugen post_processing
 
 Both can trigger color generation. Currently:
+
 - skwd-wall runs `ExternalMatugenCommand` before `postProcessing`
 - matugen config has `[post_processing] command = wall-sync.sh`
 - wall-sync.sh debounces 5s to avoid double-runs
@@ -141,20 +142,24 @@ Both can trigger color generation. Currently:
 ### MAD68 HE Keyboard
 
 **Protocol**: 32-byte HID output report via hidapi. Report descriptor:
+
 - `\x55\x0B` prefix for frame data (per-key animation)
 - `\x07\x41` prefix for solid color mode
 
 **Custom mode init** (required):
+
 ```
 0x96 warmup dim (RGB 60,60,60) → wait 50ms → 0x97 enable custom mode → wait 100ms
 ```
 
 **Solid color** (used by rgb-sync.sh via `mad68-rgb.py`):
+
 ```python
 data = [7, 65, 2, 0, 0x96, R, G, B, 0xB1, zeros...]  # 32 bytes
 ```
 
 **Animation** (used by MAD68 HE dashboard at `localhost:3333`):
+
 - `rgb_engine.py` runs as subprocess, receives JSON commands via stdin
 - Sends per-key frame data in `\x55\x0B` chunks (26 bytes per chunk, 384 bytes total)
 - Map: `matrix_map.json` maps key names → LED indices
@@ -188,12 +193,14 @@ Caelestia is a Quickshell-based desktop shell handling: lock screen, notificatio
 ### Lock Screen
 
 **Components**:
+
 - `Lock.qml` — WlSessionLock + IPC handler (target `lock`)
 - `LockSurface.qml` — Screencopy + password input (PAM)
 - `Center.qml` — Clock, password field, wallpaper background
 - `Content.qml` — Side panels (weather, fetch, media, resources, notifs)
 
 **IPC calls** (space-separated, NOT dotted):
+
 ```
 caelestia shell lock lock       # Lock the screen  ✓
 caelestia shell lock unlock     # Unlock            ✓
@@ -203,6 +210,7 @@ caelestia shell lock isLocked   # Check status      ✓
 **QUIRK**: `qs ipc call` expects target and function as **separate CLI args**. `caelestia shell lock.lock` is ONE arg → treated as target name only → "Function required to send message."
 
 **Triggers**:
+
 - `Super+L` → `caelestia shell lock lock`
 - hypridle: `lock_cmd` + `before_sleep_cmd`
 - Boot: `exec-once = hyprlock` (not caelestia)
@@ -225,85 +233,90 @@ Caelestia watches `~/.local/state/caelestia/scheme.json` via inotify. When matug
 ## 5. Keybindings Reference
 
 ### System
-| Key | Action |
-|-----|--------|
-| Super+W | Wallpaper toggle |
+
+| Key           | Action                       |
+| ------------- | ---------------------------- |
+| Super+W       | Wallpaper toggle             |
 | Super+Shift+W | Wall-reset (re-apply colors) |
-| Super+L | Lock (caelestia) |
-| Super+Return | Fuzzel control center |
-| Super+Space | App launcher |
-| Super+Escape | Power menu (wlogout) |
-| Super+Shift+M | Exit Hyprland |
-| Super+Shift+R | Restart caelestia |
+| Super+L       | Lock (caelestia)             |
+| Super+Return  | Fuzzel control center        |
+| Super+Space   | App launcher                 |
+| Super+Escape  | Power menu (wlogout)         |
+| Super+Shift+M | Exit Hyprland                |
+| Super+Shift+R | Restart caelestia            |
 
 ### Apps
-| Key | Action |
-|-----|--------|
-| Super+B | Brave |
-| Super+D | Discord |
-| Super+F | Thunar file manager |
-| Super+Q | Kitty terminal |
-| Super+S | Steam launcher |
+
+| Key     | Action                    |
+| ------- | ------------------------- |
+| Super+B | Brave                     |
+| Super+D | Discord                   |
+| Super+F | Thunar file manager       |
+| Super+Q | Kitty terminal            |
+| Super+S | Steam launcher            |
 | Super+T | Trayscale (Tailscale GUI) |
-| Super+V | Clipse clipboard |
-| Super+X | Toggle fullscreen |
-| Super+Z | Toggle float |
+| Super+V | Clipse clipboard          |
+| Super+X | Toggle fullscreen         |
+| Super+Z | Toggle float              |
 
 ### Media
-| Key | Action |
-|-----|--------|
-| Fn+Up / Super+Up | Volume up |
-| Fn+Down / Super+Down | Volume down |
-| Fn+Prev/Play/Next | Media controls |
-| Super+Shift+V | Toggle unlimited volume |
+
+| Key                  | Action                  |
+| -------------------- | ----------------------- |
+| Fn+Up / Super+Up     | Volume up               |
+| Fn+Down / Super+Down | Volume down             |
+| Fn+Prev/Play/Next    | Media controls          |
+| Super+Shift+V        | Toggle unlimited volume |
 
 ### Hardware
-| Key | Action |
-|-----|--------|
+
+| Key               | Action                   |
+| ----------------- | ------------------------ |
 | Super+PageUp/Down | Monitor brightness (DDC) |
 
 ### Screenshots
-| Key | Action |
-|-----|--------|
-| Super+Shift+S | Region screenshot |
-| Super+Alt+S | Window screenshot |
-| Super+Insert | Full screenshot |
+
+| Key           | Action             |
+| ------------- | ------------------ |
+| Super+Shift+S | Region screenshot  |
+| Super+Alt+S   | Window screenshot  |
+| Super+Insert  | Full screenshot    |
 | Super+Shift+T | Text extract (OCR) |
 
 ---
 
 ## 6. Scripts Reference
 
-| Script | Location | Purpose |
-|--------|----------|---------|
-| wall-sync.sh | `~/Dotfiles/scripts/wall-sync.sh` | Main color sync after wallpaper change |
-| wall-reset.sh | `~/Dotfiles/scripts/wall-reset.sh` | Re-apply colors from current wallpaper |
-| rgb-sync.sh | `~/Dotfiles/scripts/rgb-sync.sh` | OpenRGB + keyboard color |
-| mad68-rgb.py | `~/.local/bin/mad68-rgb.py` | MAD68 keyboard solid color |
-| caelestia-restart.sh | `~/Dotfiles/scripts/caelestia-restart.sh` | Kill + restart caelestia |
-| rename-wallpapers.sh | `~/Dotfiles/scripts/rename-wallpapers.sh` | Safe sequential rename (3-stage) |
-| volume-log.sh | `~/.local/bin/volume-log.sh` | Volume change with notification |
-| brightness-log.sh | `~/.local/bin/brightness-log.sh` | Brightness change with notification |
-| volume-unlimited-toggle.sh | `~/.local/bin/volume-unlimited-toggle.sh` | Toggle volume cap |
-| shot-smart.sh | `~/Dotfiles/scripts/shot-smart.sh` | Screenshot (region/window/full) |
-| textextract | `~/.local/bin/textextract` | OCR screenshot → clipboard |
-| fuzzel-control.sh | `~/Dotfiles/scripts/fuzzel-control.sh` | Fuzzel launcher for control panel/snippets |
-| app-launcher.sh | `~/Dotfiles/scripts/app-launcher.sh` | Application launcher |
-| steam-launch.sh | `~/Dotfiles/scripts/steam-launch.sh` | Steam game launcher |
-| night-light.sh | `~/Dotfiles/scripts/night-light.sh` | Toggle hyprsunset |
-| safe-kill.sh | `~/Dotfiles/scripts/safe-kill.sh` | Kill focused window safely |
-| hypr-float.sh | `~/Dotfiles/scripts/hypr-float.sh` | Toggle window float |
-| wlogout.sh | `~/scripts/wlogout.sh` | Power menu |
-| cursor-colors.sh | `~/Dotfiles/scripts/cursor-colors.sh` | Update cursor theme colors |
-| brave-theme.sh | `~/Dotfiles/scripts/brave-theme.sh` | Update Brave theme |
-| forkgram-apply-palette.sh | `~/Dotfiles/scripts/forkgram-apply-palette.sh` | Apply Telegram palette |
-| snow-audit.sh | `~/Dotfiles/scripts/snow-audit.sh` | System audit |
-| health.sh | `~/Dotfiles/scripts/health.sh` | Freezer + Snowpi health |
-| dotsync | `~/Dotfiles/scripts/dotsync` | Dotfiles bare repo sync |
-| dotpull | `~/Dotfiles/scripts/dotpull` | Pull Dotfiles updates |
-| dot-mirror.sh | `~/Dotfiles/scripts/dot-mirror.sh` | Mirror Dotfiles to external backup |
-| publish-public.sh | `~/Dotfiles/scripts/publish-public.sh` | Sanitize + push to GitHub |
-| oc-sync.sh | `~/Dotfiles/scripts/oc-sync.sh` | OC config sync to Snowpi |
+| Script                     | Location                                       | Purpose                                    |
+| -------------------------- | ---------------------------------------------- | ------------------------------------------ |
+| wall-sync.sh               | `~/Dotfiles/scripts/wall-sync.sh`              | Main color sync after wallpaper change     |
+| wall-reset.sh              | `~/Dotfiles/scripts/wall-reset.sh`             | Re-apply colors from current wallpaper     |
+| rgb-sync.sh                | `~/Dotfiles/scripts/rgb-sync.sh`               | OpenRGB + keyboard color                   |
+| mad68-rgb.py               | `~/.local/bin/mad68-rgb.py`                    | MAD68 keyboard solid color                 |
+| caelestia-restart.sh       | `~/Dotfiles/scripts/caelestia-restart.sh`      | Kill + restart caelestia                   |
+| rename-wallpapers.sh       | `~/Dotfiles/scripts/rename-wallpapers.sh`      | Safe sequential rename (3-stage)           |
+| volume-log.sh              | `~/.local/bin/volume-log.sh`                   | Volume change with notification            |
+| brightness-log.sh          | `~/.local/bin/brightness-log.sh`               | Brightness change with notification        |
+| volume-unlimited-toggle.sh | `~/.local/bin/volume-unlimited-toggle.sh`      | Toggle volume cap                          |
+| shot-smart.sh              | `~/Dotfiles/scripts/shot-smart.sh`             | Screenshot (region/window/full)            |
+| textextract                | `~/.local/bin/textextract`                     | OCR screenshot → clipboard                 |
+| fuzzel-control.sh          | `~/Dotfiles/scripts/fuzzel-control.sh`         | Fuzzel launcher for control panel/snippets |
+| app-launcher.sh            | `~/Dotfiles/scripts/app-launcher.sh`           | Application launcher                       |
+| steam-launch.sh            | `~/Dotfiles/scripts/steam-launch.sh`           | Steam game launcher                        |
+| night-light.sh             | `~/Dotfiles/scripts/night-light.sh`            | Toggle hyprsunset                          |
+| safe-kill.sh               | `~/Dotfiles/scripts/safe-kill.sh`              | Kill focused window safely                 |
+| hypr-float.sh              | `~/Dotfiles/scripts/hypr-float.sh`             | Toggle window float                        |
+| wlogout.sh                 | `~/scripts/wlogout.sh`                         | Power menu                                 |
+| cursor-colors.sh           | `~/Dotfiles/scripts/cursor-colors.sh`          | Update cursor theme colors                 |
+| brave-theme.sh             | `~/Dotfiles/scripts/brave-theme.sh`            | Update Brave theme                         |
+| forkgram-apply-palette.sh  | `~/Dotfiles/scripts/forkgram-apply-palette.sh` | Apply Telegram palette                     |
+| snow-audit.sh              | `~/Dotfiles/scripts/snow-audit.sh`             | System audit                               |
+| health.sh                  | `~/Dotfiles/scripts/health.sh`                 | Freezer + Snowpi health                    |
+| dotsync                    | `~/Dotfiles/scripts/dotsync`                   | Dotfiles bare repo sync                    |
+| dotpull                    | `~/Dotfiles/scripts/dotpull`                   | Pull Dotfiles updates                      |
+| dot-mirror.sh              | `~/Dotfiles/scripts/dot-mirror.sh`             | Mirror Dotfiles to external backup         |
+| publish-public.sh          | `~/Dotfiles/scripts/publish-public.sh`         | Sanitize + push to GitHub                  |
+| oc-sync.sh                 | `~/Dotfiles/scripts/oc-sync.sh`                | OC config sync to Snowpi                   |
 
 ---
 
@@ -312,6 +325,7 @@ Caelestia watches `~/.local/state/caelestia/scheme.json` via inotify. When matug
 ### Bare Git Repo
 
 Dotfiles tracked via bare git repo at `~/.dotfiles`:
+
 ```bash
 alias dotsync='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 ```
@@ -320,10 +334,10 @@ alias dotsync='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 
 ### Sync Strategy
 
-| Remote | URL | Content |
-|--------|-----|---------|
-| GitLab origin | `gitlab.com/sn0wman/snowdots` | Full dotfiles (private) |
-| GitHub | `github.com/sn0wmann1/snowdots` | Sanitized (public) |
+| Remote        | URL                             | Content                 |
+| ------------- | ------------------------------- | ----------------------- |
+| GitLab origin | `gitlab.com/sn0wman/snowdots`   | Full dotfiles (private) |
+| GitHub        | `github.com/sn0wmann1/snowdots` | Sanitized (public)      |
 
 **GitHub publish**: `publish-public.sh` clones sanitized copy (removes `.opencode/`, `.ssh/`, replaces real IPs). Full clone (no `--depth 1` — shallow clone caused push failures).
 
@@ -339,19 +353,20 @@ alias dotsync='git --git-dir=$HOME/.dotfiles --work-tree=$HOME'
 
 ### hyprland.conf (key sections)
 
-| Section | Details |
-|---------|---------|
-| Colors | `source = ~/.cache/skwd-wall/hyprland-colors.conf`, fallback hex values |
-| Monitor | `2560x1440@180`, scale 1 |
-| NVIDIA | env vars: `LIBVA_DRIVER_NAME=nvidia`, `__GLX_VENDOR_LIBRARY_NAME=nvidia`, etc. |
-| Input | kb_layout `us, iq(ku_ara), ara`, alt_shift toggle |
-| Decorations | rounding 10, blur (size 3, passes 2), no shadow |
-| Animations | snappy bezier `0.2, 0.1, 0.2, 1` |
-| Misc | `allow_session_lock_restore = true`, `enable_swallow = true` |
+| Section     | Details                                                                        |
+| ----------- | ------------------------------------------------------------------------------ |
+| Colors      | `source = ~/.cache/skwd-wall/hyprland-colors.conf`, fallback hex values        |
+| Monitor     | `2560x1440@180`, scale 1                                                       |
+| NVIDIA      | env vars: `LIBVA_DRIVER_NAME=nvidia`, `__GLX_VENDOR_LIBRARY_NAME=nvidia`, etc. |
+| Input       | kb_layout `us, iq(ku_ara), ara`, alt_shift toggle                              |
+| Decorations | rounding 10, blur (size 3, passes 2), no shadow                                |
+| Animations  | snappy bezier `0.2, 0.1, 0.2, 1`                                               |
+| Misc        | `allow_session_lock_restore = true`, `enable_swallow = true`                   |
 
 ### hyprlock.conf
 
 Layout (top→bottom):
+
 1. Status bar (top-left)
 2. Greeting (y=330)
 3. Clock (y=250)
@@ -366,38 +381,62 @@ Weather: Erbil, Celsius via wttr.in, cached 1hr in `/tmp/weather-cache`.
 
 ### hypridle.conf
 
-| Listener | Action |
-|----------|--------|
-| lock_cmd | `caelestia shell lock lock` |
-| before_sleep_cmd | `caelestia shell lock lock` |
-| after_sleep_cmd | `hyprctl dispatch dpms on` |
-| Evening 19:00 | `hyprsunset --temperature 4500` |
-| Night 22:00 | `hyprsunset --temperature 3000` |
-| Morning 07:00 | `pkill hyprsunset` |
+| Listener         | Action                          |
+| ---------------- | ------------------------------- |
+| lock_cmd         | `caelestia shell lock lock`     |
+| before_sleep_cmd | `caelestia shell lock lock`     |
+| after_sleep_cmd  | `hyprctl dispatch dpms on`      |
+| Evening 19:00    | `hyprsunset --temperature 4500` |
+| Night 22:00      | `hyprsunset --temperature 3000` |
+| Morning 07:00    | `pkill hyprsunset`              |
 
 ---
 
-## 9. OpenCode AI Integration
+## 9. AI Integration (OpenCode + Pi)
 
-### Subagents (10)
+### OpenCode Subagents (10)
 
-| Agent | Purpose |
-|-------|---------|
-| health-monitor | Disk temps, services, audit |
-| pkg-manager | Arch packages, AUR, cache |
-| snowpi-bridge | SSH to RPi4 |
-| tailscale-manager | Tailscale status/IP |
-| docker-orchestrator | Docker compose up/down |
-| docker-cleanup | Prune images, volumes |
-| backup-agent | Btrfs snapshots, verify |
-| disk-usage | Analyze /dev/sda space |
-| dotfiles-sync | Git add/commit/push |
-| log-scanner | journalctl + Hyprland logs |
+| Agent               | Purpose                     |
+| ------------------- | --------------------------- |
+| health-monitor      | Disk temps, services, audit |
+| pkg-manager         | Arch packages, AUR, cache   |
+| snowpi-bridge       | SSH to RPi4                 |
+| tailscale-manager   | Tailscale status/IP         |
+| docker-orchestrator | Docker compose up/down      |
+| docker-cleanup      | Prune images, volumes       |
+| backup-agent        | Btrfs snapshots, verify     |
+| disk-usage          | Analyze /dev/sda space      |
+| dotfiles-sync       | Git add/commit/push         |
+| log-scanner         | journalctl + Hyprland logs  |
 
 ### Config
+
 - Active: `~/.config/opencode/opencode.json` (NOT the symlink at `~/.opencode/`)
 - Theme: `~/.config/opencode/themes/matugen.json` (generated by matugen)
 - Permissions: `"*": "allow"` + dangerous `ask`
+
+### Pi Coding Agent
+
+Pi runs alongside OpenCode as a secondary AI assistant, managed through the pi-coding-agent package.
+
+| Aspect         | Detail                                                         |
+| -------------- | -------------------------------------------------------------- |
+| Extensions dir | `~/.pi/agent/extensions/` (auto-discovered on startup)         |
+| Skills dir     | `~/.pi/agent/skills/`                                          |
+| Agent configs  | `~/.pi/agent/AGENTS.md`                                        |
+| Context-mode   | FTS5 knowledge base via `ctx_*` tools                          |
+| Therapy        | ctx_execute, ctx_search, ctx_index for large-output processing |
+
+**Keybinds overlay** (`/keybinds`): interactive reference of all Pi shortcuts grouped by category, scrollable with arrow keys/PgUp/PgDn/g/G/Esc/q. Built as an extension at `~/.pi/agent/extensions/keybinds.ts`.
+
+**Auto-name** (`~/.pi/agent/extensions/auto-name.ts`): names sessions automatically from the first user prompt via `session_start` + `agent_settled` hook.
+
+**Shortcuts**:
+
+| Key    | Action                      |
+| ------ | --------------------------- |
+| Ctrl+Q | Insert `/hotkeys` in editor |
+| Alt+R  | Insert `/reload` in editor  |
 
 ---
 
@@ -410,6 +449,7 @@ Weather: Erbil, Celsius via wttr.in, cached 1hr in `/tmp/weather-cache`.
 - **Web UI**: Browser-based animation preview + control
 
 ### Startup
+
 ```bash
 cd ~/MAD-68-custom-animation && node server.js &
 ```
@@ -429,6 +469,7 @@ Browser UI → WebSocket → server.js → stdin → rgb_engine.py → HID → K
 **Symptoms**: "Function required to send message" or screen doesn't lock.
 
 **Checks**:
+
 1. Is caelestia running? `pgrep -f "qs -c caelestia"`
 2. Correct command? Must be `caelestia shell lock lock` (space-separated, NOT `lock.lock`)
 3. Check `loginctl show-session $(loginctl | grep $(whoami) | awk '{print $1}') -p LockedHint`
@@ -436,12 +477,14 @@ Browser UI → WebSocket → server.js → stdin → rgb_engine.py → HID → K
 5. Check caelestia logs: `journalctl --user -u quickshell-caelestia`
 
 **Common causes**:
+
 - hyprlock still holds session lock (shouldn't — hyprlock exits on unlock)
 - caelestia crashed (restart with `caelestia-restart.sh`)
 
 ### Wallpaper colors not updating
 
 **Checks**:
+
 1. Wallpaper set? Check `awww query`
 2. matugen succeeded? `cat ~/.local/share/wall-sync/logs/wall-sync.log`
 3. `hyprctl reload` needed? Run manually
@@ -450,6 +493,7 @@ Browser UI → WebSocket → server.js → stdin → rgb_engine.py → HID → K
 ### Keyboard RGB not changing
 
 **Checks**:
+
 1. Keyboard connected? Check `lsusb | grep 373B`
 2. udev rule exists? `/etc/udev/rules.d/99-mad68.rules`
 3. Custom mode enabled? `python3 ~/.local/bin/mad68-rgb.py HEXCOLOR`
@@ -459,6 +503,7 @@ Browser UI → WebSocket → server.js → stdin → rgb_engine.py → HID → K
 ### OpenRGB not working
 
 **Checks**:
+
 1. `openrgb --server` running? `pgrep -x openrgb`
 2. Devices listed? `openrgb --devices`
 3. Connection refused? Start server: `openrgb --server &`
@@ -466,6 +511,7 @@ Browser UI → WebSocket → server.js → stdin → rgb_engine.py → HID → K
 ### Caelestia not starting
 
 **Checks**:
+
 1. `pgrep -f "qs -c caelestia"` — running?
 2. Try start: `qs -c caelestia -d`
 3. Has `-d` (daemonize) not `-n` (no-duplicate) in exec-once
@@ -487,23 +533,27 @@ Run `chmod a+wr /opt/spotify/Apps -R && spicetify backup apply` (sudo needed). F
 
 ## 12. System Services
 
-| Service | Status | Purpose |
-|---------|--------|---------|
-| `skwd-daemon` | user service | Wallpaper daemon |
-| `awww-daemon` | user (~/.xprofile) | Wallpaper setter |
-| `openrgb --server` | user (exec-once) | RGB controller server |
-| `caelestia` | user (qs -d) | Desktop shell |
-| `hypridle` | user (exec-once) | Idle management |
-| `clipse` | user (exec-once) | Clipboard manager |
-| `polkit-gnome` | user (exec-once) | Authentication agent |
-| `trayscale` | user (exec-once, delayed) | Tailscale GUI |
-| `coolercontrol` | user (exec-once, delayed) | Fan control |
-| `oc-fast-sync.timer` | systemd user timer | OC memory sync (30min) |
-| `opencode-serve.service` | systemd | OC remote (port 4096, unused — snowpi only) |
-| `services-dashboard.py` | user (exec-once) | Dynamic service dashboard (port 80) |
+| Service                       | Status                           | Purpose                                     |
+| ----------------------------- | -------------------------------- | ------------------------------------------- |
+| `skwd-daemon`                 | user service                     | Wallpaper daemon                            |
+| `awww-daemon`                 | user (~/.xprofile)               | Wallpaper setter                            |
+| `openrgb --server`            | user (exec-once)                 | RGB controller server                       |
+| `caelestia`                   | user (qs -d)                     | Desktop shell                               |
+| `hypridle`                    | user (exec-once)                 | Idle management                             |
+| `clipse`                      | user (exec-once)                 | Clipboard manager                           |
+| `polkit-gnome`                | user (exec-once)                 | Authentication agent                        |
+| `trayscale`                   | user (exec-once, delayed)        | Tailscale GUI                               |
+| `coolercontrol`               | user (exec-once, delayed)        | Fan control                                 |
+| `oc-fast-sync.timer`          | systemd user timer               | OC memory sync (30min)                      |
+| `opencode-serve.service`      | systemd                          | OC remote (port 4096, unused — snowpi only) |
+| `services-dashboard.py`       | user (exec-once)                 | Dynamic service dashboard (port 80)         |
+| `snapperd`                    | systemd service (DBus-activated) | Snapper DBus interface                      |
+| `snapper-cleanup.timer`       | systemd timer                    | Hourly cleanup of old snapshots             |
+| `snapper-timeline.timer`      | systemd timer                    | Timeline snapshot creation                  |
+| `limine-snapper-sync.service` | systemd service                  | Sync boot entries with snapshots            |
 
 > Services dashboard at **`http://localhost/`** — auto-detects running/idle services via `ss`.
-> Full list with ports in #localhost-services 
+> Full list with ports in #localhost-services
 
 ---
 
@@ -520,10 +570,10 @@ Run `chmod a+wr /opt/spotify/Apps -R && spicetify backup apply` (sudo needed). F
 
 ## 14. Network
 
-| Device | IP | Tailscale |
-|--------|-----|-----------|
-| Freezer | 192.168.0.111 | 100.83.33.67 |
-| Snowpi | 192.168.1.35 | 100.120.197.52 |
+| Device  | IP            | Tailscale      |
+| ------- | ------------- | -------------- |
+| Freezer | <local-ip> | <tailscale-ip>   |
+| Snowpi  | <local-ip>  | <tailscale-ip> |
 
 ---
 
@@ -535,3 +585,60 @@ Run `chmod a+wr /opt/spotify/Apps -R && spicetify backup apply` (sudo needed). F
 4. **NVIDIA VRAM OOM**: Heavy WebGL content (e.g., rauno.me) can exhaust 12GB VRAM. Hard crash, needs reboot.
 5. **spicetify permissions**: Needs `sudo chmod a+wr /opt/spotify/Apps -R` after Spotify updates.
 6. **yay --locked flag**: Metropolis PKGBUILD has `--locked` in cargo build. Edit PKGBUILD to remove after every yay upgrade.
+
+---
+
+## 16. Snapper (Btrfs Snapshots)
+
+Snapper provides automated btrfs snapshot management for root (`/`) and home (`/home`) on separate LUKS volumes.
+
+### Configs
+
+| Config | Subvolume                 | Device                  |
+| ------ | ------------------------- | ----------------------- |
+| `root` | `/` (subvol `@`, id 256)  | LUKS `luks-52b45dbb...` |
+| `home` | `/home` (top-level, id 5) | LUKS `luks-17f57cce...` |
+
+### Snapshot limits (conservative — COW snapshots only store diffs)
+
+| Config | Daily | Weekly | Monthly | Yearly | Max | Important |
+| ------ | ----- | ------ | ------- | ------ | --- | --------- |
+| Root   | 5     | 4      | 0       | 0      | 20  | 5         |
+| Home   | 3     | 2      | 0       | 0      | 10  | 3         |
+
+### Snapshot subvolumes
+
+| Mount              | Subvol path                    | Subvolid |
+| ------------------ | ------------------------------ | -------- |
+| `/.snapshots`      | `@/.snapshots`                 | 262      |
+| `/home/.snapshots` | `./snapshots` (home top-level) | auto     |
+
+### Integration
+
+- **snap-pac**: pacman hooks at `/usr/share/libalpm/hooks/` create pre/post snapshots on every `pacman` transaction:
+  - `05-snap-pac-pre.hook` — PreTransaction snapshot (described as "before upgrade")
+  - `zz-snap-pac-post.hook` — PostTransaction snapshot ("after upgrade")
+  - `10-snap-pac-removal.hook` — Safety guard when snap-pac is removed
+
+- **limine-snapper-sync**: Updates Limine boot menu entries after each snapshot so you can boot into previous snapshots:
+  - `10-limine-snapper-lock.hook` — PreTransaction: waits for limine-snapper-sync
+  - `limine-snapper-sync.service` — Runs at boot, syncs snapshot list
+
+### Usage
+
+```bash
+snapper -c root list                          # list root snapshots
+snapper -c home list                          # list home snapshots
+sudo snapper -c root create -d 'before-test'  # manual snapshot
+snapper -c root delete <num>                  # delete snapshot (auto-cleanup handles old ones)
+```
+
+### Auto-cleanup
+
+- `snapper-cleanup.timer` runs hourly
+- Old snapshots are pruned based on the limits above
+- Timeline snapshots created every hour (configurable via TIMELINE_MIN_AGE)
+
+### Known issue
+
+- **limine-snapper-sync creates "config already exists" error**: limine-snapper-watcher uses `--no-dbus` flag and fails to create root config even when it doesn't exist. Workaround: manually create config with `sudo snapper -c root create-config /`. After the config exists, boot sync works correctly.
