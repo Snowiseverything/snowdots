@@ -39,7 +39,7 @@ def _ease(t): return t * t * (3 - 2 * t)
 
 
 async def handle(client, reader, writer, color_state):
-    lr = lg = lb = 0
+    lr, lg, lb = color_state[0], color_state[1], color_state[2]
     try:
         while True:
             line = await reader.readline()
