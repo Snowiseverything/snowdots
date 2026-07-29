@@ -2,7 +2,7 @@
 # Backup Snowpi system to /mnt/backups
 set -e
 
-SNOWPI="snow@192.168.1.35"
+SNOWPI="snow@<local-snowpi>"
 DEST="/mnt/backups/snowpi/system"
 DATE=$(date +%Y%m%d_%H%M%S)
 SNAPSHOT="$DEST/$DATE"

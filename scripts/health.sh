@@ -1,7 +1,7 @@
 #!/bin/bash
 # health.sh - Quick health overview: local + Snowpi
 
-SNOWPI="192.168.1.35"
+SNOWPI="<local-snowpi>"
 TIMEOUT=5
 
 echo "❄️  SnowHealth"

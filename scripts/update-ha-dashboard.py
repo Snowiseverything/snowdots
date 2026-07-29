@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Update HA dashboard to add Freezer RGB controls."""
-import json, subprocess, sys
+import json, os, subprocess, sys
 
-HA_URL = "http://100.83.33.67:8123"
-TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI0YjMzZDI1M2I2OTc0MDUwYTIxM2MwNDdkMWZjODVmNCIsImlhdCI6MTc4MTg1NTQzMywiZXhwIjoyMDk3MjE1NDMzfQ.xIE4jtuBiB1c2OtmYn7-F-y5gsw2V7DoVWQ66WhTNmU"
+HA_URL = "http://<ha-ip>:8123"
+TOKEN = os.environ.get("HA_TOKEN", "")
 
 # Read the current dashboard config
 config = subprocess.run(

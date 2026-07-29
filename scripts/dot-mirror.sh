@@ -4,7 +4,7 @@
 ########################################################################
 
 DEST="/mnt/backups/System-Mirror"
-SNOWPI="snow@100.83.33.67"
+SNOWPI="snow@<tailscale-snowpi>"
 
 # Ensure backup directory ownership
 if [ ! -d "$DEST" ]; then

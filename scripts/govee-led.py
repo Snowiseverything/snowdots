@@ -12,7 +12,7 @@ import sys, asyncio, json, os, urllib.request
 from pathlib import Path
 
 CONFIG = Path.home() / ".config/govee-led.toml"
-HA_URL = "http://100.83.33.67:8123"
+HA_URL = "http://<tailscale-snowpi>:8123"
 HA_TOKEN = ""
 ENTITY = "light.govee_h6102_2f48"
 

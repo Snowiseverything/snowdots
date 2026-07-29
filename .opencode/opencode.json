@@ -106,7 +106,7 @@
       "enabled": true,
       "headers": {
         "Content-Type": "application/json",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjEsIm5pY2tuYW1lIjoiIiwidG9rZW5JZCI6MTgsIm5vbmNlIjoiSHcxQXJBcFhMbk9odzlKdiIsImlzcyI6ImZhc3Qtbm90ZS1zeW5jLXNlcnZpY2UiLCJzdWIiOiJ1c2VyLXRva2VuIiwiZXhwIjoxODE0MDAwNTMyLCBuYmYiOjE3ODI0NjQ1MzIsImlhdCI6MTc4MjQ2NDUzMiwianRpIjoiMSJ9.mfdihDR2KIk4GidbMY43fpG_bvCJv1a0F8YgLDlGzSE",
+        "Authorization": "Bearer ${FNS_TOKEN}",
         "X-Default-Vault-Name": "Obsidian Vault",
         "X-Client": "ObsidianPlugin",
         "X-Client-Name": "OpenCode"

@@ -114,7 +114,7 @@ abbr -a sdelr 'sudo snapper -c root delete'
 abbr -a sdelh 'sudo snapper -c home delete --sync' #eg  --sync 1 or 2-4
 abbr -a sbdel 'sudo btrfs subvolume delete' #eg  sudo btrfs subvolume delete /.snapshots/5/snapshot
 # ── SSH ────────────────────────────────────────
-alias snowpi='ssh snow@100.83.33.67'
+alias snowpi='ssh snow@<tailscale-snowpi>'
 
 # ── SnowDots Scripts ───────────────────────────
 # All scripts in PATH (~/Dotfiles/scripts + ~/.local/bin)
