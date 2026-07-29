@@ -103,6 +103,19 @@ StyledClippingRect {
             }
         }
 
+        // Wheel handler covers the full workspace widget area, not just the dot layout
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            onWheel: event => {
+                if (event.angleDelta.y > 0)
+                    Hypr.dispatch("workspace r-1");
+                else
+                    Hypr.dispatch("workspace r+1");
+                event.accepted = true;
+            }
+        }
+
         Behavior on scale {
             Anim {}
         }

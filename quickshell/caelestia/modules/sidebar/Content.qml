@@ -86,6 +86,20 @@ Item {
                         }
                     }
                 }
+
+                // Wheel handler covers the workspace list area
+                MouseArea {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    acceptedButtons: Qt.NoButton
+                    onWheel: event => {
+                        if (event.angleDelta.y > 0)
+                            Hypr.dispatch("workspace r-1");
+                        else
+                            Hypr.dispatch("workspace r+1");
+                        event.accepted = true;
+                    }
+                }
             }
         }
 
