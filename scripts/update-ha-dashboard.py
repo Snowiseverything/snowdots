@@ -14,11 +14,21 @@ if _config.exists():
             TOKEN = line.split("=", 1)[1].strip().strip('"')
 
 # Read the current dashboard config
-config = subprocess.run(
-    ["docker", "exec", "homeassistant", "cat", "/config/.storage/lovelace.dashboard_home"],
-    capture_output=True, text=True, cwd="/"
-)
-dashboard = json.loads(config.stdout)
+try:
+    config = subprocess.run(
+        ["docker", "exec", "homeassistant", "cat", "/config/.storage/lovelace.dashboard_home"],
+        capture_output=True, text=True, cwd="/"
+    )
+    config.check_returncode()
+except (subprocess.CalledProcessError, FileNotFoundError) as e:
+    print(f"Error reading dashboard config: {e}")
+    sys.exit(1)
+
+try:
+    dashboard = json.loads(config.stdout)
+except json.JSONDecodeError as e:
+    print(f"Error parsing dashboard config: {e}")
+    sys.exit(1)
 
 # The Govee section to replace
 govee_section = dashboard["data"]["config"]["views"][0]["sections"][-1]

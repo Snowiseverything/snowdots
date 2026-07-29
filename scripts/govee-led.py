@@ -182,7 +182,7 @@ def set_via_ha(endpoint, data, msg):
 def main():
     args = sys.argv[1:]
     if not args:
-        print(__doc__.strip())
+        print((__doc__ or "").strip())
         return
 
     if args[0] == "discover":

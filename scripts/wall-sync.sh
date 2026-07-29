@@ -324,7 +324,7 @@ cp "$CACHE_DIR/forkgram.tdesktop-palette" \
 # forkgram stores the active theme reference to this file.
 THEME="$HOME/.local/share/TelegramDesktop/tdata/awesome.tdesktop-theme"
 if [ -f "$THEME" ]; then
-	cd /tmp
+	cd /tmp || exit 1
 	cp "$CACHE_DIR/forkgram.tdesktop-palette" colors.tdesktop-palette
 	rm -f "$THEME"
 	zip -0 "$THEME" colors.tdesktop-palette 2>/dev/null || true
@@ -332,7 +332,7 @@ if [ -f "$THEME" ]; then
 	log "awesome.tdesktop-theme updated with new palette"
 fi
 
-# Forkgram palette copied to disk (no restart — next launch picks it up)
+# Forkgram palette copied to disk (no restart — next launch picks it up) palette copied to disk (no restart — next launch picks it up)
 
 # Update waylock colors
 if command -v waylock &>/dev/null; then
