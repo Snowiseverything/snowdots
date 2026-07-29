@@ -152,16 +152,20 @@ if [ -f "$CACHE_DIR/hyprland-colors.conf" ]; then
             log_error "Failed to update hyprland borders"
         fi
     fi
-    # Reload hyprland to ensure all color changes take effect
-    hyprctl reload 2>/dev/null || true
-else
-    log_error "hyprland-colors.conf not found"
 fi
 
 # Sync RGB after hyprctl reload so OpenRGB doesn't get reset
-bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >> "$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
-ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
-[ -n "$ACCENT" ] && [ "$ACCENT" != "null" ] && echo "$ACCENT" > "$CACHE_DIR/last_synced_accent"
+# Sync RGB only if accent changed (skip unnecessary fades on wallpaper change)
+# wall-reset.sh (Super+Shift+W) bypasses this path and always syncs
+LAST_ACCENT=$(cat "$CACHE_DIR/last_synced_accent" 2>/dev/null)
+CURRENT_ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
+if [ "$CURRENT_ACCENT" = "$LAST_ACCENT" ] && [ -n "$CURRENT_ACCENT" ] && [ "$CURRENT_ACCENT" != "null" ]; then
+    log "Accent unchanged ($CURRENT_ACCENT), skipping RGB sync"
+else
+    log "Accent changed or first run, syncing RGB"
+    bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >> "$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
+    echo "$CURRENT_ACCENT" > "$CACHE_DIR/last_synced_accent"
+fi
 
 # Reload Kitty colors via pkill (more reliable than kitten)
 if pkill -USR1 kitty 2>/dev/null; then
