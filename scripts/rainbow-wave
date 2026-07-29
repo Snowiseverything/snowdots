@@ -118,43 +118,53 @@ def write_govee_last(r: int, g: int, b: int):
 
 def main():
     style_name = "ambient"
-    if len(sys.argv) > 2 and sys.argv[1] == "--style":
-        style_name = sys.argv[2]
+    only = None  # "pc", "keyboard", "govee", or None (all)
+    
+    args = sys.argv[1:]
+    for i, a in enumerate(args):
+        if a == "--style" and i + 1 < len(args):
+            style_name = args[i + 1]
+        elif a == "--only" and i + 1 < len(args):
+            only = args[i + 1]
+
     cfg = get_style(style_name)
 
-    print(f"Rainbow wave — {style_name} (cycle={cfg['cycle_s']}s, "
+    tag = f" [{only}]" if only else ""
+    print(f"Rainbow wave — {style_name}{tag} (cycle={cfg['cycle_s']}s, "
           f"sat={cfg['sat']}, light={cfg['light']})")
     print("Ctrl+C to stop")
 
-    # ── Open devices ──────────────────────────────────────────────────
+    # ── Open devices (skip if --only excludes them) ───────────────────
     orgb = None
     kb_dev = None
-    try:
-        from openrgb import OpenRGBClient
-        from openrgb.utils import RGBColor
-        orgb = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
-        print("PC case: connected")
-    except Exception:
-        print("PC case: skipped")
+    if only is None or only == "pc":
+        try:
+            from openrgb import OpenRGBClient
+            from openrgb.utils import RGBColor
+            orgb = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
+            print("PC case: connected")
+        except Exception:
+            print("PC case: skipped")
 
-    try:
-        import hid
-        for d in hid.enumerate(MAD68_VID, MAD68_PID):
-            if d.get("usage_page") == MAD68_RGB_USAGE_PAGE:
-                kb_dev = hid.device()
-                kb_dev.open_path(d["path"])
-                print("Keyboard: connected")
-                break
-    except Exception:
-        print("Keyboard: skipped")
+    if only is None or only == "keyboard":
+        try:
+            import hid
+            for d in hid.enumerate(MAD68_VID, MAD68_PID):
+                if d.get("usage_page") == MAD68_RGB_USAGE_PAGE:
+                    kb_dev = hid.device()
+                    kb_dev.open_path(d["path"])
+                    print("Keyboard: connected")
+                    break
+        except Exception:
+            print("Keyboard: skipped")
 
-    if orgb is None and kb_dev is None:
+    if orgb is None and kb_dev is None and only != "govee":
         print("No devices found. Exiting.")
         return
 
     # ── Run async rainbow loop with BLE ───────────────────────────────
     try:
-        asyncio.run(_rainbow_loop(orgb, kb_dev, cfg, style_name))
+        asyncio.run(_rainbow_loop(orgb, kb_dev, cfg, style_name, only))
     except KeyboardInterrupt:
         print("\nStopped.")
     finally:
@@ -178,7 +188,8 @@ def main():
         print("Restored wallpaper color.")
 
 
-async def _rainbow_loop(orgb, kb_dev, cfg: dict, style_name: str):
+async def _rainbow_loop(orgb, kb_dev, cfg: dict, style_name: str,
+                       only: str | None = None):
     """Async rainbow loop with persistent BLE connection for Govee."""
     from openrgb.utils import RGBColor
 
@@ -230,7 +241,7 @@ async def _rainbow_loop(orgb, kb_dev, cfg: dict, style_name: str):
             last_r, last_g, last_b = ri, gi, bi
 
             # PC devices
-            if orgb is not None:
+            if orgb is not None and (only is None or only == "pc"):
                 try:
                     color = RGBColor(ri, gi, bi)
                     for d in orgb.devices:
@@ -240,14 +251,14 @@ async def _rainbow_loop(orgb, kb_dev, cfg: dict, style_name: str):
                     pass
 
             # Keyboard
-            if kb_dev is not None:
+            if kb_dev is not None and (only is None or only == "keyboard"):
                 try:
                     _mad68_send_color(kb_dev, ri, gi, bi)
                 except Exception:
                     pass
 
             # Govee via persistent BLE
-            if govee_client is not None and govee_client.is_connected:
+            if govee_client is not None and govee_client.is_connected and (only is None or only == "govee"):
                 try:
                     await _govee_ble_set(govee_client, ri, gi, bi)
                     write_govee_last(ri, gi, bi)
