@@ -45,12 +45,14 @@ def _govee_color_pkt(r: int, g: int, b: int) -> bytes:
     return bytes([0x33]) + payload + bytes([_govee_crc(payload)])
 
 STYLES = {
-    "smooth": {"speed": 0.05, "cycle_s": 10, "sat": 0.90, "light": 0.45},
-    "fast":   {"speed": 0.02, "cycle_s": 3,  "sat": 0.95, "light": 0.50},
-    "pastel": {"speed": 0.08, "cycle_s": 15, "sat": 0.50, "light": 0.65},
-    "strobe": {"speed": 0.0,  "cycle_s": 0.5, "sat": 1.0,  "light": 0.55, "strobe": True},
-    "breathe":{"speed": 0.04, "cycle_s": 8,  "sat": 0.80, "light": 0.40, "breathe_hue": 0},
-    "chase":  {"speed": 0.03, "cycle_s": 6,  "sat": 1.0,  "light": 0.50, "chase": True},
+    "ambient": {"speed": 0.10, "cycle_s": 30, "sat": 0.70, "light": 0.40},
+    "smooth":  {"speed": 0.05, "cycle_s": 10, "sat": 0.90, "light": 0.45},
+    "test":    {"speed": 0.02, "cycle_s": 3,  "sat": 0.95, "light": 0.50},
+    "fast":    {"speed": 0.02, "cycle_s": 3,  "sat": 0.95, "light": 0.50},
+    "pastel":  {"speed": 0.08, "cycle_s": 15, "sat": 0.50, "light": 0.65},
+    "strobe":  {"speed": 0.0,  "cycle_s": 0.5, "sat": 1.0,  "light": 0.55, "strobe": True},
+    "breathe": {"speed": 0.04, "cycle_s": 8,  "sat": 0.80, "light": 0.40, "breathe_hue": 0},
+    "chase":   {"speed": 0.03, "cycle_s": 6,  "sat": 1.0,  "light": 0.50, "chase": True},
 }
 
 
@@ -72,7 +74,7 @@ def get_style(name: str) -> dict:
     if len(parts) >= 3:
         return {"speed": float(parts[1]), "cycle_s": float(parts[2]),
                 "sat": 0.90, "light": 0.45, "hue_offset": float(parts[0])}
-    return STYLES["smooth"]
+    return STYLES["ambient"]
 
 
 def send_govee(hex_color: str):
@@ -115,7 +117,7 @@ def write_govee_last(r: int, g: int, b: int):
 
 
 def main():
-    style_name = "smooth"
+    style_name = "ambient"
     if len(sys.argv) > 2 and sys.argv[1] == "--style":
         style_name = sys.argv[2]
     cfg = get_style(style_name)
