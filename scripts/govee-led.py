@@ -242,21 +242,26 @@ def main():
     if len(args) > 1:
         brightness = int(args[1])
 
+    # Apply brightness dimming to the actual target color
+    factor = max(0, min(100, brightness)) / 100.0
+    dr, dg, db = int(r * factor), int(g * factor), int(b * factor)
+    dimmed_hex = f"{dr:02x}{dg:02x}{db:02x}"
+
     color_hex = f"{r:02x}{g:02x}{b:02x}"
 
-    # Skip if already at target (avoids wasteful calls + flash)
+    # Skip if already at target (compare dimmed values — govee-last stores dimmed)
     last = read_last_color()
-    if last and last == (r, g, b):
+    if last and last == (dr, dg, db):
         print(f"Already #{color_hex} at {brightness}%")
         return
 
-    # Save original last_color for BLE fade interpolation, then
-    # write intent immediately — closes race window with concurrent calls
+    # Save dimmed target as last_color for BLE fade interpolation
     orig_last = last
-    write_last_color(r, g, b)
+    write_last_color(dr, dg, db)
 
     # ── Fast socket daemon first (persistent BLE, ~5ms) ─────────────────
-    if _fast_send(f"fade {color_hex} {brightness}"):
+    # Send DIMMED color hex — daemon ignores brightness param
+    if _fast_send(f"fade {dimmed_hex} {brightness}"):
         print(f"Set #{color_hex} at {brightness}% via socket")
         return
 
@@ -265,7 +270,7 @@ def main():
     try:
         ha_state = ha_call(f"states/{ENTITY}")
         if ha_state.get("state") != "unavailable":
-            ha_fade_color(r, g, b, brightness=brightness)
+            ha_fade_color(dr, dg, db, brightness=brightness)
             print(f"Set #{color_hex} at {brightness}% via HA")
             return
     except Exception:
@@ -273,12 +278,12 @@ def main():
 
     # ── HA unavailable or failed — fall back to direct BLE ───────────────
     if fade_mode and orig_last:
-        result = asyncio.run(ble_fade_color(*orig_last, r, g, b))
+        result = asyncio.run(ble_fade_color(*orig_last, dr, dg, db))
         if result == "ble":
             print(f"Set #{color_hex} at {brightness}% via BLE fade")
             return
     else:
-        result = asyncio.run(ble_set_color(r, g, b, brightness))
+        result = asyncio.run(ble_set_color(dr, dg, db, brightness))
         if result == "ble":
             print(f"Set #{color_hex} at {brightness}% via BLE")
             return
