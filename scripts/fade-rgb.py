@@ -73,6 +73,9 @@ def fade_all(target_r, target_g, target_b, frames, brightness_pct, last_color=No
         if orgb is not None:
             for d in orgb.devices:
                 try:
+                    # Force Direct mode — Static mode on ASUS ignores per-LED colors
+                    if d.active_mode != 0:
+                                        d.set_mode(0)
                     d.set_colors([color] * len(d.leds))
                     d.show()
                 except Exception:

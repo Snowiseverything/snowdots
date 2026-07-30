@@ -63,21 +63,48 @@ state = {
 
 
 def set_openrgb(color: str, brightness: int = 80):
-    """Set all OpenRGB devices via CLI (no --brightness flag, it breaks multi-device in 0.9+)."""
+    """Set all OpenRGB devices via SDK in Direct mode (per-LED color).
+
+    Note: must use Direct mode, NOT Static mode via CLI. ASUS motherboard
+    zones don't support per-LED colors in Static mode (HAS_MODE_SPECIFIC_COLOR
+    but not HAS_PER_LED_COLOR). Direct mode lets set_colors() work everywhere.
+    """
     r, g, b = [int(color[i:i+2], 16) for i in (0, 2, 4)]
     factor = max(0, min(100, brightness)) / 100.0
-    dimmed = '%02x%02x%02x' % (int(r * factor), int(g * factor), int(b * factor))
+    ri, gi, bi = int(r * factor), int(g * factor), int(b * factor)
     try:
-        subprocess.run(
-            ["openrgb", "--mode", "static", "--color", dimmed],
-            timeout=5, capture_output=True,
-        )
-        state["openrgb"] = {"color": color, "brightness": brightness, "mode": "static"}
+        from openrgb import OpenRGBClient
+        from openrgb.utils import RGBColor
+        orgb = OpenRGBClient("localhost", 6742, name="rgb-bridge")
+        for d in orgb.devices:
+            if ri == gi == bi == 0 and d.active_mode != 1:
+                # Off — switch to Off mode so LEDs truly turn off
+                d.set_mode(1)
+            else:
+                # Direct mode — per-LED colors work on all devices
+                if d.active_mode != 0:
+                    d.set_mode(0)
+                d.set_colors([RGBColor(ri, gi, bi)] * len(d.leds))
+                d.show()
+        orgb.disconnect()
+        state["openrgb"] = {"color": color, "brightness": brightness, "mode": "direct"}
         state["last_color"] = color
         return True
     except Exception as e:
         print(f"OpenRGB error: {e}", file=sys.stderr)
-        return False
+        # Fallback to CLI
+        try:
+            from pathlib import Path
+            subprocess.run(
+                ["openrgb", "--mode", "direct", "--color", "%02x%02x%02x" % (ri, gi, bi)],
+                timeout=5, capture_output=True,
+            )
+            state["openrgb"] = {"color": color, "brightness": brightness, "mode": "direct"}
+            state["last_color"] = color
+            return True
+        except Exception as e2:
+            print(f"OpenRGB CLI fallback error: {e2}", file=sys.stderr)
+            return False
 
 
 def set_keyboard(color: str, brightness: int = 70):
