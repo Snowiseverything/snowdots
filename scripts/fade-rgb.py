@@ -4,23 +4,63 @@
 import sys, time
 from pathlib import Path
 
+# ── Config ────────────────────────────────────────────────────────────────
+sys.path.insert(0, str(Path.home() / ".local/bin"))
+try:
+    from rgb_config import load_config, config_value  # pyright: ignore[reportMissingImports]
+    _CFG = load_config()
+except Exception:
+    _CFG = None
+    config_value = None  # type: ignore[assignment]
+
+
+def _cfg(key, default):
+    """Get config value or fall back to default."""
+    if _CFG is None or config_value is None:
+        return default
+    keys = key.split(".")
+    return config_value(_CFG, *keys, default=default)
+
+
 LAST_COLOR = Path("/tmp/fade-rgb-last")
-FADE_STEPS = 10
-FADE_DELAY_MS = 20
-OPENRGB_HOST = "localhost"
-OPENRGB_PORT = 6742
+RAW_LAST = Path("/tmp/fade-rgb-raw-last")
+FADE_STEPS = _cfg("fade.steps", 10)
+FADE_DELAY_MS = _cfg("fade.delay_ms", 20)
+OPENRGB_HOST = _cfg("openrgb.host", "localhost")
+OPENRGB_PORT = _cfg("openrgb.port", 6742)
+
+
+def _safe_int(v, default=0):
+    """int() with fallback — file/user input can be malformed."""
+    try:
+        return int(v)
+    except (TypeError, ValueError, OverflowError):
+        return default
 
 
 def read_last():
     if LAST_COLOR.exists():
         parts = LAST_COLOR.read_text().strip().split()
         if len(parts) >= 3:
-            return int(parts[0]), int(parts[1]), int(parts[2])
+            return _safe_int(parts[0]), _safe_int(parts[1]), _safe_int(parts[2])
     return None
 
 
 def write_last(r, g, b):
     LAST_COLOR.write_text(f"{r} {g} {b}\n")
+
+
+def read_raw_last():
+    """Read raw (undimmed) last color."""
+    if RAW_LAST.exists():
+        parts = RAW_LAST.read_text().strip().split()
+        if len(parts) >= 3:
+            return _safe_int(parts[0]), _safe_int(parts[1]), _safe_int(parts[2])
+    return None
+
+
+def write_raw_last(r, g, b):
+    RAW_LAST.write_text(f"{r} {g} {b}\n")
 
 
 def ease(t):
@@ -31,29 +71,55 @@ def interpolate(fr, fg, fb, r, g, b):
     frames = []
     for i in range(1, FADE_STEPS + 1):
         t = ease(i / FADE_STEPS)
-        ri = int(round(fr + (r - fr) * t))
-        gi = int(round(fg + (g - fg) * t))
-        bi = int(round(fb + (b - fb) * t))
+        ri = round(fr + (r - fr) * t)
+        gi = round(fg + (g - fg) * t)
+        bi = round(fb + (b - fb) * t)
         frames.append((ri, gi, bi))
     return frames
 
 
-def fade_all(target_r, target_g, target_b, frames, brightness_pct, last_color=None):
-    """Fade OpenRGB + keyboard without mode switch — no flash."""
+def _mad68_set_brightness(dev, r, g, b, pct):
+    """Set hardware brightness via solid-color packet (brightness byte).
+
+    Same packet format as mad68-rgb.py — the per-slot color protocol has no
+    brightness field, so the hardware dim level is set here and the per-slot
+    colors render at it.
+    """
+    bri = max(0, min(255, _safe_int(pct * 255 / 100, 255)))
+    pkt = bytearray([7, 65, 2, 0, 0x96, r, g, b, bri, 0, 0, 0, 0, 0, 0, 0, 0,
+                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    dev.write(bytes(pkt))
+    time.sleep(MAD68_PACKET_DELAY)
+
+
+def fade_all(frames, kb_frames, brightness_pct):
+    """Fade OpenRGB + keyboard.
+
+    frames — dimmed RGB for OpenRGB (pre-scaled by brightness factor)
+    kb_frames — raw RGB for keyboard (hardware brightness handles dimming)
+    """
     orgb = None
     kb_dev = None
     try:
+        import socket
         from openrgb import OpenRGBClient
         from openrgb.utils import RGBColor
 
-        for attempt in range(3):
+        # Wait for the OpenRGB SDK listener — at boot the server takes
+        # several seconds to init hardware before accepting connections.
+        for attempt in range(20):
+            try:
+                with socket.create_connection((OPENRGB_HOST, OPENRGB_PORT), timeout=1):
+                    break
+            except OSError:
+                time.sleep(0.5)
+
+        for attempt in range(5):
             try:
                 orgb = OpenRGBClient(OPENRGB_HOST, OPENRGB_PORT)
                 break
             except Exception:
-                time.sleep(0.5)
-
-        # Stay in current mode (Static). No _direct() — mode switches cause flash.
+                time.sleep(1.0)
 
         import hid
         for d in hid.enumerate(MAD68_VID, MAD68_PID):
@@ -67,26 +133,29 @@ def fade_all(target_r, target_g, target_b, frames, brightness_pct, last_color=No
     if orgb is None and kb_dev is None:
         return
 
-    for ri, gi, bi in frames:
-        color = RGBColor(ri, gi, bi)
-
+    for i, (ri, gi, bi) in enumerate(frames):
         if orgb is not None:
+            color = RGBColor(ri, gi, bi)
             for d in orgb.devices:
                 try:
-                    # Force Direct mode — Static mode on ASUS ignores per-LED colors
                     if d.active_mode != 0:
-                                        d.set_mode(0)
+                        d.set_mode(0)
                     d.set_colors([color] * len(d.leds))
                     d.show()
                 except Exception:
                     pass
 
-        if kb_dev is not None:
+        if kb_dev is not None and i < len(kb_frames):
             try:
-                _mad68_send_color(kb_dev, ri, gi, bi)
+                if i == 0 and kb_frames:
+                    kr0, kg0, kb0 = kb_frames[-1]
+                    _mad68_set_brightness(kb_dev, kr0, kg0, kb0, brightness_pct)
+                kr, kg, kb = kb_frames[i]
+                _mad68_send_color(kb_dev, kr, kg, kb)
             except Exception:
                 pass
 
+        # pi-lens-ignore: python-sleep-in-test
         time.sleep(FADE_DELAY_MS / 1000)
 
     if orgb is not None:
@@ -111,8 +180,8 @@ MAD68_NUM_SLOTS = 80
 MAD68_KEYS_PER_PACKET = 8
 MAD68_NUM_CHUNKS = 5
 MAD68_SUB_OFFSETS = (0x00, 0x08)
-MAD68_FRAME_DELAY = .030
-MAD68_PACKET_DELAY = 0
+MAD68_FRAME_DELAY = _cfg("keyboard.frame_delay_ms", 30) / 1000
+MAD68_PACKET_DELAY = _cfg("keyboard.packet_delay_ms", 0) / 1000
 
 
 def _mad68_send_color(dev, r, g, b):
@@ -134,6 +203,7 @@ def _mad68_send_color(dev, r, g, b):
                 pkt[8 + k * 3] = cb
                 idx += 1
             dev.write(bytes(pkt))
+            # pi-lens-ignore: python-sleep-in-test
             time.sleep(MAD68_PACKET_DELAY)
 
     commit = bytearray(MAD68_REPORT_LEN)
@@ -146,6 +216,7 @@ def _mad68_send_color(dev, r, g, b):
     commit[8] = 0xEE
     commit[9] = 0xD2
     dev.write(bytes(commit))
+    # pi-lens-ignore: python-sleep-in-test
     time.sleep(MAD68_PACKET_DELAY)
 
 
@@ -164,6 +235,7 @@ def fade_mad68(frames, brightness_pct):
 
         for ri, gi, bi in frames:
             _mad68_send_color(dev, ri, gi, bi)
+            # pi-lens-ignore: python-sleep-in-test
             time.sleep(MAD68_FRAME_DELAY)
         dev.close()
     except Exception:
@@ -173,33 +245,50 @@ def fade_mad68(frames, brightness_pct):
 def main():
     args = sys.argv[1:]
     if not args:
-        print(__doc__.strip())
+        print((__doc__ or "").strip())
         return
 
     r = g = b = 0
     brightness = 100
     hex_color = args[0].lstrip("#")
     if len(hex_color) >= 6:
-        r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+        try:
+            r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+        except ValueError:
+            r = g = b = 0
     if len(args) > 1:
-        brightness = int(args[1])
+        brightness = _safe_int(args[1], 100)
 
     factor = max(0, min(100, brightness)) / 100.0
-    target_r, target_g, target_b = int(r * factor), int(g * factor), int(b * factor)
+    target_r, target_g, target_b = round(r * factor), round(g * factor), round(b * factor)
+    raw_target = (r, g, b)
 
     last = read_last()
+    raw_last = read_raw_last() if last else None
+
     if last is None:
-        frames = [(target_r, target_g, target_b)]
+        orgb_frames = [(target_r, target_g, target_b)]
+        kb_frames = [(r, g, b)]
     else:
         fr, fg, fb = last
         if fr == target_r and fg == target_g and fb == target_b:
-            print(f"Already #{r:02x}{g:02x}{b:02x} at {brightness}%")
+            # Color matches but devices might be in Off mode — force wake
+            fade_all([(target_r, target_g, target_b)], [(r, g, b)], brightness)
+            write_last(target_r, target_g, target_b)
+            write_raw_last(r, g, b)
+            print(f"Set #{r:02x}{g:02x}{b:02x} at {brightness}%")
             return
-        frames = interpolate(fr, fg, fb, target_r, target_g, target_b)
+        orgb_frames = interpolate(fr, fg, fb, target_r, target_g, target_b)
+        if raw_last is not None:
+            krf, kgf, kbf = raw_last
+            kb_frames = interpolate(krf, kgf, kbf, r, g, b)
+        else:
+            kb_frames = interpolate(fr, fg, fb, r, g, b)
 
-    fade_all(target_r, target_g, target_b, frames, brightness, last)
+    fade_all(orgb_frames, kb_frames, brightness)
 
     write_last(target_r, target_g, target_b)
+    write_raw_last(r, g, b)
     print(f"Set #{r:02x}{g:02x}{b:02x} at {brightness}%")
 
 

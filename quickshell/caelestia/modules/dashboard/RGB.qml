@@ -11,6 +11,7 @@ Item {
     implicitHeight: layout.implicitHeight + Tokens.padding.large * 2
 
     property string currentHex: "da470b"
+    property string restoreHex: "da470b"
     property int currentBrightness: 50
     property var recentColors: ["#ff6600", "#00aaff", "#ff0066", "#00ff88", "#ffaa00", "#aa00ff"]
 
@@ -29,7 +30,11 @@ Item {
                 try {
                     var d = JSON.parse(xhr.responseText);
                     if (d && d.openrgb) {
-                        root.currentHex = d.openrgb.color;
+                        var c = d.openrgb.color;
+                        if (c && c !== "000000") {
+                            root.currentHex = c;
+                            root.restoreHex = c;
+                        }
                         root.currentBrightness = d.openrgb.brightness;
                     }
                 } catch(e) {}
@@ -48,7 +53,7 @@ Item {
 
     function setAll(hex) {
         root.currentHex = hex;
-        firePost("/all", {color: hex, brightness: root.currentBrightness});
+        firePost("/all", {color: hex, brightness: root.currentBrightness, fade: true});
     }
 
     function syncWallpaper() {
@@ -155,7 +160,7 @@ Item {
                         Text { text: "⏻"; font.pixelSize: 16; color: "#f7768e"; anchors.verticalCenter: parent.verticalCenter }
                         Text { text: qsTr("All Off"); font.pixelSize: 14; font.weight: Font.DemiBold; font.family: "Noto Sans"; color: "#f7768e"; anchors.verticalCenter: parent.verticalCenter }
                     }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.setAll("000000") }
+                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.allOff() }
                 }
             }
         }

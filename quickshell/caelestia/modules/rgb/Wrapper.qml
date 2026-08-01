@@ -29,7 +29,9 @@ PanelWindow {
             if (status) {
                 var data = JSON.parse(status);
                 var color = data.openrgb.color;
-                root.currentColor = Qt.color("#" + color);
+                if (color && color !== "000000") {
+                    root.currentColor = Qt.color("#" + color);
+                }
                 root.brightness = data.openrgb.brightness;
             }
         });
@@ -38,7 +40,8 @@ PanelWindow {
     function setColor(hex: string, bri: int): void {
         XhrFetch.post("http://localhost:5070/all", JSON.stringify({
             color: hex,
-            brightness: bri
+            brightness: bri,
+            fade: true
         }));
     }
 
@@ -140,19 +143,21 @@ PanelWindow {
                 }
             }
 
-            Slider {
-                id: brightnessSlider
+    Timer { id: briDebounce; interval: 300; onTriggered: root.setColor(Qt.colorToHex(root.currentColor).replace("#", ""), root.brightness) }
 
-                Layout.fillWidth: true
-                from: 0
-                to: 100
-                value: root.brightness
-                stepSize: 5
+    Slider {
+        id: brightnessSlider
 
-                onMoved: {
-                    root.brightness = value;
-                    root.setColor(Qt.colorToHex(root.currentColor).replace("#", ""), value);
-                }
+        Layout.fillWidth: true
+        from: 0
+        to: 100
+        value: root.brightness
+        stepSize: 5
+
+        onMoved: {
+            root.brightness = value;
+            briDebounce.restart();
+        }
 
                 background: Rectangle {
                     x: brightnessSlider.leftPadding

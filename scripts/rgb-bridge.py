@@ -29,8 +29,34 @@ import json, os, subprocess, sys, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
-PORT = 5070
+# ── Config ────────────────────────────────────────────────────────────────
+sys.path.insert(0, str(Path.home() / ".local/bin"))
+try:
+    from rgb_config import load_config, config_value  # pyright: ignore[reportMissingImports]
+    _CFG = load_config()
+except Exception:
+    _CFG = None
+    config_value = None  # type: ignore[assignment]
+
+
+def _cfg(key, default):
+    if _CFG is None or config_value is None:
+        return default
+    keys = key.split(".")
+    return config_value(_CFG, *keys, default=default)
+
+
+def _safe_int(v, default=0):
+    """int() with fallback — config/file values can be malformed."""
+    try:
+        return int(v)
+    except (TypeError, ValueError, OverflowError):
+        return default
+
+
+PORT = _safe_int(_cfg("server.port", 5070), 5070)
 MAD68_SCRIPT = Path.home() / ".local/bin/mad68-rgb.py"
+MAD68_OFF_SCRIPT = Path.home() / ".local/bin/mad68-off.py"
 SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/rgb-sync.sh"
 WALL_SYNC_SCRIPT = Path.home() / "Dotfiles/scripts/wall-sync.sh"
 GOVEE_SCRIPT = Path.home() / "Dotfiles/scripts/govee-led.py"
@@ -51,31 +77,48 @@ def current_wallpaper_path() -> str | None:
     return None
 
 
+_DEF_BRI = _safe_int(_cfg("brightness.default", 80), 80)
+_DEF_KB_BRI = _safe_int(_cfg("brightness.keyboard", 80), 80)
+
 state = {
-    "openrgb": {"color": "000000", "brightness": 80, "mode": "static"},
-    "keyboard": {"color": "000000"},
-    "govee": {"color": "000000", "brightness": 80},
+    "openrgb": {"color": "000000", "brightness": _DEF_BRI, "mode": "static"},
+    "keyboard": {"color": "000000", "brightness": _DEF_KB_BRI},
+    "govee": {"color": "000000", "brightness": _DEF_BRI},
     "last_color": "000000",
+    "restore_color": "00dbeb",
     "synced": False,
     "last_sync": None,
     "wallpaper": current_wallpaper_name(),
 }
 
 
-def set_openrgb(color: str, brightness: int = 80):
-    """Set all OpenRGB devices via SDK in Direct mode (per-LED color).
+def _kill_inflight_fades():
+    """Kill running fade processes so an off/set doesn't race them.
 
-    Note: must use Direct mode, NOT Static mode via CLI. ASUS motherboard
-    zones don't support per-LED colors in Static mode (HAS_MODE_SPECIFIC_COLOR
-    but not HAS_PER_LED_COLOR). Direct mode lets set_colors() work everywhere.
+    fade-rgb.py + govee-led.py --fade animate over ~0.6s in threads;
+    an All Off issued mid-fade gets overwritten by later frames — the
+    RAM flash the user saw. Kill first, then apply the new state.
     """
+    for pat in ("fade-rgb.py", "govee-led.py"):
+        try:
+            subprocess.run(["pkill", "-f", pat], capture_output=True)
+        except Exception:
+            pass
+
+
+def set_openrgb(color: str, brightness: int | None = None):
+    """Set all OpenRGB devices via SDK in Direct mode (per-LED color)."""
+    if brightness is None:
+        brightness = _safe_int(_cfg("brightness.default", 80), 80)
+    if not _cfg("devices.openrgb", True):
+        return True
     r, g, b = [int(color[i:i+2], 16) for i in (0, 2, 4)]
     factor = max(0, min(100, brightness)) / 100.0
-    ri, gi, bi = int(r * factor), int(g * factor), int(b * factor)
+    ri, gi, bi = round(r * factor), round(g * factor), round(b * factor)
     try:
         from openrgb import OpenRGBClient
         from openrgb.utils import RGBColor
-        orgb = OpenRGBClient("localhost", 6742, name="rgb-bridge")
+        orgb = OpenRGBClient(_cfg("openrgb.host", "localhost"), _safe_int(_cfg("openrgb.port", 6742), 6742), name="rgb-bridge")
         for d in orgb.devices:
             if ri == gi == bi == 0 and d.active_mode != 1:
                 # Off — switch to Off mode so LEDs truly turn off
@@ -107,14 +150,22 @@ def set_openrgb(color: str, brightness: int = 80):
             return False
 
 
-def set_keyboard(color: str, brightness: int = 70):
-    """Set MAD68 keyboard color via HID."""
+def set_keyboard(color: str, brightness: int | None = None):
+    """Set MAD68 keyboard color via HID.
+
+    Sends raw (undimmed) color with brightness byte for hardware dimming.
+    This preserves color balance — pre-dimmed RGB shifts LED color temp.
+    """
+    if brightness is None:
+        brightness = _safe_int(_cfg("brightness.keyboard", 80), 80)
+    if not _cfg("devices.keyboard", True):
+        return True
     try:
         subprocess.run(
             [sys.executable, str(MAD68_SCRIPT), color, str(brightness)],
             timeout=5, capture_output=True,
         )
-        state["keyboard"] = {"color": color}
+        state["keyboard"] = {"color": color, "brightness": max(brightness, 1)}
         state["last_color"] = color
         return True
     except Exception as e:
@@ -122,8 +173,25 @@ def set_keyboard(color: str, brightness: int = 70):
         return False
 
 
-def set_govee(color: str, brightness: int = 80):
+def set_keyboard_off():
+    """Turn off MAD68 keyboard LEDs using per-slot black protocol."""
+    try:
+        subprocess.run(
+            [sys.executable, str(MAD68_OFF_SCRIPT)],
+            timeout=5, capture_output=True,
+        )
+        return True
+    except Exception as e:
+        print(f"Keyboard off error: {e}", file=sys.stderr)
+        return False
+
+
+def set_govee(color: str, brightness: int | None = None):
     """Set Govee LED strip via HA API or direct BLE."""
+    if brightness is None:
+        brightness = _safe_int(_cfg("brightness.default", 80), 80)
+    if not _cfg("devices.govee", True):
+        return True
     try:
         subprocess.run(
             [sys.executable, str(GOVEE_SCRIPT), color, str(brightness)],
@@ -225,6 +293,8 @@ def trigger_sync():
     message = "Already synced to wallpaper" if already_synced else "Colors synced to wallpaper"
 
     bri = state["openrgb"].get("brightness", 80)
+    if bri == 0:
+        bri = 80  # restore from off when syncing to wallpaper
 
     def _govee_async(c):
         try:
@@ -248,7 +318,11 @@ def trigger_sync():
         if result.returncode != 0:
             print(f"fade-rgb stderr: {result.stderr}", file=sys.stderr)
         state["openrgb"]["color"] = color
+        state["openrgb"]["brightness"] = bri
+        state["openrgb"]["mode"] = "direct"
         state["keyboard"]["color"] = color
+        state["last_color"] = color
+        state["restore_color"] = color
         state["last_color"] = color
         return {"ok": True, "message": message}
     except Exception as e:
@@ -289,25 +363,29 @@ def track_color(hex_color: str):
 
 # ── HTTP Handler ─────────────────────────────────────────────────────────
 class RGBHandler(BaseHTTPRequestHandler):
-    def log_message(self, fmt, *args):
+    def log_message(self, format, *args):
         pass  # suppress default logging
 
     def _json(self, data, status=200):
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", "http://localhost")
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.end_headers()
         self.wfile.write(json.dumps(data).encode())
 
     def _body(self) -> dict:
-        length = int(self.headers.get("Content-Length", 0))
+        length = _safe_int(self.headers.get("Content-Length", 0), 0)
         if length == 0:
             return {}
-        return json.loads(self.rfile.read(length))
+        try:
+            return json.loads(self.rfile.read(length))
+        except (ValueError, OSError):
+            return {}
 
     def do_OPTIONS(self):
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", "http://localhost")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
@@ -405,12 +483,73 @@ class RGBHandler(BaseHTTPRequestHandler):
                 self._json({"error": "color required"}, 400)
                 return
             track_color(color)
-            results = [None, None, None]
+            fade = bool(body.get("fade", False))
+            if color == "000000" or brightness == 0:
+                # All Off — instant, every device off (no fade to black).
+                # Kill in-flight fades FIRST so a still-running fade can't
+                # flash a color after the devices went dark.
+                _kill_inflight_fades()
+                if state.get("last_color", "000000") != "000000":
+                    state["restore_color"] = state["last_color"]
+                results: list = [None, None, None]
+                def run_openrgb_off():
+                    results[0] = set_openrgb("000000", 0)
+                def run_keyboard_off():
+                    if _cfg("off.keyboard", True):
+                        results[1] = set_keyboard_off()
+                def run_govee_off():
+                    if _cfg("off.govee", True):
+                        results[2] = set_govee("000000", 0)
+                t1 = threading.Thread(target=run_openrgb_off)
+                t2 = threading.Thread(target=run_keyboard_off)
+                t3 = threading.Thread(target=run_govee_off)
+                t1.start(); t2.start(); t3.start()
+                t1.join(timeout=8); t2.join(timeout=8); t3.join(timeout=8)
+                self._json({"ok": all(r for r in results if r is not None), "color": "000000", "brightness": 0})
+                return
+            if fade:
+                # Smooth crossfade path — fade-rgb.py (PC + keyboard) and
+                # govee-led.py --fade in parallel, same step timing as rgb-sync.sh
+                def _govee_fade(c):
+                    try:
+                        subprocess.run(
+                            [sys.executable, str(GOVEE_SCRIPT), c, str(brightness), "--fade"],
+                            timeout=15, capture_output=True,
+                        )
+                        state["govee"]["color"] = c
+                        state["govee"]["brightness"] = brightness
+                    except Exception:
+                        pass
+
+                t_g = threading.Thread(target=_govee_fade, args=(color,), daemon=True)
+                t_g.start()
+                try:
+                    result = subprocess.run(
+                        [sys.executable, str(Path.home() / "Dotfiles/scripts/fade-rgb.py"), color, str(brightness)],
+                        timeout=10, capture_output=True, text=True,
+                    )
+                    if result.returncode != 0:
+                        print(f"fade-rgb stderr: {result.stderr}", file=sys.stderr)
+                except Exception as e:
+                    print(f"fade-rgb error: {e}", file=sys.stderr)
+                state["openrgb"]["color"] = color
+                state["openrgb"]["brightness"] = brightness
+                state["openrgb"]["mode"] = "direct"
+                state["keyboard"]["color"] = color
+                state["keyboard"]["brightness"] = max(brightness, 1)
+                state["last_color"] = color
+                self._json({"ok": True, "color": color, "brightness": brightness, "fade": True})
+                return
+            results: list = [None, None, None]
             def run_openrgb():
                 results[0] = set_openrgb(color, brightness)
             def run_keyboard():
-                results[1] = set_keyboard(color, brightness)
+                # Keyboard brightness follows the requested value (hardware
+                # dim byte in mad68-rgb.py). min 1 — 0 means off, handled above.
+                results[1] = set_keyboard(color, max(brightness, 1))
             def run_govee():
+                if brightness == 0 and not _cfg("off.govee", True):
+                    return  # skip Govee when off is disabled in config
                 results[2] = set_govee(color, brightness)
             t1 = threading.Thread(target=run_openrgb)
             t2 = threading.Thread(target=run_keyboard)
@@ -454,14 +593,26 @@ class RGBHandler(BaseHTTPRequestHandler):
 
         elif self.path == "/brightness":
             b = brightness
+            # After All Off, last_color is black — restore to the remembered
+            # color so raising brightness actually lights the devices again.
             current_color = state.get("last_color", "000000")
-            results = [None, None, None]
+            if current_color == "000000":
+                current_color = state.get("restore_color", "00dbeb")
+            if b == 0:
+                _kill_inflight_fades()
+            results: list = [None, None, None]
             def run_openrgb_b():
                 results[0] = set_openrgb(current_color, b)
             def run_keyboard_b():
-                results[1] = set_keyboard(current_color, b)
+                if b > 0:
+                    results[1] = set_keyboard(current_color, max(b, 1))
+                elif _cfg("off.keyboard", True):
+                    results[1] = set_keyboard_off()
             def run_govee_b():
-                results[2] = set_govee(current_color, b)
+                if b > 0:
+                    results[2] = set_govee(current_color, b)
+                elif _cfg("off.govee", True):
+                    results[2] = set_govee("000000", 0)
             t1 = threading.Thread(target=run_openrgb_b)
             t2 = threading.Thread(target=run_keyboard_b)
             t3 = threading.Thread(target=run_govee_b)
