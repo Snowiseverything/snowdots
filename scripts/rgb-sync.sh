@@ -1,4 +1,8 @@
 #!/bin/bash
+## SnowDots — RGB sync to current wallpaper accent
+## Routes through the bridge /sync so per-device brightness is preserved
+## and off devices stay off (no black-flash). Falls back to direct fades
+## only when the bridge is unreachable (e.g. early boot).
 
 COLORS_FILE="$HOME/.cache/skwd-wall/colors.json"
 
@@ -25,26 +29,24 @@ print('%02x%02x%02x' % (int(r_l*255), int(g_l*255), int(b_l*255)))
 
 [ -z "$LED_COLOR" ] && exit 0
 
+# ── Prefer the bridge /sync: it preserves each device's brightness and
+#    silently updates color for off devices (no flash, no reset).
+# ── The bridge's trigger_sync reads the SAME colors.json accent, so
+#    passing LED_COLOR here is only for the direct-fallback path.
+resp=$(curl -sf -m 3 -X POST http://localhost:5070/sync 2>/dev/null)
+if [ -n "$resp" ] && echo "$resp" | jq -e '.ok' >/dev/null 2>&1; then
+	msg=$(echo "$resp" | jq -r '.message // "Colors synced to wallpaper"')
+	logger -t rgb-sync "$msg" 2>/dev/null || true
+	exit 0
+fi
+
+# ── Bridge unreachable — fall back to direct fades at brightness 80 ─────
 # Run PC and Govee fades in parallel with matching step timing
 # fade-rgb.py: 10 steps × 20ms = 200ms fade
 # govee-led.py --fade: 10 steps × 20ms = 200ms fade via daemon socket
 # Both finish at ~same time for synchronized color transition
-#
-# Brightness: preserve each device's current value from the bridge
-# (falls back to 80 when the bridge is down or state is missing).
-BRI=80
-KB_BRI=80
-GOVEE_BRI=80
-if RESP=$(curl -sf -m 2 http://localhost:5070/status 2>/dev/null); then
-	BRI=$(echo "$RESP" | jq -r '.openrgb.brightness // 80' 2>/dev/null)
-	KB_BRI=$(echo "$RESP" | jq -r '.keyboard.brightness // 80' 2>/dev/null)
-	GOVEE_BRI=$(echo "$RESP" | jq -r '.govee.brightness // 80' 2>/dev/null)
-	# Off devices stay off — don't relight them on a wallpaper change
-	[ "$BRI" = "0" ] && exit 0
-fi
+timeout 10 python3 "$HOME/Dotfiles/scripts/fade-rgb.py" "$LED_COLOR" 80 80 2>&1 | sed 's/^/[PC] /' &
 
-timeout 10 python3 "$HOME/Dotfiles/scripts/fade-rgb.py" "$LED_COLOR" "$BRI" "$KB_BRI" 2>&1 | sed 's/^/[PC] /' &
-
-timeout 10 python3 "$HOME/Dotfiles/scripts/govee-led.py" "$LED_COLOR" "$GOVEE_BRI" --fade 2>&1 | sed 's/^/[Govee] /' || echo "[Govee] failed or timed out" &
+timeout 10 python3 "$HOME/Dotfiles/scripts/govee-led.py" "$LED_COLOR" 80 --fade 2>&1 | sed 's/^/[Govee] /' || echo "[Govee] failed or timed out" &
 
 wait
