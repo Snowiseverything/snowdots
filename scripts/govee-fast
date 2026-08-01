@@ -13,6 +13,20 @@ import asyncio, os, sys
 
 GOVEE_ADDR = "C6:32:38:31:2F:48"
 SOCKET_PATH = "/tmp/govee-fast.sock"
+
+# ── Config ────────────────────────────────────────────────────────────────
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path.home() / ".local/bin"))
+try:
+    from rgb_config import load_config, config_value
+    _C = load_config()
+    _s = config_value(_C, "govee", "daemon_socket")
+    if _s:
+        SOCKET_PATH = _s
+except Exception:
+    pass
+
 WRITE_CHAR = "00010203-0405-0607-0809-0a0b0c0d2b11"
 FADE_STEPS = 10
 FADE_DELAY = 0.020

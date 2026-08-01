@@ -1,6 +1,6 @@
 #!/bin/bash
 # --------------------------------------------------------------------------
-# SnowSync v13 — Separate Repos Edition
+# SnowSync v14 — Snow-Commit Format + Explicit File Sync
 # --------------------------------------------------------------------------
 
 HOSTNAME=$(hostname)
@@ -32,22 +32,83 @@ CHANGES=$(git status --porcelain)
 CHANGE_COUNT=$(echo "$CHANGES" | grep -c . || true)
 
 if [ "$CHANGE_COUNT" -gt 0 ]; then
-    FIRST_CHANGE=$(echo "$CHANGES" | head -1 | sed 's/^.. //' | sed 's/\/.*//')
-    MSG="sync ($HOSTNAME): $FIRST_CHANGE"
+    # Generate snow-commit format message: area: imperative verb description
+    FIRST_CHANGE=$(echo "$CHANGES" | head -1 | sed 's/^.. //')
+    # Extract area from path (first directory component)
+    AREA=$(echo "$FIRST_CHANGE" | cut -d'/' -f1 | sed 's/\.git$//')
+    # Determine verb based on change type
+    FIRST_CHAR=$(echo "$CHANGES" | head -1 | cut -c1)
+    case "$FIRST_CHAR" in
+        "M") VERB="update" ;;
+        "A") VERB="add" ;;
+        "D") VERB="remove" ;;
+        "R") VERB="rename" ;;
+        "?") VERB="sync" ;;
+        *) VERB="sync" ;;
+    esac
+    # Build description from changed files
+    DESC=$(echo "$CHANGES" | sed 's/^.. //' | cut -d'/' -f2- | sort -u | tr '\n' ' ' | sed 's/ $//')
+    if [ ${#DESC} -gt 60 ]; then
+        DESC="${DESC:0:57}..."
+    fi
+    # snow-commit format: area: imperative verb description
+    MSG="${AREA}: ${VERB} ${DESC}"
     echo "📤 Committing $CHANGE_COUNT file(s): $MSG"
-    commit-message-skill --dotfiles "$MSG"
+    git commit -am "$MSG"
 fi
 
-echo "📡 Syncing..."
+echo "📡 Syncing to GitLab..."
 git pull "$CLOUD_REMOTE" main --no-rebase 2>/dev/null || echo "⚠️  Pull failed"
 git push "$CLOUD_REMOTE" main 2>/dev/null
 wait
 
+# ── Explicit file sync for memory/agent context ──
+echo "📦 Syncing memory/agent files..."
+
+# Sync AGENTS.md and MEMORY.md from project root and pi framework
+SYNC_FILES=(
+    "$HOME/AGENTS.md"
+    "$HOME/MEMORY.md"
+    "$HOME/.pi/AGENTS.md"
+    "$HOME/.pi/MEMORY.md"
+    "$HOME/.opencode/AGENTS.md"
+    "$HOME/.opencode/MEMORY.md"
+)
+
+for f in "${SYNC_FILES[@]}"; do
+    if [ -f "$f" ]; then
+        REL_PATH="${f#$HOME/}"
+        TARGET="$REPO/memory-backup/${REL_PATH}"
+        mkdir -p "$(dirname "$TARGET")"
+        cp "$f" "$TARGET"
+        echo "  ✓ $REL_PATH"
+    fi
+done
+
+# Add memory backup to repo
+if git status --porcelain memory-backup/ | grep -q .; then
+    git add memory-backup/
+    git commit -m "memory: backup AGENTS.md + MEMORY.md from all contexts"
+    echo "  ✓ Memory backup committed"
+fi
+
+# Push memory backup
+git push "$CLOUD_REMOTE" main 2>/dev/null
+
+# ── Sync to Snowpi (off-site) ──
+echo "☁️  Syncing to Snowpi..."
+rsync -avz \
+    --exclude '.git/' \
+    "$REPO/" "snow@100.83.33.67:Dotfiles/" 2>/dev/null || echo "⚠️  Snowpi sync failed"
+
 # ── Run full system mirror ──
+echo "🔄 Running system mirror..."
 ~/scripts/dot-mirror.sh 2>/dev/null || true
 
 # ── Sync Summary ──────────────────────────────
 echo "  ✅ $CLOUD_URL"
+echo "  ✅ Snowpi"
+echo "  ✅ Local backup"
 
 cd ~
 

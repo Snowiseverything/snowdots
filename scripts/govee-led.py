@@ -11,8 +11,24 @@ Usage:
 import sys, asyncio, json, os, urllib.request
 from pathlib import Path
 
+# ── Config ────────────────────────────────────────────────────────────────
+sys.path.insert(0, str(Path.home() / ".local/bin"))
+try:
+    from rgb_config import load_config, config_value
+    _CFG = load_config()
+except Exception:
+    _CFG = None
+
+
+def _cfg(key, default):
+    if _CFG is None:
+        return default
+    keys = key.split(".")
+    return config_value(_CFG, *keys, default=default)
+
+
 CONFIG = Path.home() / ".config/govee-led.toml"
-HA_URL = "http://<tailscale-snowpi>:8123"
+HA_URL = _cfg("govee.api_url", "http://192.168.1.35:8125")
 HA_TOKEN = ""
 ENTITY = "light.govee_h6102_2f48"
 

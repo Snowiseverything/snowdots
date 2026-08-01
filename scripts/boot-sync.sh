@@ -27,7 +27,7 @@ fi
 echo "[$(date)] === Boot Sync ($HOSTNAME) ===" | tee -a "$LOG"
 
 # ── Quick network check (2s total) ──
-if ! ping -c 1 -W 1 192.168.0.1 &>/dev/null && ! ping -c 1 -W 1 <tailscale-snowpi> &>/dev/null; then
+if ! ping -c 1 -W 1 192.168.0.1 &>/dev/null && ! ping -c 1 -W 1 100.83.33.67 &>/dev/null; then
   echo "[$(date)] ⚠️  No network, skipping" | tee -a "$LOG"
   exit 0
 fi
@@ -50,7 +50,7 @@ timeout 60 ~/Dotfiles/scripts/dotsync 2>&1 | tee -a "$LOG" || { echo "[$(date)] 
 echo "[$(date)] session-db..." | tee -a "$LOG"
 timeout 120 rsync --partial --append-verify -avz \
   "$HOME/.local/share/opencode/opencode.db" \
-  snow@<tailscale-snowpi>:/home/snow/.local/share/opencode/opencode.db.freezer-backup \
+  snow@100.83.33.67:/home/snow/.local/share/opencode/opencode.db.freezer-backup \
   2>&1 | tee -a "$LOG" || { echo "[$(date)] ⚠️  session-db rsync failed/timed out" | tee -a "$LOG"; FAILED=1; }
 
 # ── Track failures ──

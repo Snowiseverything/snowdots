@@ -19,7 +19,7 @@
       }
     },
     "transparency": {
-      "enabled": true
+      "enabled": false
     }
   },
   "background": {

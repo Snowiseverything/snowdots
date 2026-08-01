@@ -69,6 +69,9 @@ CACHE_DIR="$HOME/.cache/skwd-wall"
 LAST_WALL_FILE="$CACHE_DIR/last_applied_wall.txt"
 mkdir -p "$CACHE_DIR"
 
+# Read debounce window from config (default 3s)
+DEBOUNCE_SEC="$(python3 "$HOME/.local/bin/rgb_config.py" sync.debounce_seconds 2>/dev/null || echo 3)"
+
 # 3. Determine Wallpaper Path
 # Priority: Argument ($1) from Matugen > Awww Query > Last Known Good > Fallback
 ORIG_ARG="$1"
@@ -187,8 +190,8 @@ echo "$CURRENT_ACCENT" >"$CACHE_DIR/pending-sync-accent"
 if [ -f "$CACHE_DIR/rgb-sync-debounce" ]; then
 	DEBOUNCE_TIME=$(cat "$CACHE_DIR/rgb-sync-debounce")
 	NOW=$(date +%s)
-	if [ $((NOW - DEBOUNCE_TIME)) -lt 3 ]; then
-		log "RGB sync debounced (within 3s window), pending accent saved"
+	if [ $((NOW - DEBOUNCE_TIME)) -lt ${DEBOUNCE_SEC} ]; then
+		log "RGB sync debounced (within ${DEBOUNCE_SEC}s window), pending accent saved"
 	else
 		if [ "$CURRENT_ACCENT" != "$LAST_ACCENT" ] && [ -n "$CURRENT_ACCENT" ] && [ "$CURRENT_ACCENT" != "null" ]; then
 			log "Accent changed, syncing RGB"
@@ -222,7 +225,7 @@ if ACQUIRE_LOCK "$TRAP_LOCK"; then
 			DEBOUNCE=$(cat "$CACHE_DIR/rgb-sync-debounce" 2>/dev/null)
 			NOW=$(date +%s)
 			AGE=$((NOW - ${DEBOUNCE:-0}))
-			[ "$AGE" -ge 3 ] && break
+			[ "$AGE" -ge ${DEBOUNCE_SEC} ] && break
 			sleep 0.5
 		done
 		PENDING=$(cat "$CACHE_DIR/pending-sync-accent" 2>/dev/null)

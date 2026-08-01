@@ -2,8 +2,8 @@
 # Snowpi health monitor - switches DNS/NTP between Snowpi and fallback
 # Also writes /tmp/health-status for bar icon
 
-SNOWPI_LAN="<local-snowpi>"
-SNOWPI_TS="<tailscale-snowpi>"
+SNOWPI_LAN="192.168.1.35"
+SNOWPI_TS="100.83.33.67"
 ROUTER="192.168.0.1"
 FALLBACK_DNS="1.1.1.1"
 NTP_FALLBACK="0.arch.pool.ntp.org time.google.com"
