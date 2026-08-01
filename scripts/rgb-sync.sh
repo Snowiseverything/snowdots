@@ -29,8 +29,22 @@ print('%02x%02x%02x' % (int(r_l*255), int(g_l*255), int(b_l*255)))
 # fade-rgb.py: 10 steps × 20ms = 200ms fade
 # govee-led.py --fade: 10 steps × 20ms = 200ms fade via daemon socket
 # Both finish at ~same time for synchronized color transition
-timeout 10 python3 "$HOME/Dotfiles/scripts/fade-rgb.py" "$LED_COLOR" 80 2>&1 | sed 's/^/[PC] /' &
+#
+# Brightness: preserve each device's current value from the bridge
+# (falls back to 80 when the bridge is down or state is missing).
+BRI=80
+KB_BRI=80
+GOVEE_BRI=80
+if RESP=$(curl -sf -m 2 http://localhost:5070/status 2>/dev/null); then
+	BRI=$(echo "$RESP" | jq -r '.openrgb.brightness // 80' 2>/dev/null)
+	KB_BRI=$(echo "$RESP" | jq -r '.keyboard.brightness // 80' 2>/dev/null)
+	GOVEE_BRI=$(echo "$RESP" | jq -r '.govee.brightness // 80' 2>/dev/null)
+	# Off devices stay off — don't relight them on a wallpaper change
+	[ "$BRI" = "0" ] && exit 0
+fi
 
-timeout 10 python3 "$HOME/Dotfiles/scripts/govee-led.py" "$LED_COLOR" 80 --fade 2>&1 | sed 's/^/[Govee] /' || echo "[Govee] failed or timed out" &
+timeout 10 python3 "$HOME/Dotfiles/scripts/fade-rgb.py" "$LED_COLOR" "$BRI" "$KB_BRI" 2>&1 | sed 's/^/[PC] /' &
+
+timeout 10 python3 "$HOME/Dotfiles/scripts/govee-led.py" "$LED_COLOR" "$GOVEE_BRI" --fade 2>&1 | sed 's/^/[Govee] /' || echo "[Govee] failed or timed out" &
 
 wait

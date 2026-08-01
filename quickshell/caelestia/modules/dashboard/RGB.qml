@@ -1,18 +1,22 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
+import qs.components.controls
+import qs.services
 
 Item {
     id: root
 
-    implicitWidth: layout.implicitWidth > 600 ? layout.implicitWidth : 640
-    implicitHeight: layout.implicitHeight + Tokens.padding.large * 2
+    implicitWidth: 760
+    implicitHeight: layout.implicitHeight
 
+    // ── state ──────────────────────────────────────────────────────────────
     property string currentHex: "da470b"
     property string restoreHex: "da470b"
-    property int currentBrightness: 50
+    property int pcBrightness: 50
+    property int kbBrightness: 50
+    property int goveeBrightness: 50
     property var recentColors: ["#ff6600", "#00aaff", "#ff0066", "#00ff88", "#ffaa00", "#aa00ff"]
 
     function firePost(endpoint, body) {
@@ -22,96 +26,166 @@ Item {
         xhr.send(body ? JSON.stringify(body) : "{}");
     }
 
-    function refreshState() {
+    function fireGet(endpoint, cb) {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", "http://localhost:5070/status");
+        xhr.open("GET", "http://localhost:5070" + endpoint);
         xhr.onreadystatechange = function() {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                try {
-                    var d = JSON.parse(xhr.responseText);
-                    if (d && d.openrgb) {
-                        var c = d.openrgb.color;
-                        if (c && c !== "000000") {
-                            root.currentHex = c;
-                            root.restoreHex = c;
-                        }
-                        root.currentBrightness = d.openrgb.brightness;
-                    }
-                } catch(e) {}
+                try { cb(JSON.parse(xhr.responseText)); } catch(e) {}
             }
         };
         xhr.send();
-        var r2 = new XMLHttpRequest();
-        r2.open("GET", "http://localhost:5070/recent");
-        r2.onreadystatechange = function() {
-            if (r2.readyState === 4 && r2.status === 200) {
-                try { var c = JSON.parse(r2.responseText); if (c && c.length > 0) root.recentColors = c; } catch(e) {}
-            }
-        };
-        r2.send();
     }
 
-    function setAll(hex) {
+    function refreshState() {
+        fireGet("/status", function(d) {
+            if (d && d.openrgb) {
+                var c = d.openrgb.color;
+                // Never clobber currentHex with black (off state) — keep the
+                // last real color so brightness-up after All Off restores it.
+                if (c && c !== "000000") {
+                    root.currentHex = c;
+                    root.restoreHex = c;
+                }
+                root.pcBrightness = d.openrgb.brightness;
+            }
+            if (d && d.keyboard) root.kbBrightness = d.keyboard.brightness;
+            if (d && d.govee) root.goveeBrightness = d.govee.brightness;
+        });
+        fireGet("/recent", function(c) { if (c && c.length > 0) root.recentColors = c; });
+    }
+
+    // Pick a color — applies to every device, each keeps its own brightness.
+    function setColor(hex) {
         root.currentHex = hex;
-        firePost("/all", {color: hex, brightness: root.currentBrightness, fade: true});
+        firePost("/all", {
+            color: hex,
+            brightness: root.pcBrightness,
+            kb_bri: root.kbBrightness,
+            govee_bri: root.goveeBrightness,
+            fade: true
+        });
+    }
+
+    function setPcBrightness(v) {
+        root.pcBrightness = v;
+        firePost("/openrgb", {color: v > 0 ? root.currentHex : "000000", brightness: v});
+    }
+
+    function setKbBrightness(v) {
+        root.kbBrightness = v;
+        firePost("/keyboard", {color: v > 0 ? root.currentHex : "000000", brightness: v});
+    }
+
+    function setGoveeBrightness(v) {
+        root.goveeBrightness = v;
+        firePost("/govee", {color: v > 0 ? root.currentHex : "000000", brightness: v});
+    }
+
+    // All Off — device colors preserved, only brightness 0. Raising any
+    // per-device slider (or picking a color) relights that device.
+    function allOff() {
+        root.pcBrightness = 0;
+        root.kbBrightness = 0;
+        root.goveeBrightness = 0;
+        firePost("/all", {color: "000000", brightness: 0});
     }
 
     function syncWallpaper() {
         firePost("/sync", null);
     }
 
+    // ── timers ─────────────────────────────────────────────────────────────
     Timer { id: refreshTimer; interval: 4000; onTriggered: root.refreshState() }
-    Timer { id: briDebounce; interval: 300; onTriggered: root.setAll(root.currentHex) }
+    Timer { id: pcBriDebounce; interval: 250; onTriggered: root.setPcBrightness(root.pcBrightness) }
+    Timer { id: kbBriDebounce; interval: 250; onTriggered: root.setKbBrightness(root.kbBrightness) }
+    Timer { id: goveeBriDebounce; interval: 250; onTriggered: root.setGoveeBrightness(root.goveeBrightness) }
     Component.onCompleted: root.refreshState()
 
+    // ── ui ─────────────────────────────────────────────────────────────────
     ColumnLayout {
         id: layout
+
         anchors.fill: parent
         anchors.margins: Tokens.padding.large
         spacing: Tokens.spacing.medium
 
+        // header
         RowLayout {
             Layout.fillWidth: true
             Layout.topMargin: Tokens.padding.small
 
             Column {
                 spacing: Tokens.spacing.extraSmall
-                Text { text: qsTr("RGB Control"); font.pixelSize: 28; font.weight: Font.DemiBold; font.family: "Noto Sans"; color: "#e0e0e0" }
-                Text { text: qsTr("Manage all RGB devices"); font.pixelSize: 14; font.family: "Noto Sans"; color: "#888" }
+
+                StyledText {
+                    text: qsTr("RGB Control")
+                    font: Tokens.font.body.builders.large.size(28).weight(Font.DemiBold).build()
+                    color: Colours.palette.m3onSurface
+                }
+                StyledText {
+                    text: qsTr("PC · Keyboard · Govee")
+                    font: Tokens.font.body.small
+                    color: Colours.palette.m3onSurfaceVariant
+                }
             }
+
             Item { Layout.fillWidth: true }
-            Rectangle { implicitWidth: 60; implicitHeight: 60; radius: 30; color: "#" + root.currentHex; border.width: 2; border.color: "#444" }
+
+            StyledRect {
+                Layout.preferredWidth: 56
+                Layout.preferredHeight: 56
+
+                radius: Tokens.rounding.full
+                color: Colours.tPalette.m3surfaceContainer
+                border.width: 2
+                border.color: Colours.palette.m3outlineVariant
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: 8
+                    radius: height / 2
+                    color: "#" + root.currentHex
+                }
+            }
         }
 
-        Rectangle {
+        // recent colors
+        SectionContainer {
             Layout.fillWidth: true
-            implicitHeight: colorCol.implicitHeight + 24
-            radius: 24; color: "#1e1e2e"
 
             ColumnLayout {
-                id: colorCol
-                anchors.centerIn: parent; spacing: 12
+                Layout.fillWidth: true
+                spacing: Tokens.spacing.medium
 
-                Text { Layout.alignment: Qt.AlignHCenter; text: qsTr("Recent Colors"); font.pixelSize: 16; font.weight: Font.DemiBold; font.family: "Noto Sans"; color: "#e0e0e0" }
+                SectionHeader {
+                    title: qsTr("Recent Colors")
+                    description: qsTr("Tap a color to apply it to all devices")
+                }
 
                 RowLayout {
-                    Layout.alignment: Qt.AlignHCenter; spacing: 8
+                    Layout.fillWidth: true
+                    spacing: Tokens.spacing.small
 
                     Repeater {
                         model: root.recentColors
-                        Rectangle {
+
+                        StyledRect {
                             required property string modelData
                             property bool isActive: root.currentHex === modelData.replace("#","").toLowerCase()
 
-                            implicitWidth: 48; implicitHeight: 48; radius: 24
+                            Layout.preferredWidth: 44
+                            Layout.preferredHeight: 44
+
+                            radius: Tokens.rounding.full
                             color: Qt.color(modelData)
                             border.width: isActive ? 3 : 1
-                            border.color: isActive ? "#7aa2f7" : "#444"
+                            border.color: isActive ? Colours.palette.m3primary : Colours.palette.m3outlineVariant
 
                             MouseArea {
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.setAll(modelData.replace("#",""))
+                                onClicked: root.setColor(modelData.replace("#",""))
                             }
                         }
                     }
@@ -119,64 +193,149 @@ Item {
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true; spacing: 12
+        // per-device brightness
+        SectionContainer {
+            Layout.fillWidth: true
 
-            Rectangle {
+            ColumnLayout {
                 Layout.fillWidth: true
-                implicitHeight: briCol.implicitHeight + 24; radius: 16; color: "#1e1e2e"
+                spacing: Tokens.spacing.medium
 
-                ColumnLayout {
-                    id: briCol
-                    anchors.centerIn: parent; spacing: 8
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text { text: "☀"; font.pixelSize: 20; color: "#7aa2f7" }
-                        Text { text: qsTr("Brightness"); font.pixelSize: 14; font.family: "Noto Sans"; color: "#e0e0e0" }
-                        Item { Layout.fillWidth: true }
-                        Text { text: root.currentBrightness + "%"; font.pixelSize: 14; font.weight: Font.DemiBold; font.family: "Noto Sans"; color: "#7aa2f7" }
-                    }
-
-                    Slider {
-                        Layout.fillWidth: true
-                        from: 0; to: 100; value: root.currentBrightness; stepSize: 5
-                        onMoved: { root.currentBrightness = value; briDebounce.restart(); }
-                    }
-                }
-            }
-
-            ColumnLayout { spacing: 8
-                Rectangle { implicitWidth: 120; implicitHeight: 48; radius: 12; color: "#263040"
-                    Row { anchors.centerIn: parent; spacing: 6
-                        Text { text: "🖼"; font.pixelSize: 16; color: "#7aa2f7"; anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: qsTr("Sync"); font.pixelSize: 14; font.weight: Font.DemiBold; font.family: "Noto Sans"; color: "#7aa2f7"; anchors.verticalCenter: parent.verticalCenter }
-                    }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: { root.syncWallpaper(); refreshTimer.restart(); } }
+                SectionHeader {
+                    title: qsTr("Brightness per device")
+                    description: qsTr("Each device keeps its own level — 0 turns that device off")
                 }
 
-                Rectangle { implicitWidth: 120; implicitHeight: 48; radius: 12; color: "#2e1a1a"
-                    Row { anchors.centerIn: parent; spacing: 6
-                        Text { text: "⏻"; font.pixelSize: 16; color: "#f7768e"; anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: qsTr("All Off"); font.pixelSize: 14; font.weight: Font.DemiBold; font.family: "Noto Sans"; color: "#f7768e"; anchors.verticalCenter: parent.verticalCenter }
-                    }
-                    MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.allOff() }
+                DeviceBriRow {
+                    icon: "desktop_windows"
+                    label: qsTr("PC")
+                    value: root.pcBrightness
+                    accent: Colours.palette.m3primary
+                    onMoved: (v) => { root.pcBrightness = Math.round(v * 100); pcBriDebounce.restart(); }
+                }
+
+                DeviceBriRow {
+                    icon: "keyboard"
+                    label: qsTr("Keyboard")
+                    value: root.kbBrightness
+                    accent: Colours.palette.m3secondary
+                    onMoved: (v) => { root.kbBrightness = Math.round(v * 100); kbBriDebounce.restart(); }
+                }
+
+                DeviceBriRow {
+                    icon: "light_mode"
+                    label: qsTr("Govee")
+                    value: root.goveeBrightness
+                    accent: Colours.palette.m3tertiary
+                    onMoved: (v) => { root.goveeBrightness = Math.round(v * 100); goveeBriDebounce.restart(); }
                 }
             }
         }
 
-        Rectangle {
-            Layout.fillWidth: true; Layout.bottomMargin: 16
-            implicitHeight: wpCol.implicitHeight + 24; radius: 16; color: "#1e1e2e"
+        // actions
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Tokens.spacing.medium
+
+            TextButton {
+                Layout.fillWidth: true
+                text: qsTr("Sync with Wallpaper")
+                type: TextButton.Filled
+                onClicked: { root.syncWallpaper(); refreshTimer.restart(); }
+            }
+
+            TextButton {
+                Layout.fillWidth: true
+                text: qsTr("All Off")
+                type: TextButton.Filled
+                activeColour: Colours.palette.m3error
+                inactiveColour: Colours.palette.m3errorContainer
+                activeOnColour: Colours.palette.m3onError
+                inactiveOnColour: Colours.palette.m3onErrorContainer
+                onClicked: root.allOff()
+            }
+        }
+
+        // wallpaper preview
+        SectionContainer {
+            Layout.fillWidth: true
+            Layout.bottomMargin: Tokens.padding.medium
 
             ColumnLayout {
-                id: wpCol
-                anchors.centerIn: parent; spacing: 8
-                Text { Layout.alignment: Qt.AlignHCenter; text: qsTr("Current Wallpaper"); font.pixelSize: 16; font.weight: Font.DemiBold; font.family: "Noto Sans"; color: "#e0e0e0" }
-                Image { Layout.alignment: Qt.AlignHCenter; source: "file:///home/snow/.cache/skwd-wall/current-wallpaper"; fillMode: Image.PreserveAspectCrop; sourceSize.width: 260; sourceSize.height: 100; visible: status === Image.Ready
-                    Rectangle { anchors.fill: parent; radius: 12; color: "transparent"; border.width: 1; border.color: "#444" }
+                Layout.fillWidth: true
+                spacing: Tokens.spacing.small
+
+                SectionHeader {
+                    title: qsTr("Current Wallpaper")
+                    description: qsTr("Color synced from your active wallpaper")
+                }
+
+                StyledRect {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 110
+
+                    radius: Tokens.rounding.medium
+                    color: Colours.tPalette.m3surfaceContainer
+                    border.width: 1
+                    border.color: Colours.palette.m3outlineVariant
+
+                    StyledRect {
+                        anchors.fill: parent
+                        anchors.margins: 6
+                        radius: Tokens.rounding.small
+                        clip: true
+
+                        Image {
+                            anchors.fill: parent
+                            source: "file:///home/snow/.cache/skwd-wall/current-wallpaper"
+                            fillMode: Image.PreserveAspectCrop
+                        }
+                    }
                 }
             }
+        }
+    }
+
+    // ── local components ──────────────────────────────────────────────────
+    component DeviceBriRow: RowLayout {
+        id: briRow
+
+        required property string icon
+        required property string label
+        required property int value
+        required property color accent
+        signal moved(real v)
+
+        Layout.fillWidth: true
+        spacing: Tokens.spacing.medium
+
+        MaterialIcon {
+            text: briRow.icon
+            fontStyle: Tokens.font.icon.medium
+            color: briRow.accent
+        }
+
+        StyledText {
+            text: briRow.label
+            font: Tokens.font.body.medium
+            color: Colours.palette.m3onSurface
+            Layout.preferredWidth: 90
+        }
+
+        StyledSlider {
+            Layout.fillWidth: true
+            from: 0; to: 100; stepSize: 5
+            value: briRow.value
+            fgColour: briRow.accent
+            onInteraction: v => briRow.moved(v)
+        }
+
+        StyledText {
+            text: briRow.value + "%"
+            font: Tokens.font.body.builders.small.weight(Font.DemiBold).build()
+            color: briRow.accent
+            Layout.preferredWidth: 40
+            horizontalAlignment: Text.AlignRight
         }
     }
 }
