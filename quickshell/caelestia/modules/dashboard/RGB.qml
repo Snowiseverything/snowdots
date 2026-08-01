@@ -215,19 +215,19 @@ Item {
                 }
 
                 DeviceBriRow {
-                    icon: "keyboard"
-                    label: qsTr("Keyboard")
-                    value: root.kbBrightness
-                    accent: Colours.palette.m3secondary
-                    onMoved: (v) => { root.kbBrightness = Math.round(v * 100); kbBriDebounce.restart(); }
-                }
-
-                DeviceBriRow {
                     icon: "light_mode"
                     label: qsTr("Govee")
                     value: root.goveeBrightness
                     accent: Colours.palette.m3tertiary
                     onMoved: (v) => { root.goveeBrightness = Math.round(v * 100); goveeBriDebounce.restart(); }
+                }
+
+                DeviceBriRow {
+                    icon: "keyboard"
+                    label: qsTr("Keyboard")
+                    value: root.kbBrightness
+                    accent: Colours.palette.m3secondary
+                    onMoved: (v) => { root.kbBrightness = Math.round(v * 100); kbBriDebounce.restart(); }
                 }
             }
         }

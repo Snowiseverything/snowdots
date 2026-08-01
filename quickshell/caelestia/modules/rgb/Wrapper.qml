@@ -183,9 +183,9 @@ PanelWindow {
                 color: Colours.palette.m3onSurfaceVariant
             }
 
-            BriRow { icon: "desktop_windows"; label: "PC"; value: root.pcBrightness; accent: Colours.palette.m3primary; onMoved: { root.pcBrightness = value; pcDebounce.restart(); } }
-            BriRow { icon: "keyboard"; label: "Keyboard"; value: root.kbBrightness; accent: Colours.palette.m3secondary; onMoved: { root.kbBrightness = value; kbDebounce.restart(); } }
-            BriRow { icon: "light_mode"; label: "Govee"; value: root.goveeBrightness; accent: Colours.palette.m3tertiary; onMoved: { root.goveeBrightness = value; goveeDebounce.restart(); } }
+            BriRow { icon: "desktop_windows"; label: "PC"; value: root.pcBrightness; accent: Colours.palette.m3primary; onMoved: (v) => { root.pcBrightness = Math.round(v * 100); pcDebounce.restart(); } }
+            BriRow { icon: "light_mode"; label: "Govee"; value: root.goveeBrightness; accent: Colours.palette.m3tertiary; onMoved: (v) => { root.goveeBrightness = Math.round(v * 100); goveeDebounce.restart(); } }
+            BriRow { icon: "keyboard"; label: "Keyboard"; value: root.kbBrightness; accent: Colours.palette.m3secondary; onMoved: (v) => { root.kbBrightness = Math.round(v * 100); kbDebounce.restart(); } }
         }
 
         // ── actions ────────────────────────────────────────────────────────

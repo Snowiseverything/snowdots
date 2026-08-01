@@ -86,6 +86,10 @@ state = {
     "govee": {"color": "000000", "brightness": _DEF_BRI},
     "last_color": "000000",
     "restore_color": "00dbeb",
+    # Last non-zero brightness per device — used to wake a device from off
+    # on sync instead of resetting to a fixed 80. Updated only when a
+    # brightness > 0 is applied.
+    "restore_brightness": {"openrgb": _DEF_BRI, "keyboard": _DEF_KB_BRI, "govee": _DEF_BRI},
     "synced": False,
     "last_sync": None,
     "wallpaper": current_wallpaper_name(),
@@ -132,6 +136,8 @@ def set_openrgb(color: str, brightness: int | None = None):
         orgb.disconnect()
         state["openrgb"] = {"color": color, "brightness": brightness, "mode": "direct"}
         state["last_color"] = color
+        if brightness > 0:
+            state["restore_brightness"]["openrgb"] = brightness
         return True
     except Exception as e:
         print(f"OpenRGB error: {e}", file=sys.stderr)
@@ -144,6 +150,8 @@ def set_openrgb(color: str, brightness: int | None = None):
             )
             state["openrgb"] = {"color": color, "brightness": brightness, "mode": "direct"}
             state["last_color"] = color
+            if brightness > 0:
+                state["restore_brightness"]["openrgb"] = brightness
             return True
         except Exception as e2:
             print(f"OpenRGB CLI fallback error: {e2}", file=sys.stderr)
@@ -167,6 +175,8 @@ def set_keyboard(color: str, brightness: int | None = None):
         )
         state["keyboard"] = {"color": color, "brightness": max(brightness, 1)}
         state["last_color"] = color
+        if brightness > 0:
+            state["restore_brightness"]["keyboard"] = brightness
         return True
     except Exception as e:
         print(f"Keyboard error: {e}", file=sys.stderr)
@@ -200,6 +210,8 @@ def set_govee(color: str, brightness: int | None = None):
         )
         state["govee"] = {"color": color, "brightness": brightness}
         state["last_color"] = color
+        if brightness > 0:
+            state["restore_brightness"]["govee"] = brightness
         return True
     except Exception as e:
         print(f"Govee error: {e}", file=sys.stderr)
@@ -278,6 +290,17 @@ def _compute_color() -> str:
         return "000000"
 
 
+def _recall_restore(bri, kb_bri, govee_bri):
+    """Wake each device that is at brightness 0 back to its last non-zero value."""
+    if bri == 0:
+        bri = state.get("restore_brightness", {}).get("openrgb", 80)
+    if kb_bri == 0:
+        kb_bri = state.get("restore_brightness", {}).get("keyboard", 80)
+    if govee_bri == 0:
+        govee_bri = state.get("restore_brightness", {}).get("govee", 80)
+    return bri, kb_bri, govee_bri
+
+
 def trigger_sync():
     """Sync PC devices + Govee. Returns dict with ok + message.
 
@@ -296,9 +319,13 @@ def trigger_sync():
     bri = state["openrgb"].get("brightness", 80)
     kb_bri = state["keyboard"].get("brightness", 80)
     govee_bri = state["govee"].get("brightness", 80)
-    # Sync ONLY refreshes color — it preserves each device's own brightness.
-    # A device that's off (bri 0) stays off; it just picks up the new color
-    # for when it's turned back on. No forced restore to 80.
+    # Wake any device that is currently off so wallpaper sync brings the
+    # lights back, but at its LAST brightness — not a fixed 80. A device
+    # that is intentionally on keeps its brightness; only off→on wakes.
+    bri, kb_bri, govee_bri = _recall_restore(bri, kb_bri, govee_bri)
+    # mad68 hardware off is brightness-byte 0; clamp the wake target so a
+    # restored value of 0 (edge case) still renders a lit keyboard.
+    kb_dim = max(kb_bri, 1)
 
     def _govee_async(c):
         try:
@@ -313,28 +340,14 @@ def trigger_sync():
 
     try:
         state["synced"] = True
-        # If every device is off, sync = silent color refresh only.
-        # Running fade-rgb at brightness 0 would flash PC to black; skip it.
-        all_off = (bri == 0 and kb_bri == 0 and govee_bri == 0)
-        if all_off:
-            state["openrgb"]["color"] = color
-            state["openrgb"]["brightness"] = 0
-            state["openrgb"]["mode"] = "direct"
-            state["keyboard"]["color"] = color
-            state["keyboard"]["brightness"] = 0
-            state["govee"]["color"] = color
-            state["govee"]["brightness"] = 0
-            state["last_color"] = color
-            state["restore_color"] = color
-            return {"ok": True, "message": message}
-
         t_govee = threading.Thread(target=_govee_async, args=(color,), daemon=True)
         t_govee.start()
         # PC devices via fade-rgb.py (crossfade, ~0.6s) — pass keyboard's
-        # own brightness so it doesn't get reset to the PC value.
-        # pc_brightness=0 (off) → fade-rgb skips PC color writes (no flash).
+        # own brightness (kb_dim) so it doesn't get reset to the PC value.
+        # pc_brightness=bri (>0 after the wake above); fade-rgb still guards
+        # bri 0 defensively in case it's called directly at zero.
         result = subprocess.run(
-            [sys.executable, str(Path.home() / "Dotfiles/scripts/fade-rgb.py"), color, str(bri), str(kb_bri)],
+            [sys.executable, str(Path.home() / "Dotfiles/scripts/fade-rgb.py"), color, str(bri), str(kb_dim)],
             timeout=10, capture_output=True, text=True,
         )
         if result.returncode != 0:
@@ -343,8 +356,7 @@ def trigger_sync():
         state["openrgb"]["brightness"] = bri
         state["openrgb"]["mode"] = "direct"
         state["keyboard"]["color"] = color
-        state["keyboard"]["brightness"] = max(kb_bri, 1) if kb_bri > 0 else 0
-        state["last_color"] = color
+        state["keyboard"]["brightness"] = kb_dim
         state["restore_color"] = color
         state["last_color"] = color
         return {"ok": True, "message": message}
