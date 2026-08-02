@@ -55,10 +55,6 @@ switch (hostname)
 
         alias backup-now='~/Dotfiles/scripts/fortress_backup.sh'
 
-        set -gx PNPM_HOME "$HOME/.local/share/pnpm"
-        if not string match -q -- $PNPM_HOME $PATH
-            set -gx PATH "$PNPM_HOME" $PATH
-        end
 end
 
 # opencode
@@ -68,13 +64,4 @@ alias umount-hdd="sudo /usr/local/bin/umount-hdd"
 alias mount-hdd="sudo /usr/local/bin/mount-hdd"
 alias umount-hdd="sudo /usr/local/bin/umount-hdd"
 
-# pnpm
-set -gx PNPM_HOME "/home/snow/.local/share/pnpm"
-if not string match -q -- "$PNPM_HOME/bin" $PATH
-  set -gx PATH "$PNPM_HOME/bin" $PATH
-end
-# pnpm end
 
-# >>> railway initialize >>>
-source "$HOME/.railway/env.fish"
-# <<< railway initialize <<<
