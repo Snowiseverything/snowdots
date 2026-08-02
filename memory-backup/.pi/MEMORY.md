@@ -309,3 +309,14 @@ sudo journalctl --vacuum-size=100M
 ## 2026-08-01
 - Added commit discipline constraint to AGENTS.md, MEMORY.md, memory-manager agent (OC + pi subagent), and skill. Rule: never commit without Snow approval, use snow-commit format.
 ```
+
+## 2026-08-01 — Standing Preferences
+
+- **Web search auto-approved:** anysearch is the approved web provider; run `web_search`/`anysearch` without asking. Batch 2–4 varied angles for research; full content inline.
+- ScriptCat is split across two extension IDs: official `ndcooe` (Chrome Web Store — holds the LIVE userscripts, the leveldb scriptcat-mgr/scriptcat-mcp target) and beta `odnlmah` (unpacked at /home/snow/Downloads/scriptcat-v1.5.0-beta-chrome — exposes the `/agent/mcp` Add-Server panel; its MCP config is written to chrome.storage.local/sync only after UI use, so there's no mcp key to pre-seed).
+- `scriptcat-mcp` (~/scripts/scriptcat-mcp) = stdio MCP server (JSON-RPC 2024-11-05) mirroring scriptcat-mgr's leveldb contract; tools: list_scripts, get_script, install_script(file|url), remove_script, update_scripts, kv_list/kv_set/status. Default kills Brave for write access; `NO_KILL=1` skips.
+- pi gateway caches mcp.json at session start (HTTP `url` servers only) — stdio servers aren't hot-loaded mid-session, but the stdio MCP is fully tested directly and callable by any stdio-capable MCP host.
+- 2026-08-01: scriptcat-mcp SSE bridge active on :9191 (NO_KILL child; never kills Brave). Live scripts in ndcooe: Reddit++ 2.1.6, Reddit NSFW Unblur, Bypass All Shortlinks 96.8, Pagetual 1.9.37.132, Picviewer CE+ 2026.2.6.1 (5 total, all updates=yes). SponsorBlock absent from GreasyFork (pulled). mcp.json: scriptcat={url:http://127.0.0.1:9191/sse}. Panel auto-registration blocked (Brace shields on chrome-extension:// options). Install workflow: stop Brave -> MCP install -> relaunch.
+/home/snow/.opencode/MEMORY.md
+- 2026-08-01: ROUTING FIX — scriptcat-mcp-sse now accepts POST on /message,/sse,/,/sse//mcp; GET /sse emits ABSOLUTE endpoint. Fixes ScriptCat panel 'MCP request failed: 404'. Service restarted (active). Installed via fixed POST /sse: Bypass All Shortlinks 96.8, Pagetual 1.9.37.132, Picviewer CE+ 2026.2.6.1, Greasyfork Search w/Sleazyfork 1.6.6. ndcooe total=6; all updates=yes. SponsorBlock: no live GF source (not fabricated).
+/home/snow/.opencode/MEMORY.md
