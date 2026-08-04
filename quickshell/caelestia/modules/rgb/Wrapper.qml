@@ -143,6 +143,11 @@ PanelWindow {
                 border.width: 2
                 border.color: Colours.palette.m3outlineVariant
             }
+            StyledText {
+                text: Qt.colorToHex(root.currentColor).toUpperCase()
+                font: Tokens.font.body.builders.small.size(11).weight(Font.DemiBold).family("JetBrains Mono, monospace").build()
+                color: Colours.palette.m3onSurfaceVariant
+            }
         }
 
         // ── color presets ──────────────────────────────────────────────────

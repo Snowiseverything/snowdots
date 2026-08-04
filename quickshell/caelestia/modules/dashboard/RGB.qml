@@ -19,6 +19,67 @@ Item {
     property int goveeBrightness: 50
     property var recentColors: ["#ff6600", "#00aaff", "#ff0066", "#00ff88", "#ffaa00", "#aa00ff"]
 
+    // color picker state
+    property real pickerHue: 0.58
+    property string pickerHex: "#da470b"
+    property bool pickerOpen: true
+    readonly property color pickerColor: Qt.color(pickerHex)
+    readonly property color pickerHueColor: Qt.hsva(pickerHue, 1, 1, 1)
+
+    // Convert hex -> hue (0..1) for the picker
+    function hexToHue(hex) {
+        var c = Qt.color("#" + hex)
+        if (!c.valid) return 0.58
+        var r = c.r, g = c.g, b = c.b
+        var max = Math.max(r, g, b), min = Math.min(r, g, b)
+        var d = max - min
+        if (d === 0) return 0.58
+        var h
+        if (max === r) h = ((g - b) / d) % 6
+        else if (max === g) h = (b - r) / d + 2
+        else h = (r - g) / d + 4
+        h = h * 60
+        if (h < 0) h += 360
+        return h / 360
+    }
+
+    // Convert hex -> saturation/value (0..1) for the SV dot
+    function hexToSV(hex) {
+        var c = Qt.color("#" + hex)
+        if (!c.valid) return {s: 1, v: 1}
+        var max = Math.max(c.r, c.g, c.b)
+        var min = Math.min(c.r, c.g, c.b)
+        var d = max - min
+        var s = max === 0 ? 0 : d / max
+        return {s: s, v: max}
+    }
+
+    // Open the picker pre-seeded with the current color
+    function openPicker() {
+        root.pickerHex = "#" + root.currentHex
+        root.pickerHue = root.hexToHue(root.currentHex)
+        var sv = root.hexToSV(root.currentHex)
+        svDot.sx = sv.s
+        svDot.sy = 1 - sv.v
+        root.pickerOpen = true
+    }
+
+    // Convert a QML color to hex string
+    function colorToHex(c) {
+        if (!c.valid) return "000000"
+        var r = Math.round(c.r * 255).toString(16).padStart(2, "0")
+        var g = Math.round(c.g * 255).toString(16).padStart(2, "0")
+        var b = Math.round(c.b * 255).toString(16).padStart(2, "0")
+        return (r + g + b).toLowerCase()
+    }
+
+    // Apply a hex (with or without #) to all devices
+    function applyColor(hex) {
+        var h = hex.replace("#", "")
+        root.setColor(h)
+        root.pickerHex = "#" + h
+    }
+
     function firePost(endpoint, body) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "http://localhost:5070" + endpoint);
@@ -46,6 +107,11 @@ Item {
                 if (c && c !== "000000") {
                     root.currentHex = c;
                     root.restoreHex = c;
+                    root.pickerHex = "#" + c;
+                    root.pickerHue = root.hexToHue(c);
+                    var sv = root.hexToSV(c);
+                    svDot.sx = sv.s;
+                    svDot.sy = 1 - sv.v;
                 }
                 root.pcBrightness = d.openrgb.brightness;
             }
@@ -146,6 +212,181 @@ Item {
                     anchors.margins: 8
                     radius: height / 2
                     color: "#" + root.currentHex
+                }
+            }
+
+            // hex value display
+            StyledText {
+                text: "#" + root.currentHex.toUpperCase()
+                font: Tokens.font.body.builders.small.size(13).weight(Font.DemiBold).family("JetBrains Mono, monospace").build()
+                color: Colours.palette.m3onSurfaceVariant
+            }
+        }
+
+        // color picker
+        SectionContainer {
+            Layout.fillWidth: true
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Tokens.spacing.medium
+
+                SectionHeader {
+                    title: qsTr("Color Picker")
+                    description: qsTr("Pick any color — applies to all devices")
+                }
+
+                // saturation × value square
+                Rectangle {
+                    id: svSquare
+
+                    Layout.preferredWidth: 280
+                    Layout.preferredHeight: 280
+                    Layout.alignment: Qt.AlignHCenter
+                    radius: Tokens.rounding.medium
+
+                    // hue gradient (left→right white→hue), value (top→bottom transparent→black)
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "white" }
+                        GradientStop { position: 1.0; color: root.pickerHueColor }
+                    }
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: parent.radius
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: "transparent" }
+                            GradientStop { position: 1.0; color: "black" }
+                        }
+                    }
+
+                    // picker dot
+                    Rectangle {
+                        id: svDot
+
+                        property real sx: 1.0
+                        property real sy: 0.0
+
+                        x: parent.width * sx - width / 2
+                        y: parent.height * sy - height / 2
+                        width: 16
+                        height: 16
+                        radius: 8
+                        color: "white"
+                        border.width: 2
+                        border.color: "black"
+                        visible: root.pickerOpen
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onPressed: (m) => pick(m)
+                        onPositionChanged: (m) => { if (pressed) pick(m) }
+                        function pick(m) {
+                            svDot.sx = Math.max(0, Math.min(1, m.x / svSquare.width))
+                            svDot.sy = Math.max(0, Math.min(1, m.y / svSquare.height))
+                            root.pickerHex = "#" + root.colorToHex(Qt.hsva(root.pickerHue, svDot.sx, 1 - svDot.sy, 1))
+                        }
+                    }
+                }
+
+                // hue slider
+                RowLayout {
+                    Layout.preferredWidth: 280
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: Tokens.spacing.medium
+
+                    StyledText {
+                        text: qsTr("Hue")
+                        font: Tokens.font.body.medium
+                        color: Colours.palette.m3onSurfaceVariant
+                        Layout.preferredWidth: 40
+                    }
+
+                    Rectangle {
+                        id: hueBar
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 18
+                        radius: Tokens.rounding.full
+
+                        gradient: Gradient {
+                            GradientStop { position: 0.000; color: "#ff0000" }
+                            GradientStop { position: 0.167; color: "#ffff00" }
+                            GradientStop { position: 0.333; color: "#00ff00" }
+                            GradientStop { position: 0.500; color: "#00ffff" }
+                            GradientStop { position: 0.667; color: "#0000ff" }
+                            GradientStop { position: 0.833; color: "#ff00ff" }
+                            GradientStop { position: 1.000; color: "#ff0000" }
+                        }
+
+                        Rectangle {
+                            id: hueMarker
+
+                            x: parent.width * root.pickerHue - width / 2
+                            y: 0
+                            width: 6
+                            height: parent.height
+                            radius: 3
+                            color: "white"
+                            border.width: 1
+                            border.color: "#00000088"
+                            visible: root.pickerOpen
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onPressed: (m) => setHue(m)
+                            onPositionChanged: (m) => { if (pressed) setHue(m) }
+                            function setHue(m) {
+                                root.pickerHue = Math.max(0, Math.min(1, m.x / hueBar.width))
+                            }
+                        }
+                    }
+                }
+
+                // hex input
+                RowLayout {
+                    Layout.preferredWidth: 280
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: Tokens.spacing.medium
+
+                    StyledText {
+                        text: qsTr("Hex")
+                        font: Tokens.font.body.medium
+                        color: Colours.palette.m3onSurfaceVariant
+                        Layout.preferredWidth: 40
+                    }
+
+                    StyledTextField {
+                        id: hexField
+
+                        Layout.fillWidth: true
+                        text: root.pickerHex
+                        maximumLength: 7
+                        placeholderText: "#RRGGBB"
+                        font: Tokens.font.body.builders.small.weight(Font.DemiBold).family("JetBrains Mono, monospace").build()
+                        onAccepted: {
+                            var h = hexField.text.trim()
+                            if (h.length === 6) h = "#" + h
+                            if (h.length === 7 && h[0] === "#") {
+                                var c = Qt.color(h)
+                                if (c.valid) root.applyColor(h)
+                            }
+                        }
+                    }
+
+                    TextButton {
+                        text: qsTr("Apply")
+                        type: TextButton.Filled
+                        onClicked: {
+                            var h = hexField.text.trim()
+                            if (h.length === 6) h = "#" + h
+                            if (h.length === 7 && h[0] === "#") {
+                                var c = Qt.color(h)
+                                if (c.valid) root.applyColor(h)
+                            }
+                        }
+                    }
                 }
             }
         }
