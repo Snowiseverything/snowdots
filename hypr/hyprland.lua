@@ -57,6 +57,7 @@ hl.env("XDG_SESSION_DESKTOP", "Hyprland")
 
 -- Steam
 hl.env("SAM_STEAM_INSTALL_ROOT", "/home/snow/.local/share/Steam")
+hl.env("XKB_CONFIG_EXTRA_PATH", "/home/snow/.config/xkb")
 
 -- NVIDIA
 hl.env("LIBVA_DRIVER_NAME", "nvidia")
@@ -130,7 +131,7 @@ end)
 
 hl.config({
     input = {
-        kb_layout = "us, iq(ku_ara), ara",
+        kb_layout = "us, iq(ku_ara), ara_ph",
         kb_options = "grp:alt_shift_toggle",
         numlock_by_default = false,
         follow_mouse = 1,

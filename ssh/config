@@ -2,6 +2,14 @@ Host snowpi
     HostName 100.83.33.67
     User snow
     IdentitiesOnly yes
+    IdentityFile ~/.ssh/id_ed25519
+    IdentityFile ~/.ssh/id_ed25519_snowpi_backup
+
+Host snowpi-backup
+    HostName 100.83.33.67
+    User snow
+    IdentitiesOnly yes
+    IdentityFile ~/.ssh/id_ed25519_snowpi_backup
 
 Host freezer
     HostName 100.87.27.79
