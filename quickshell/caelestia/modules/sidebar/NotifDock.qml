@@ -82,7 +82,7 @@ Item {
         anchors.topMargin: Tokens.spacing.medium
 
         radius: Tokens.rounding.medium
-        color: "transparent"
+        color: Colours.palette.m3surfaceContainerLow
 
         Loader {
             asynchronous: true

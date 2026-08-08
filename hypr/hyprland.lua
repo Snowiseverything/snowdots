@@ -229,7 +229,7 @@ hl.config({
 
 hl.config({
     misc = {
-        vrr = 1,
+        vrr = 2,
         disable_hyprland_logo = true,
         disable_splash_rendering = true,
         force_default_wallpaper = 0,
@@ -347,6 +347,7 @@ hl.bind(mainMod .. " + SHIFT + M",      hl.dsp.exit())
 hl.bind(mainMod .. " + SHIFT + R",      hl.dsp.exec_cmd("~/Dotfiles/scripts/caelestia-restart.sh"))
 hl.bind(mainMod .. " + SHIFT + B",      hl.dsp.exec_cmd("brave --incognito"))
 hl.bind(mainMod .. " + C",              hl.dsp.window.close())
+hl.bind(mainMod .. " + SHIFT + C",      hl.dsp.exec_cmd("~/Dotfiles/scripts/force-kill.sh"))
 hl.bind(mainMod .. " + O",              hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + A",              hl.dsp.window.alter_zorder({ mode = "top" }))
 hl.bind(mainMod .. " + N",              hl.dsp.exec_cmd("quickshell -c caelestia ipc call drawers toggle sidebar"))
