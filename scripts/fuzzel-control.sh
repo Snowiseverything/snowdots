@@ -107,14 +107,12 @@ open_games() {
 
 # Nested menu: Edit Configs / Edit Scripts / Run Scripts / Copy Script
 edit_tools() {
-	OPTIONS="󰌾 Lock
- Search & Open
-󰊖 Folders
- Edit Configs/Scripts
-󰊖 Games
-󱌣 Run Rice Fixer
-󰐥 Power Menu
-⬇ Video Download"
+	OPTIONS="󰁧 Edit Configs
+󰁦 Edit Scripts
+󰈔 Run Scripts
+󰈙 Copy Script
+
+ Back"
 	CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Edit Configs/Scripts: ")
 
 	case "$CHOICE" in
@@ -129,7 +127,7 @@ edit_tools() {
 # --- MAIN MENU ---
 main_menu() {
 	ensure_executable
-	OPTIONS="󰌾 Lock\n Search & Open\n Edit Configs/Scripts\n󰊖 Games\n󱌣 Run Rice Fixer\n󰐥 Power Menu\n⬇ Video Download"
+	OPTIONS="󰌾 Lock\n Search & Open\n󰊖 Folders\n Edit Configs/Scripts\n󰊖 Games\n󱌣 Run Rice Fixer\n󰐥 Power Menu\n⬇ Video Download"
 	CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Control Center: ")
 
 	case "$CHOICE" in
@@ -254,6 +252,7 @@ run_scripts() {
 		["night-light.sh"]="󰖔 Night Light"
 		["app-launcher.sh"]="󰀻 App Launcher"
 		["fuzzel-control.sh"]=" Control Center"
+		["rename-wallpapers.sh"]="󰖟 Rename Wallpapers"
 	)
 
 	RAW_FILES=$(script_files)
