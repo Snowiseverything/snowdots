@@ -82,6 +82,11 @@ open_games() {
 		gcmds["$gtitle"]="$gcmd"
 		if [[ -n "$gicon" && -f "$gicon" ]]; then
 			GLIST+="$gtitle\0icon\x1f$gicon\n"
+		elif [[ -n "$gicon" ]]; then
+			# text glyph icon (Nerd Font char) rendered inline; also key the
+			# lookup by the prefixed form fuzzel returns on selection
+			GLIST+="$gicon $gtitle\n"
+			gcmds["$gicon $gtitle"]="$gcmd"
 		else
 			GLIST+="$gtitle\n"
 		fi
