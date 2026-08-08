@@ -23,7 +23,7 @@ theme[inactive_fg]={{colors.outline.default.hex}}
 theme[graph_text]={{colors.on_surface_variant.default.hex}}
 
 # Background color of percentage meters
-theme[meter_bg]={{colors.surface_container_default.hex}}
+theme[meter_bg]={{colors.surface_container.default.hex}}
 
 # Misc colors for processes
 theme[proc_misc]={{colors.secondary.default.hex}}
