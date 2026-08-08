@@ -322,3 +322,54 @@ sudo journalctl --vacuum-size=100M
   /home/snow/.opencode/MEMORY.md
 - viymess email: RECOMMEND sending via subdomain (e.g. updates.viymess.com) in Resend rather than root viymess.com, to avoid merging SPF with Spacemail mailbox SPF (root currently v=spf1 include:spf.efwd.spaceship.net ~all, no resend include). DKIM CNAME resend._domainkey empty. DMARC p=none set. RESEND_API_KEY not yet on vercel. Route /api/waitlist fail-soft: sends branded email from hello@<updates@updates.viymess.com> via Resend once key + domain live; Telegram owner alert always fires.
 - viymess Resend: the api-keys-<ts>.csv "token" column is MASKED/truncated (14-char re_iDk... -> Resend 400 "API key is invalid"). Use the FULL key value copied once at creation (~39 chars, re_...) OR paste directly. Validate candidate via GET <https://api.resend.com/domains> (200=valid, 400=invalid) before wiring to VERCEL env RESEND_API_KEY; from=Viymess <hello@viymess.com> (root domain is now SPF-merged with spaceship, DKIN+DMARC p=none present). Route fail-soft until key present.
+
+## 2026-08-05 — Tailscale DNS + 1.1.1.1 fallback
+
+- Freezer: Tailscale v1.98.10, `100.87.27.79` (active + enabled at boot).
+- `tailscale set --accept-dns=true --accept-routes=true` — no sudo needed (socket is root-accessible), applies live + persists.
+- Tailnet MagicDNS suffix: `snowfinch-catfish.ts.net` (.ts.net names resolve: snowpi -> 100.83.33.67, freezer -> 100.87.27.79) via the Tailscale 100.100.100.100 stub -> Pi-hole on Snowpi (100.83.33.67) -> Cloudflare upstream.
+- DNS chain: tailscale0 (100.100.100.100, +DefaultRoute) -> tailnet resolver 100.83.33.67 -> upstream; .ts.net split-DNS -> 199.247.155.53.
+- `FallbackDNS=1.1.1.1` added to `/etc/systemd/resolved.conf` (needs sudo). Global DNS stays 192.168.0.1 1.1.1.1. When Pi-hole/Snowpi unreachable, systemd-resolved falls back to 1.1.1.1 directly.
+- Idempotent re-apply: `sudo bash ~/scripts/configure-tailscale-dns.sh` (sets FallbackDNS + restarts systemd-resolved, verifies).
+- `--accept-routes` pulled in 192.168.0.0/24 from the tailnet (LAN routable over Tailscale).
+- Verified live: snowpi.snowfinch-catfish.ts.net -> 100.83.33.67; google.com resolves via Pi-hole upstream; LAN devices reachable.
+
+## 2026-08-05 — anysearch CLI replaces fish function
+
+- Replaced the fish `anysearch` function with a compiled Go CLI binary at `/home/snow/.local/bin/anysearch`.
+- The Go CLI wraps AnySearch's MCP HTTP endpoint (`https://api.anysearch.com/mcp`) directly — same backend as the Pi `web_search` tool, 1000 free req/day, no API key.
+- Features: search, extract (full page content via `--extract`), batch parallel queries (`--batch`), provider listing (`--providers`), help (`--help`).
+- Build: `go build` from source at `~/.local/src/anysearch-cli/` (source deleted after install, binary is self-contained ~9MB).
+- The fish function was removed from `~/.config/fish/functions/anysearch.fish`.
+- 2026-08-05: scriptcat-mgr hardened (install/update/restore now AUTO-BACKUP first to ~/scripts/userscripts/backups/<ts>/; write_script is add-only with collision guard — never clobbers existing entries; duplicate installs warn + add beside, don't replace). Verified: 9 scripts preserved across installs. Live set (9): Pagetual 1.9.37.132, Bypass All Shortlinks Debloated, Greasyfork Search w/Sleazyfork 1.6.6, OmniChess 1.0.0, Picviewer CE+ 2026.2.6.1, Reddit NSFW Unblur, Reddit++, Matugen Material You Theme, Ultimate Popup Blocker 2 (new). Restored via backups at ~/scripts/userscripts/ (Reddit++, Reddit NSFW Unblur, matugen-theme.user.js) after earlier installs wiped them.
+- 2026-08-05: Bypass shortlinks fixed — debloated fork (codeberg gongchandang49) has NO adf.ly support (dropped); original greasyfork #431691 v96.8 HAS adf.ly (34 refs) but no ouo.io. Both installed (complementary): "Bypass All Shortlinks" 96.8 + "Bypass All Shortlinks Debloated". Test: real adf.ly link should auto-redirect; ouo.io shows #btn-main click-after-4s.
+- 2026-08-05: Pi-Hole popunder fix APPLIED — hagezi Pro (218k ABP) + hagezi PopUp Ads (54k) lists enabled, pro.plus disabled (aggressive tier), exact denies: hai8g.com/1xlite.com/who.io. Gravity 578k→851k. Backups: /home/snow/gravity.db.bak-20260805-232843, pihole.toml.bak-*. v6 API: POST /api/lists?type=block (type in QUERY STRING), POST /api/domains/deny/exact, auth via sid header + cli_pw password.
+- 2026-08-05: Query-log sweep — blocked whiopfwto.in via regex wildcard `(\.|^)whiopfwto\.in$` (Singapore AS7979 bulletproof popunder net). cawsg.com already caught by hagezi PopUp Ads. v6 regex deny: POST /api/domains/deny/regex with SINGLE backslashes (raw string in py = literal). Reload: pihole reloaddns needs root but regex applies live via FTL.
+- 2026-08-05: Pi-hole DNSSEC ON + maxDBdays 7→91 via /home/snow/enable-dnssec.sh on snowpi (v6 has NO setdnssec/setdblog CLI — edit pihole.toml + restart pihole-FTL; [dns] dnssec at line 175, [debug] dnssec at 1653 leave alone; regex sub in py needs \g<1> not \191). Verified: dnssec-failed.org SERVFAIL, blocking intact.
+
+## 2026-08-06 — ScriptCat userscripts: full root-cause + fix (14 scripts live)
+
+### Root causes found (3 independent bugs)
+
+1. **scriptcat-mgr parser regex `@(\w+)` misses hyphenated keys** — `@run-at` never captured → default `document-idle` written into compiled resource → Chrome userScripts.register() rejects ("Invalid value for runAt"). FIXED: `@([\w-]+)` + `to_chrome_run_at()` mapping (`document-start`→`document_start`, `document-end`→`document_end`, else `document_idle`).
+2. **`http*://` match scheme** (TM-ism, Greasyfork Search) — Chrome scheme whitelist only allows http/https/*/file; `http*` → "Invalid scheme". FIXED: `normalize_scheme()` converts `http*://`/`https*://` → `*://` (applied to BOTH match_urls AND metadata['match'] since ScriptCat rebuilds compiled resources from metadata).
+3. **Local backup corruption** — Reddit++ stored code had binary garbage (NUL bytes at line 108, `_node_modules_css_loader...`) from a restored backup → SyntaxError killed whole script silently (no window key, no console error, parse-time failure). FIXED: reinstall from original source (greasyfork #490046 v2.1.6). **Rule: ALWAYS fetch scripts from original source, never restore from local backup** (user directive).
+
+### Key ScriptCat mechanics
+
+- Compiled resource `runAt` must be Chrome enum form. `scriptUrlPatterns` must be POPULATED (empty → ScriptCat re-parses raw scriptCode, reintroducing http*:// + TM runAt → registration fails).
+- Registration guard: SW skips re-registration if `registerState===REGISTER_DONE` && scriptcat-inject exists → after storage changes MUST `chrome.userScripts.unregister()` + `chrome.runtime.reload()` to force clean re-registration.
+- Popup "enabled and running in background" group is ONLY for type-2 background scripts (`dealBackgroundScriptInstall` filters `r.type!==1`); page userscripts (type 1) always appear only in "current page running scripts". Empty background group = NORMAL.
+- Registered script code = compiled wrapper `window['#<uuid>'] = function(){...})(); ... }).call(this);}` — if the inner code has a SyntaxError, the whole script dies at parse time (no error surfaces).
+
+### Current state (verified live on reddit)
+
+- **14 scripts + 2 dispatchers (scriptcat-inject/scriptcat-content) registered**, all type:1 status:1, no binary corruption: Pagetual, Bypass Debloated, Reddit Age Bypass, OmniChess, Picviewer CE+, Reddit++ (NEW uuid 5fa6ae9f after reinstall), Reddit NSFW Unblur, Bypass All Shortlinks, Privacy Redirector, Matugen, Universal Link Cleaner, Greasyfork Search (matches now `*://greasyfork.org/*` etc), Ultimate Popup Blocker, Reject cookie banners.
+- NSFW Unblur + Reddit++ verified executing on <www.reddit.com> (window keys `#-6988063c-8c...` and `#5fa6ae9f-b35...`).
+- ScriptCat pin still in Brave toolbar (pinned_extensions list includes jaehimm...).
+- scriptcat-mgr fixed tool at `~/scripts/scriptcat-mgr`; new scripts in `~/scripts/userscripts/` (reddit-age-bypass, reject-cookie-banners, universal-link-cleaner, privacy-redirector, reddit-plus-plus, greasyfork-search .user.js).
+- uBO NOT installed — "essential filters" half of the age-bypass plan still needs manual CWS install (user action).
+- 2026-08-06: ScriptCat's built-in AI Agent (Model Service) is a PLAIN CHAT CLIENT — no tools, NO access to installed scripts/storage. It only does `${baseUrl}/chat/completions` (OpenAI format) + `${baseUrl}/models`. Cannot list/read/create/manage userscripts despite what it claims. For script management ALWAYS use scriptcat-mgr + CDP/scriptcat-mcp instead.
+- 2026-08-06: ScriptCat AI Agent provider config (works): Provider=openai (default), API Base URL=`https://opencode.ai/zen/go/v1` (opencode-go gateway, key from `~/.local/share/opencode/auth.json`), Default Model=`qwen3.7-plus`/`minimax-m3`/`kimi-k2.7-code`. GOTCHA: trailing space/slash in base URL → `${base}/models` 404s → ScriptCat's Fetch Models has NO error catch (silent fail, dropdown stays stale). Also: opencode local serve (4096) is native REST (sessions/PTY), NOT OpenAI-compatible — can't be used as ScriptCat base URL.
+- 2026-08-06: VRR on Microstep G274QPF E2 (Freezer): works. Requires (1) monitor OSD Adaptive Sync ON — driver reports `vrr_capable:0` until enabled (this was the silent killer), (2) Hyprland 0.56 Lua config `misc.vrr = 2` (2=fullscreen-only, 1=always, 0=off) in ~/Dotfiles/hypr/hyprland.lua. Runtime: `hyprctl eval 'hl.monitor({ output = "DP-3", mode = "2560x1440@180", position = "0x0", scale = 1, vrr = 2 })'` — NOT hyprctl keyword (0.55+ needs Lua). Verify: `hyprctl monitors -j` → vrr true only in fullscreen. Game setting: RE9 FrameRate=Variable + VSync=False (uncapped, VRR handles 70-110fps; Max120 was the no-VRR fallback).
+- 2026-08-06: viymess deploy = GitLab integration only. Project linked to gitlab sn0wman/viymess (productionBranch main, rootDirectory apps/storefront). NO `.gitlab-ci.yml`, NO snowpi build — the double-build was Vercel git integration (source:git on push) PLUS manual `vercel deploy --yes` (source:cli) in the same command chain. DECISION: Option A — stop CLI deploys, push to origin only; Vercel auto-builds per branch. Git-push failures (lockfile/standalone ENOENT) fixed in 462fb82+b17eaef so git builds pass. Single-push config: push.default=simple, remote.pushDefault=origin, main tracks origin/main. Snowpi stays fetch-only mirror. Landing+analytics work on dev-sprint1; main untouched (old Georgia build).
