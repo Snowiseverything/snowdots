@@ -66,7 +66,7 @@ open_games() {
 		cnt=$(games_parse "${name,,}" | grep -c .)
 		[[ "$cnt" -gt 0 ]] && LIST+="$name\0icon\x1f$icon\n"
 	done
-	LIST+="󰜉 Back"
+	LIST+="󰁍 Back"
 
 	CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Games: ")
 	[[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
@@ -91,7 +91,7 @@ open_games() {
 			GLIST+="$gtitle\n"
 		fi
 	done < <(games_parse "$LAUNCHER_LC")
-	GLIST+="󰜉 Back"
+	GLIST+="󰁍 Back"
 
 	GCHOICE=$(echo -e "$GLIST" | fuzzel --dmenu --minimal-lines -p "$LAUNCHER: ")
 	[[ -z "$GCHOICE" || "$GCHOICE" == *"Back"* ]] && open_games && return
