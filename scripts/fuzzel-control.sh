@@ -107,12 +107,11 @@ open_games() {
 
 # Nested menu: Edit Configs / Edit Scripts / Run Scripts / Copy Script
 edit_tools() {
-	OPTIONS="󰁧 Edit Configs
-󰁦 Edit Scripts
-󰈔 Run Scripts
-󰈙 Copy Script
-
- Back"
+	OPTIONS="󰘮 Edit Configs
+ Edit Scripts
+󰐊 Run Scripts
+ Copy Script
+󰁍 Back"
 	CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Edit Configs/Scripts: ")
 
 	case "$CHOICE" in
@@ -148,34 +147,17 @@ main_menu() {
 	esac
 }
 
-# --- FOLDERS (matugen-themed icons) ---
+# --- FOLDERS (Nerd Font glyph icons) ---
 open_folders() {
-	ICON_DIR="$HOME/.cache/skwd-wall/icons"
-	# Fall back to Papirus if matugen hasn't rendered yet
-	[[ -d "$ICON_DIR" ]] || ICON_DIR="/usr/share/icons/Papirus/64x64/places"
-
-	LIST=""
-	add_folder() { # $1=label  $2=path  $3=icon-base
-		local icon
-		if [[ -f "$ICON_DIR/$3.svg" ]]; then
-			icon="$ICON_DIR/$3.svg"
-		else
-			icon="$ICON_DIR/folder-$3.svg"
-		fi
-		if [[ -f "$icon" ]]; then
-			LIST+="$1\0icon\x1f$icon\n"
-		else
-			LIST+="$1\n"
-		fi
-	}
-	add_folder "󰋘 Videos" "$HOME/Videos" "folder-videos"
-	add_folder "󰋭 Downloads" "$HOME/Downloads" "folder-downloads"
-	add_folder "󰋺 Pictures" "$HOME/Pictures" "folder-pictures"
-	add_folder "󰎆 Music" "$HOME/Music" "folder-music"
-	add_folder "󰈙 Documents" "$HOME/Documents" "folder-documents"
-	add_folder "󰄛 Desktop" "$HOME/Desktop" "folder-desktop"
-	add_folder "󰀄 Home" "$HOME" "folder-home"
-	LIST+="\n󰫃 Custom Path…\n\n Back"
+	LIST="󰎁 Videos
+󰇚 Downloads
+󰋩 Pictures
+󰝚 Music
+󰈙 Documents
+󰍹 Desktop
+󰋜 Home
+󰉗 Custom Path…
+󰁍 Back"
 
 	CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Open Folder: ")
 	[[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
@@ -202,6 +184,8 @@ open_folders() {
 		esac
 	fi
 }
+
+
 
 # --- 2. DYNAMIC SUBMENUS ---
 
@@ -252,7 +236,7 @@ run_scripts() {
 		["night-light.sh"]="󰖔 Night Light"
 		["app-launcher.sh"]="󰀻 App Launcher"
 		["fuzzel-control.sh"]=" Control Center"
-		["rename-wallpapers.sh"]="󰖟 Rename Wallpapers"
+		["rename-wallpapers.sh"]="󰸉 Rename Wallpapers"
 	)
 
 	RAW_FILES=$(script_files)
