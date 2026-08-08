@@ -63,7 +63,7 @@ open_games() {
 		name="${entry%%|*}"
 		icon="${entry#*|}"
 		# count games for this launcher
-		cnt=$(games_parse "${name,,}" | grep -c . )
+		cnt=$(games_parse "${name,,}" | grep -c .)
 		[[ "$cnt" -gt 0 ]] && LIST+="$name\0icon\x1f$icon\n"
 	done
 	LIST+="󰜉 Back"
@@ -122,7 +122,7 @@ edit_tools() {
 # --- MAIN MENU ---
 main_menu() {
 	ensure_executable
-	OPTIONS="󰌾 Lock\n Search & Open\n Edit Configs/Scripts\n󰊖 Games\n󱌣 Run Rice Fixer\n󰐥 Power Menu"
+	OPTIONS="󰌾 Lock\n Search & Open\n Edit Configs/Scripts\n󰊖 Games\n󱌣 Run Rice Fixer\n󰐥 Power Menu\n⬇ Video Download"
 	CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Control Center: ")
 
 	case "$CHOICE" in
@@ -137,6 +137,7 @@ main_menu() {
 		hyprctl reload
 		notify-send "󱌣 Rice Fixer" "System UI Refreshed"
 		;;
+	*"Video Download") $HOME/Dotfiles/scripts/video-dl.sh ;;
 	*"Power Menu") power_menu ;;
 	esac
 }

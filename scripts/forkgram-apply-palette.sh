@@ -7,14 +7,14 @@
 PALETTE_FILE="${1:-$HOME/.cache/skwd-wall/forkgram.tdesktop-palette}"
 LOG_FILE="/tmp/forkgram-palette.log"
 
-log() { echo "[$(date '+%H:%M:%S')] $1" >> "$LOG_FILE"; }
+log() { echo "[$(date '+%H:%M:%S')] $1" >>"$LOG_FILE"; }
 
 log "=== Forkgram palette import ==="
 log "Palette: $PALETTE_FILE"
 
 # Wait for forkgram window to exist
 for i in {1..10}; do
-    WINDOW_OK=$(hyprctl clients -j 2>/dev/null | python3 -c "
+	WINDOW_OK=$(hyprctl clients -j 2>/dev/null | python3 -c "
 import json,sys
 try:
     clients=json.load(sys.stdin)
@@ -25,17 +25,17 @@ try:
 except: pass
 print(0)
 ")
-    if [ "$WINDOW_OK" = "1" ]; then break; fi
-    sleep 0.5
+	if [ "$WINDOW_OK" = "1" ]; then break; fi
+	sleep 0.5
 done
 
 if [ "$WINDOW_OK" != "1" ]; then
-    log "ERROR: forkgram window not found"
-    exit 1
+	log "ERROR: forkgram window not found"
+	exit 1
 fi
 
 # Focus forkgram
-hyprctl dispatch focuswindow forkgram 2>/dev/null
+hyprctl dispatch 'hl.dsp.focus({ window = "class:forkgram" })' 2>/dev/null
 sleep 0.5
 
 # Open Settings
@@ -52,8 +52,8 @@ sleep 0.8
 # The number of tabs depends on widget layout, 12 should cover most cases
 log "Navigating to Import button..."
 for i in {1..12}; do
-    wtype -k Tab
-    sleep 0.12
+	wtype -k Tab
+	sleep 0.12
 done
 
 # Press Enter to trigger import (opens file dialog)
