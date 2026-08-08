@@ -1,7 +1,7 @@
+#!/bin/bash
 ########################################################################
 ##  SnowDots — SnowSafekill                             Version: v1.0.0    ##
 ##  Last Edited: 2026-05-02                                           ##
 ########################################################################
 
-#!/bin/bash
-hyprctl dispatch killactive ""
+hyprctl dispatch 'hl.dsp.window.close()'
