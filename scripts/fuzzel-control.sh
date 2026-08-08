@@ -107,7 +107,14 @@ open_games() {
 
 # Nested menu: Edit Configs / Edit Scripts / Run Scripts / Copy Script
 edit_tools() {
-	OPTIONS=" Edit Configs\n Edit Scripts\n Run Scripts\n Copy Script\n󰜉 Back"
+	OPTIONS="󰌾 Lock
+ Search & Open
+󰊖 Folders
+ Edit Configs/Scripts
+󰊖 Games
+󱌣 Run Rice Fixer
+󰐥 Power Menu
+⬇ Video Download"
 	CHOICE=$(echo -e "$OPTIONS" | fuzzel --dmenu --minimal-lines -p "Edit Configs/Scripts: ")
 
 	case "$CHOICE" in
@@ -128,6 +135,7 @@ main_menu() {
 	case "$CHOICE" in
 	*Lock) quickshell -c caelestia ipc call lock lock ;;
 	*"Search & Open") search_open ;;
+	*Folders) open_folders ;;
 	*"Edit Configs/Scripts") edit_tools ;;
 	*"Games") open_games ;;
 	*"Run Rice Fixer")
@@ -140,6 +148,61 @@ main_menu() {
 	*"Video Download") $HOME/Dotfiles/scripts/video-dl.sh ;;
 	*"Power Menu") power_menu ;;
 	esac
+}
+
+# --- FOLDERS (matugen-themed icons) ---
+open_folders() {
+	ICON_DIR="$HOME/.cache/skwd-wall/icons"
+	# Fall back to Papirus if matugen hasn't rendered yet
+	[[ -d "$ICON_DIR" ]] || ICON_DIR="/usr/share/icons/Papirus/64x64/places"
+
+	LIST=""
+	add_folder() { # $1=label  $2=path  $3=icon-base
+		local icon
+		if [[ -f "$ICON_DIR/$3.svg" ]]; then
+			icon="$ICON_DIR/$3.svg"
+		else
+			icon="$ICON_DIR/folder-$3.svg"
+		fi
+		if [[ -f "$icon" ]]; then
+			LIST+="$1\0icon\x1f$icon\n"
+		else
+			LIST+="$1\n"
+		fi
+	}
+	add_folder "󰋘 Videos" "$HOME/Videos" "folder-videos"
+	add_folder "󰋭 Downloads" "$HOME/Downloads" "folder-downloads"
+	add_folder "󰋺 Pictures" "$HOME/Pictures" "folder-pictures"
+	add_folder "󰎆 Music" "$HOME/Music" "folder-music"
+	add_folder "󰈙 Documents" "$HOME/Documents" "folder-documents"
+	add_folder "󰄛 Desktop" "$HOME/Desktop" "folder-desktop"
+	add_folder "󰀄 Home" "$HOME" "folder-home"
+	LIST+="\n󰫃 Custom Path…\n\n Back"
+
+	CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Open Folder: ")
+	[[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
+
+	if [[ "$CHOICE" == *"Custom Path…"* ]]; then
+		PATH_IN=$(fuzzel --dmenu --lines=1 -p "Path: " \
+			--placeholder "/home/snow/… (Tab to autocomplete)")
+		[[ -z "$PATH_IN" ]] && main_menu && return
+		PATH_IN=$(eval echo "$PATH_IN")
+		if [[ -d "$PATH_IN" ]]; then
+			xdg-open "$PATH_IN"
+		else
+			notify-send "󰊖 Folders" "Not a directory: $PATH_IN" || true
+		fi
+	else
+		case "$CHOICE" in
+		*Videos) xdg-open "$HOME/Videos" ;;
+		*Downloads) xdg-open "$HOME/Downloads" ;;
+		*Pictures) xdg-open "$HOME/Pictures" ;;
+		*Music) xdg-open "$HOME/Music" ;;
+		*Documents) xdg-open "$HOME/Documents" ;;
+		*Desktop) xdg-open "$HOME/Desktop" ;;
+		*Home) xdg-open "$HOME" ;;
+		esac
+	fi
 }
 
 # --- 2. DYNAMIC SUBMENUS ---

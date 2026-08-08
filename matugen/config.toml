@@ -116,3 +116,31 @@ post_hook = '/home/snow/Dotfiles/scripts/toofan-theme.sh'
 [post_processing]
 command = "/home/snow/Dotfiles/scripts/wall-sync.sh"
 run_on_change = true
+
+[templates.folder_videos]
+input_path = '/home/snow/Dotfiles/matugen/templates/folders/folder-videos.svg'
+output_path = '/home/snow/.cache/skwd-wall/icons/folder-videos.svg'
+
+[templates.folder_downloads]
+input_path = '/home/snow/Dotfiles/matugen/templates/folders/folder-downloads.svg'
+output_path = '/home/snow/.cache/skwd-wall/icons/folder-downloads.svg'
+
+[templates.folder_pictures]
+input_path = '/home/snow/Dotfiles/matugen/templates/folders/folder-pictures.svg'
+output_path = '/home/snow/.cache/skwd-wall/icons/folder-pictures.svg'
+
+[templates.folder_music]
+input_path = '/home/snow/Dotfiles/matugen/templates/folders/folder-music.svg'
+output_path = '/home/snow/.cache/skwd-wall/icons/folder-music.svg'
+
+[templates.folder_documents]
+input_path = '/home/snow/Dotfiles/matugen/templates/folders/folder-documents.svg'
+output_path = '/home/snow/.cache/skwd-wall/icons/folder-documents.svg'
+
+[templates.folder_desktop]
+input_path = '/home/snow/Dotfiles/matugen/templates/folders/folder-desktop.svg'
+output_path = '/home/snow/.cache/skwd-wall/icons/folder-desktop.svg'
+
+[templates.folder_home]
+input_path = '/home/snow/Dotfiles/matugen/templates/folders/folder-home.svg'
+output_path = '/home/snow/.cache/skwd-wall/icons/folder-home.svg'
