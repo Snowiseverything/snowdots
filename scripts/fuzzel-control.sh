@@ -24,8 +24,24 @@ script_files() {
 	find "$SCRIPT_DIR" -maxdepth 1 -type f -printf '%f\n' | sort
 }
 
-# Games launcher — reads ~/.config/tui-games-launcher/games.toml, launches via fuzzel
-# (games only; no terminal window, games run directly via Hyprland exec)
+# Games launcher — two-level: pick launcher (Steam/Lutris/Heroic) then game.
+# Reads ~/.config/tui-games-launcher/games.toml; real cover-art icons via
+# Rofi extended dmenu protocol (\0icon\x1f<path>).
+games_parse() {
+	# $1 = launcher filter (or "ALL"). Prints title|command|icon per game.
+	awk -v L="$1" '
+		function emit() {
+			if (pt != "" && pc != "" && (L == "ALL" || pla == L))
+				print pt "|" pc "|" pi
+		}
+		/^launcher =/ { emit(); pla=$0; sub(/^launcher = "/,"",pla); sub(/"$/,"",pla); pt=""; pc=""; pi="" }
+		/^title =/   { pt=$0; sub(/^title = "/,"",pt); sub(/"$/,"",pt) }
+		/^command =/ { pc=$0; sub(/^command = "/,"",pc); sub(/"$/,"",pc) }
+		/^icon =/    { pi=$0; sub(/^icon = "/,"",pi); sub(/"$/,"",pi) }
+		END { emit() }
+	' "$GAMES_TOML"
+}
+
 open_games() {
 	GAMES_TOML="$HOME/.config/tui-games-launcher/games.toml"
 	[[ -f "$GAMES_TOML" ]] || {
@@ -33,25 +49,49 @@ open_games() {
 		return
 	}
 
-	declare -A gcmds
+	# Launcher metadata: name|icon-path|visible-if-games-exist
+	# Steam uses fa-steam logo; Lutris/Heroic use their app icons.
+	LAUNCHERS=(
+		"Steam|/usr/share/icons/hicolor/256x256/apps/steam.png"
+		"Lutris|/usr/share/icons/hicolor/128x128/apps/net.lutris.Lutris.png"
+		"Heroic|/usr/share/icons/hicolor/128x128/apps/heroic.png"
+	)
+
+	# Level 1: pick launcher (only show launchers that have games)
 	LIST=""
-	while IFS='|' read -r gtitle gcmd gicon; do
-		[[ -z "$gtitle" ]] && continue
-		gcmds["$gtitle"]="$gcmd"
-		[[ -z "$gicon" ]] && gicon="󰊖"
-		LIST+="$gicon $gtitle\n"
-	done < <(awk '
-		/^title =/ { if (t != "" && c != "") print t "|" c "|" i; t=$0; sub(/^title = "/,"",t); sub(/"$/,"",t); c=""; i="" }
-		/^command =/ { c=$0; sub(/^command = "/,"",c); sub(/"$/,"",c) }
-		/^icon =/ { i=$0; sub(/^icon = "/,"",i); sub(/"$/,"",i) }
-		END { if (t != "" && c != "") print t "|" c "|" i }
-	' "$GAMES_TOML")
+	for entry in "${LAUNCHERS[@]}"; do
+		name="${entry%%|*}"
+		icon="${entry#*|}"
+		# count games for this launcher
+		cnt=$(games_parse "${name,,}" | grep -c . )
+		[[ "$cnt" -gt 0 ]] && LIST+="$name\0icon\x1f$icon\n"
+	done
 	LIST+="󰜉 Back"
 
 	CHOICE=$(echo -e "$LIST" | fuzzel --dmenu --minimal-lines -p "Games: ")
 	[[ -z "$CHOICE" || "$CHOICE" == *"Back"* ]] && main_menu && return
 
-	GTITLE="${CHOICE#* }"
+	LAUNCHER="$(printf '%s' "$CHOICE" | tr '\0' '\n' | head -1)"
+	LAUNCHER_LC="${LAUNCHER,,}"
+
+	# Level 2: pick game within that launcher
+	GLIST=""
+	declare -A gcmds
+	while IFS='|' read -r gtitle gcmd gicon; do
+		[[ -z "$gtitle" ]] && continue
+		gcmds["$gtitle"]="$gcmd"
+		if [[ -n "$gicon" && -f "$gicon" ]]; then
+			GLIST+="$gtitle\0icon\x1f$gicon\n"
+		else
+			GLIST+="$gtitle\n"
+		fi
+	done < <(games_parse "$LAUNCHER_LC")
+	GLIST+="󰜉 Back"
+
+	GCHOICE=$(echo -e "$GLIST" | fuzzel --dmenu --minimal-lines -p "$LAUNCHER: ")
+	[[ -z "$GCHOICE" || "$GCHOICE" == *"Back"* ]] && open_games && return
+
+	GTITLE="$(printf '%s' "$GCHOICE" | tr '\0' '\n' | head -1)"
 	GCMD="${gcmds[$GTITLE]}"
 	if [[ -n "$GCMD" ]]; then
 		hyprctl dispatch "hl.dsp.exec_cmd(\"$GCMD\")"
