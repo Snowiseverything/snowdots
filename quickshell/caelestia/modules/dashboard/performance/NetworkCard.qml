@@ -12,7 +12,9 @@ StyledRect {
     color: Colours.tPalette.m3surfaceContainer
     radius: Tokens.rounding.extraLarge
 
-    implicitWidth: Tokens.sizes.dashboard.perfNetworkCardWidth
+    // Shrunk from Tokens.sizes.dashboard.perfNetworkCardWidth (390) to give
+    // MemoryCard (now with Available/Cached/Speed grid) more room in the row.
+    implicitWidth: 300
     implicitHeight: Tokens.sizes.dashboard.perfNetworkCardHeight
 
     Ref {
