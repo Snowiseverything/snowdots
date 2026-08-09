@@ -28,7 +28,7 @@ skwd-daemon picks random wallpaper
 skwd-wall postProcessing: wall-sync.sh
    (or matugen config post_processing runs wall-sync.sh)
         │
-        ├─ awww img <wallpaper> --fade 0.3s    ← wallpaper transition
+        ├─ skwd-paper <wallpaper>                     ← wallpaper transition
         ├─ matugen image <wallpaper>            ← color generation
         ├─ rgb-sync.sh                          ← OpenRGB + keyboard
         ├─ hyprctl borders update               ← border colors
@@ -642,3 +642,20 @@ snapper -c root delete <num>                  # delete snapshot (auto-cleanup ha
 ### Known issue
 
 - **limine-snapper-sync creates "config already exists" error**: limine-snapper-watcher uses `--no-dbus` flag and fails to create root config even when it doesn't exist. Workaround: manually create config with `sudo snapper -c root create-config /`. After the config exists, boot sync works correctly.
+
+## 17. skwd-wall Paper Engine
+
+### Problem
+`skwd-paper` binary requires FFmpeg 6.x libraries (`libavutil.so.60`, `libavcodec.so.62`, etc.) which are not available on the current system (has FFmpeg 7.x/4.4).
+
+### Solution
+- **Compat libs**: `~/.local/lib/skwd-paper/` contains FFmpeg 6.x libs from PCSX2/Steam Proton:
+  - `libavutil.so.60`, `libavcodec.so.62`, `libavformat.so.62`, `libavdevice.so.62`
+  - `libswscale.so.9`, `libswresample.so.6`, `libx264.so.163`
+- **Wrapper**: `~/.local/bin/skwd-paper` sets `LD_LIBRARY_PATH` and execs `/usr/bin/skwd-paper`
+- **Config**: `~/.config/skwd-wall/config.json` has `"paper.engine": "skwd-paper"` with transitions enabled
+- **Systemd override**: `~/.config/systemd/user/skwd-daemon.service.d/override.conf` sets `SKWD_PAPER_BIN=/home/snow/.local/bin/skwd-paper`
+
+### Cleanup
+- Removed duplicate `skwd.service` (was conflicting with `skwd-daemon.service`)
+- Removed broken `/home/snow/shell.qml` test harness that caused `qs.services` import failures in wall-ui
