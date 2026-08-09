@@ -3,6 +3,7 @@
 
 import sys, time
 from pathlib import Path
+from typing import Any
 
 # ── Config ────────────────────────────────────────────────────────────────
 sys.path.insert(0, str(Path.home() / ".local/bin"))
@@ -147,22 +148,15 @@ def _mad68_send_color(dev, r, g, b):
     time.sleep(MAD68_PACKET_DELAY)
 
 
-def fade_all(frames, kb_frames, brightness_pct, pc_brightness=100):
-    """Fade OpenRGB + keyboard.
-
-    frames — dimmed RGB for OpenRGB (pre-scaled by brightness factor)
-    kb_frames — raw RGB for keyboard (hardware brightness handles dimming)
-    brightness_pct — keyboard hardware-dim level (0-100)
-    pc_brightness — OpenRGB brightness (0-100). When 0 the PC devices are off
-        and their color writes are skipped so we don't flash a transition to
-        black — they just stay off while the keyboard still syncs.
-    """
+def open_devices() -> tuple[Any, Any]:
+    """Open OpenRGB client + MAD68 hid device once (retries SDK listener).
+    Returns (orgb, kb_dev); either may be None when unavailable so callers
+    can run headless (Govee-only)."""
     orgb = None
     kb_dev = None
     try:
         import socket
         from openrgb import OpenRGBClient
-        from openrgb.utils import RGBColor
 
         # Wait for the OpenRGB SDK listener — at boot the server takes
         # several seconds to init hardware before accepting connections.
@@ -188,21 +182,93 @@ def fade_all(frames, kb_frames, brightness_pct, pc_brightness=100):
                 break
     except Exception:
         pass
+    return orgb, kb_dev
 
+
+def set_openrgb_solid(orgb: Any, r: int, g: int, b: int) -> None:
+    """Set all OpenRGB devices to one solid color (direct mode)."""
+    if orgb is None:
+        return
+    try:
+        from openrgb.utils import RGBColor  # pyright: ignore[reportMissingImports]
+        color = RGBColor(r, g, b)
+        for d in orgb.devices:
+            try:
+                if d.active_mode != 0:
+                    d.set_mode(0)
+                d.set_colors([color] * len(d.leds))
+                d.show()
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+
+def set_keyboard_solid(kb_dev: Any, r: int, g: int, b: int, dim: int = 100) -> None:
+    """Set the MAD68 keyboard to one solid color at a hardware dim level.
+    Color stays constant; only the hardware brightness varies, so hue never
+    shifts at low brightness."""
+    if kb_dev is None:
+        return
+    try:
+        _mad68_set_brightness(kb_dev, r, g, b, dim)
+        _mad68_send_color(kb_dev, r, g, b)
+    except Exception:
+        pass
+
+
+def set_solid(orgb: Any, kb_dev: Any,
+              r: int, g: int, b: int,
+              kb_bri: int = 100, pc_on: bool = True) -> None:
+    """Set OpenRGB + keyboard to one solid color immediately.
+
+    kb_bri — keyboard hardware dim level (0-100)
+    pc_on — when False skip OpenRGB writes (devices stay off)
+    """
+    if pc_on:
+        set_openrgb_solid(orgb, r, g, b)
+    set_keyboard_solid(kb_dev, r, g, b, kb_bri)
+
+
+def close_devices(orgb: Any, kb_dev: Any) -> None:
+    try:
+        if orgb is not None:
+            orgb.disconnect()
+        if kb_dev is not None:
+            kb_dev.close()
+    except Exception:
+        pass
+
+
+def fade_all(frames, kb_frames, brightness_pct, pc_brightness=100):
+    """Fade OpenRGB + keyboard.
+
+    frames — dimmed RGB for OpenRGB (pre-scaled by brightness factor)
+    kb_frames — raw RGB for keyboard (hardware brightness handles dimming)
+    brightness_pct — keyboard hardware-dim level (0-100)
+    pc_brightness — OpenRGB brightness (0-100). When 0 the PC devices are off
+        and their color writes are skipped so we don't flash a transition to
+        black — they just stay off while the keyboard still syncs.
+    """
+    orgb, kb_dev = open_devices()
     if orgb is None and kb_dev is None:
         return
 
     for i, (ri, gi, bi) in enumerate(frames):
         if orgb is not None and pc_brightness > 0:
-            color = RGBColor(ri, gi, bi)  # pyright: ignore[reportOptionalCall]
-            for d in orgb.devices:
-                try:
-                    if d.active_mode != 0:
-                        d.set_mode(0)
-                    d.set_colors([color] * len(d.leds))
-                    d.show()
-                except Exception:
-                    pass
+            try:
+                from openrgb.utils import RGBColor  # pyright: ignore[reportMissingImports]
+                color = RGBColor(ri, gi, bi)  # pyright: ignore[reportOptionalCall]
+                for d in orgb.devices:
+                    try:
+                        if d.active_mode != 0:
+                            d.set_mode(0)
+                        d.set_colors([color] * len(d.leds))
+                        d.show()
+                    except Exception:
+                        pass
+            except Exception:
+                pass
 
         if kb_dev is not None and i < len(kb_frames):
             try:
@@ -217,17 +283,7 @@ def fade_all(frames, kb_frames, brightness_pct, pc_brightness=100):
         # pi-lens-ignore: python-sleep-in-test
         time.sleep(FADE_DELAY_MS / 1000)
 
-    if orgb is not None:
-        try:
-            orgb.disconnect()
-        except Exception:
-            pass
-
-    if kb_dev is not None:
-        try:
-            kb_dev.close()
-        except Exception:
-            pass
+    close_devices(orgb, kb_dev)
 
 
 def main():

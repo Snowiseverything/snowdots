@@ -129,11 +129,21 @@ async def main():
                     await c.start_notify(WRITE_CHAR, lambda s, d: None)
                 except Exception as e:
                     print(f"notify subscribe failed: {e}", file=sys.stderr)
-                # Re-read last color: govee-led.py may have written one via
-                # the HA fallback while BLE was down — sync the keepalive
-                # to it so we don't write a stale/black packet.
-                if color_state == [0, 0, 0]:
-                    color_state[:] = load_last_color()
+                # Always re-sync color_state from the last-color file on
+                # (re)connect. govee-led.py writes it on EVERY set attempt
+                # (socket OR HA fallback), so it is the source of truth for
+                # what the strip should show. Without this, a color applied
+                # via HA while BLE was down is lost on reconnect: the
+                # keepalive would write the stale in-memory color_state and
+                # revert the strip to the old wallpaper color.
+                color_state[:] = load_last_color()
+                # Push it immediately (don't wait for the 5s keepalive) so
+                # a reconnect doesn't leave the strip on the wrong color.
+                if color_state != [0, 0, 0]:
+                    try:
+                        await c.write_gatt_char(WRITE_CHAR, _pkt(color_state[0], color_state[1], color_state[2]), response=False)
+                    except Exception:
+                        pass
                 while c.is_connected:
                     await asyncio.sleep(KEEPALIVE_S)
                     if c.is_connected:

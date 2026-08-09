@@ -65,3 +65,7 @@ alias mount-hdd="sudo /usr/local/bin/mount-hdd"
 alias umount-hdd="sudo /usr/local/bin/umount-hdd"
 
 
+
+# >>> railway initialize >>>
+source "$HOME/.railway/env.fish"
+# <<< railway initialize <<<
