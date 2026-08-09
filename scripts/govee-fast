@@ -89,13 +89,29 @@ async def main():
     from bleak import BleakClient
     if os.path.exists(SOCKET_PATH): os.unlink(SOCKET_PATH)
 
+    def load_last_color() -> list[int]:
+        """Restore last dimmed RGB from govee-led.py's state file.
+
+        govee-fast starts with color_state [0,0,0] — its 5s keepalive would
+        write a black packet (RGB 0 = off) and turn the strip OFF at boot
+        before any real color arrives. Seed from /tmp/govee-last-color so
+        the first keepalive restores the last color instead of killing it.
+        """
+        try:
+            parts = open("/tmp/govee-last-color").read().strip().split()
+            if len(parts) == 3:
+                return [int(x) for x in parts]
+        except (OSError, ValueError):
+            pass
+        return [0, 0, 0]
+
     # Start socket immediately (clients see "error" while BLE connects)
     async def on_connect(r, w):
         await handle(ble_client, r, w, color_state) if ble_client else (
             w.write(b"error BLE down\n"), await w.drain(), w.close())
 
     ble_client = None
-    color_state = [0, 0, 0]
+    color_state = load_last_color()
     server = await asyncio.start_unix_server(on_connect, SOCKET_PATH)
     print(f"Socket ready on {SOCKET_PATH}", file=sys.stderr)
 
@@ -105,9 +121,26 @@ async def main():
             async with BleakClient(GOVEE_ADDR, timeout=15) as c:
                 ble_client = c
                 print("Govee BLE connected", file=sys.stderr)
+                # Govee H6102 drops the BLE link within ~3-5s unless you
+                # subscribe to the write characteristic's notifications.
+                # Subscribe immediately to hold the connection; without it
+                # the link flaps and every reconnect writes stale state.
+                try:
+                    await c.start_notify(WRITE_CHAR, lambda s, d: None)
+                except Exception as e:
+                    print(f"notify subscribe failed: {e}", file=sys.stderr)
+                # Re-read last color: govee-led.py may have written one via
+                # the HA fallback while BLE was down — sync the keepalive
+                # to it so we don't write a stale/black packet.
+                if color_state == [0, 0, 0]:
+                    color_state[:] = load_last_color()
                 while c.is_connected:
                     await asyncio.sleep(KEEPALIVE_S)
                     if c.is_connected:
+                        # Never keepalive black — RGB(0,0,0) is power-off on
+                        # Govee. Off stays off; a real color comes via socket.
+                        if color_state == [0, 0, 0]:
+                            continue
                         try: await c.write_gatt_char(WRITE_CHAR, _pkt(color_state[0], color_state[1], color_state[2]), response=False)
                         except Exception: break
                 print("Disconnected, reconnecting...", file=sys.stderr)
