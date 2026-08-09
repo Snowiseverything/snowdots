@@ -107,8 +107,16 @@ async def main():
 
     # Start socket immediately (clients see "error" while BLE connects)
     async def on_connect(r, w):
-        await handle(ble_client, r, w, color_state) if ble_client else (
-            w.write(b"error BLE down\n"), await w.drain(), w.close())
+        if not ble_client:
+            try:
+                w.write(b"error BLE down\n")
+                await w.drain()
+            except (ConnectionResetError, OSError):
+                pass  # client closed early (fire-and-forget) — not our fault
+            finally:
+                w.close()
+            return
+        await handle(ble_client, r, w, color_state)
 
     ble_client = None
     color_state = load_last_color()

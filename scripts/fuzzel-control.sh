@@ -185,8 +185,6 @@ open_folders() {
 	fi
 }
 
-
-
 # --- 2. DYNAMIC SUBMENUS ---
 
 search_open() {
@@ -345,8 +343,14 @@ power_menu() {
 	case "$P_CHOICE" in
 	*Suspend) systemctl suspend ;;
 	*Logout) hyprctl dispatch 'hl.dsp.exit()' ;;
-	*Reboot) systemctl reboot ;;
-	*Shutdown) systemctl poweroff ;;
+	*Reboot)
+		timeout 15 ~/Dotfiles/scripts/govee-boot-anim.py --shutdown
+		systemctl reboot
+		;;
+	*Shutdown)
+		timeout 15 ~/Dotfiles/scripts/govee-boot-anim.py --shutdown
+		systemctl poweroff
+		;;
 	esac
 }
 
