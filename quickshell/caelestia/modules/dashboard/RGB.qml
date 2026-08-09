@@ -17,6 +17,7 @@ Item {
     property int pcBrightness: 50
     property int kbBrightness: 50
     property int goveeBrightness: 50
+    property int masterBrightness: 100
     property var recentColors: ["#ff6600", "#00aaff", "#ff0066", "#00ff88", "#ffaa00", "#aa00ff"]
 
     // color picker state
@@ -148,6 +149,14 @@ Item {
         firePost("/govee", {color: v > 0 ? root.currentHex : "000000", brightness: v});
     }
 
+    function setMasterBrightness(v) {
+        root.masterBrightness = v;
+        root.pcBrightness = v;
+        root.kbBrightness = v;
+        root.goveeBrightness = v;
+        firePost("/all", {color: v > 0 ? root.currentHex : "000000", brightness: v, kb_bri: v, govee_bri: v});
+    }
+
     // All Off — device colors preserved, only brightness 0. Raising any
     // per-device slider (or picking a color) relights that device.
     function allOff() {
@@ -166,6 +175,7 @@ Item {
     Timer { id: pcBriDebounce; interval: 250; onTriggered: root.setPcBrightness(root.pcBrightness) }
     Timer { id: kbBriDebounce; interval: 250; onTriggered: root.setKbBrightness(root.kbBrightness) }
     Timer { id: goveeBriDebounce; interval: 250; onTriggered: root.setGoveeBrightness(root.goveeBrightness) }
+    Timer { id: masterBriDebounce; interval: 250; onTriggered: root.setMasterBrightness(root.masterBrightness) }
     Component.onCompleted: root.refreshState()
 
     // ── ui ─────────────────────────────────────────────────────────────────
@@ -445,6 +455,14 @@ Item {
                 SectionHeader {
                     title: qsTr("Brightness per device")
                     description: qsTr("Each device keeps its own level — 0 turns that device off")
+                }
+
+                DeviceBriRow {
+                    icon: "brightness_6"
+                    label: qsTr("All")
+                    value: root.masterBrightness
+                    accent: Colours.palette.m3primary
+                    onMoved: (v) => { root.masterBrightness = Math.round(v * 100); masterBriDebounce.restart(); }
                 }
 
                 DeviceBriRow {

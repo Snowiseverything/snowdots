@@ -884,6 +884,7 @@ class RGBHandler(BaseHTTPRequestHandler):
                 state["keyboard"]["color"] = color
                 state["keyboard"]["brightness"] = max(kb_bri, 1)
                 state["last_color"] = color
+                _save_state()
                 self._json({"ok": True, "color": color, "brightness": brightness, "kb_bri": kb_bri, "govee_bri": govee_bri, "fade": True})
                 return
             results: list = [None, None, None]

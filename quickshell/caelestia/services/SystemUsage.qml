@@ -13,6 +13,14 @@ Singleton {
     property real cpuPerc
     property real cpuTemp
 
+    // Extended CPU data
+    property var perCorePerc: []       // usage 0..1 per core
+    property real cpuFreqMhz: 0       // current average frequency
+    property real loadAvg1: 0
+    property real loadAvg5: 0
+    property real loadAvg15: 0
+    property int coreCount: 0
+
     // GPU properties
     readonly property string gpuType: GlobalConfig.services.gpuType.toUpperCase() || autoGpuType
     property string autoGpuType: "NONE"
@@ -20,10 +28,52 @@ Singleton {
     property real gpuPerc
     property real gpuTemp
 
+    // Extended GPU data
+    property real gpuClockSm: 0        // MHz
+    property real gpuClockMem: 0       // MHz
+    property real gpuPower: 0          // W
+    property real gpuVramUsed: 0       // MiB
+    property real gpuVramTotal: 0      // MiB
+    property real gpuFan: 0            // %
+
     // Memory properties
     property real memUsed
     property real memTotal
     readonly property real memPerc: memTotal > 0 ? memUsed / memTotal : 0
+    property real memAvailable
+    property real memCached
+    // RAM speed: env QS_RAM_SPEED_MHZ wins, falls back to config file
+    // ~/.config/quickshell/caelestia/ram-speed (live-editable, no restart needed)
+    property int ramSpeedFileValue: 0
+    readonly property real ramSpeedMhz: {
+        const fromEnv = parseInt(Quickshell.env("QS_RAM_SPEED_MHZ") ?? "0", 10);
+        if (Number.isFinite(fromEnv) && fromEnv > 0)
+            return fromEnv;
+        return ramSpeedFileValue;
+    }
+
+    // System info (static — loaded once, no root needed)
+    property string sysVendor: ""
+    property string sysProduct: ""
+    property string moboVendor: ""
+    property string moboName: ""
+    property int cpuBaseMhz: 0
+    property int cpuMaxMhz: 0
+    property int cpuPhysicalCores: 0
+    property string gpuDriver: ""
+    // CPU power estimate (W) — RAPL energy_uj is root-only on this system,
+    // so we estimate from utilization + the readable RAPL max power limit.
+    readonly property real cpuPowerW: {
+        const idleW = 8; // i7-12700KF idle baseline
+        const maxW = 125; // package-0 constraint_0_max_power_uw = 125000000 µW
+        if (cpuPerc <= 0) return idleW;
+        return idleW + cpuPerc * (maxW - idleW);
+    }
+
+    // Swap properties
+    property real swapUsed
+    property real swapTotal
+    readonly property real swapPerc: swapTotal > 0 ? swapUsed / swapTotal : 0
 
     // Storage properties (aggregated)
     readonly property real storagePerc: {
@@ -41,6 +91,8 @@ Singleton {
 
     property real lastCpuIdle
     property real lastCpuTotal
+    property var lastPerCoreTotal: []   // previous per-core busy+idle sums
+    property var lastPerCoreIdle: []
 
     property int refCount
 
@@ -86,9 +138,74 @@ Singleton {
         onTriggered: {
             stat.reload();
             meminfo.reload();
+            loadavg.reload();
+            cpuinfoFreq.reload();
             storage.running = true;
             gpuUsage.running = true;
+            gpuDetail.running = true;
             sensors.running = true;
+            ramSpeedFile.reload();
+        }
+    }
+
+    // RAM speed config file (live-editable: ~/.config/quickshell/caelestia/ram-speed)
+    FileView {
+        id: ramSpeedFile
+
+        path: `${Quickshell.env("HOME")}/.config/quickshell/caelestia/ram-speed`
+        onLoaded: {
+            const v = parseInt(text().trim(), 10);
+            root.ramSpeedFileValue = Number.isFinite(v) && v > 0 ? v : 0;
+        }
+    }
+
+    // --- Static system info (no root needed) ---
+    FileView {
+        path: "/sys/class/dmi/id/sys_vendor"
+        onLoaded: root.sysVendor = text().trim()
+    }
+
+    FileView {
+        path: "/sys/class/dmi/id/product_name"
+        onLoaded: root.sysProduct = text().trim()
+    }
+
+    FileView {
+        path: "/sys/class/dmi/id/board_vendor"
+        onLoaded: root.moboVendor = text().trim()
+    }
+
+    FileView {
+        path: "/sys/class/dmi/id/board_name"
+        onLoaded: root.moboName = text().trim()
+    }
+
+    FileView {
+        path: "/sys/devices/system/cpu/cpu0/cpufreq/base_frequency"
+        onLoaded: {
+            const khz = parseInt(text().trim(), 10);
+            root.cpuBaseMhz = Number.isFinite(khz) && khz > 0 ? Math.round(khz / 1000) : 0;
+        }
+    }
+
+    FileView {
+        path: "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
+        onLoaded: {
+            const khz = parseInt(text().trim(), 10);
+            root.cpuMaxMhz = Number.isFinite(khz) && khz > 0 ? Math.round(khz / 1000) : 0;
+        }
+    }
+
+    Process {
+        id: cpuTopology
+
+        running: true
+        command: ["sh", "-c", "cat /sys/devices/system/cpu/cpu*/topology/core_id 2>/dev/null | sort -un | wc -l"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const n = parseInt(text.trim(), 10);
+                root.cpuPhysicalCores = Number.isFinite(n) && n > 0 ? n : 0;
+            }
         }
     }
 
@@ -109,9 +226,10 @@ Singleton {
 
         path: "/proc/stat"
         onLoaded: {
-            const data = text().match(/^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
-            if (data) {
-                const stats = data.slice(1).map(n => parseInt(n, 10));
+            const lines = text().split("\n");
+            const first = lines[0].match(/^cpu\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
+            if (first) {
+                const stats = first.slice(1).map(n => parseInt(n, 10));
                 const total = stats.reduce((a, b) => a + b, 0);
                 const idle = stats[3] + (stats[4] ?? 0);
 
@@ -122,6 +240,59 @@ Singleton {
                 root.lastCpuTotal = total;
                 root.lastCpuIdle = idle;
             }
+
+            // Per-core usage: cpu0..cpuN lines
+            const perCore = [];
+            const totals = [];
+            const idles = [];
+            for (const line of lines) {
+                const m = line.match(/^cpu(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/);
+                if (!m)
+                    continue;
+                const idx = parseInt(m[1], 10);
+                const s = m.slice(2).map(n => parseInt(n, 10));
+                const t = s.reduce((a, b) => a + b, 0);
+                totals[idx] = t;
+                idles[idx] = s[3] + (s[4] ?? 0);
+                const prevTotal = (root.lastPerCoreTotal[idx] ?? 0);
+                const prevIdle = (root.lastPerCoreIdle[idx] ?? 0);
+                const tDiff = t - prevTotal;
+                const iDiff = idles[idx] - prevIdle;
+                perCore[idx] = tDiff > 0 ? Math.max(0, Math.min(1, 1 - iDiff / tDiff)) : 0;
+            }
+            root.perCorePerc = perCore;
+            root.lastPerCoreTotal = totals;
+            root.lastPerCoreIdle = idles;
+            root.coreCount = perCore.length;
+        }
+    }
+
+    FileView {
+        id: loadavg
+
+        path: "/proc/loadavg"
+        onLoaded: {
+            const parts = text().trim().split(/\s+/);
+            root.loadAvg1 = parseFloat(parts[0] ?? 0);
+            root.loadAvg5 = parseFloat(parts[1] ?? 0);
+            root.loadAvg15 = parseFloat(parts[2] ?? 0);
+        }
+    }
+
+    FileView {
+        id: cpuinfoFreq
+
+        path: "/proc/cpuinfo"
+        onLoaded: {
+            const mhz = [];
+            for (const line of text().split("\n")) {
+                const m = line.match(/cpu MHz\s*:\s*([0-9.]+)/);
+                if (m)
+                    mhz.push(parseFloat(m[1]));
+            }
+            if (mhz.length) {
+                root.cpuFreqMhz = mhz.reduce((a, b) => a + b, 0) / mhz.length;
+            }
         }
     }
 
@@ -131,8 +302,14 @@ Singleton {
         path: "/proc/meminfo"
         onLoaded: {
             const data = text();
+            const avail = parseInt(data.match(/MemAvailable: *(\d+)/)[1], 10) || 0;
+            const cached = (parseInt(data.match(/^Cached: *(\d+)/m)[1], 10) || 0) + (parseInt(data.match(/^SReclaimable: *(\d+)/m)[1], 10) || 0);
+            root.memAvailable = avail;
+            root.memCached = cached;
             root.memTotal = parseInt(data.match(/MemTotal: *(\d+)/)[1], 10) || 1;
-            root.memUsed = (root.memTotal - parseInt(data.match(/MemAvailable: *(\d+)/)[1], 10)) || 0;
+            root.memUsed = (root.memTotal - avail) || 0;
+            root.swapTotal = parseInt(data.match(/SwapTotal: *(\d+)/)[1], 10) || 0;
+            root.swapUsed = (root.swapTotal - parseInt(data.match(/SwapFree: *(\d+)/)[1], 10)) || 0;
         }
     }
 
@@ -276,6 +453,27 @@ Singleton {
                     root.gpuPerc = 0;
                     root.gpuTemp = 0;
                 }
+            }
+        }
+    }
+
+    // GPU clocks, power, VRAM, fan, driver (NVIDIA)
+    Process {
+        id: gpuDetail
+
+        command: root.gpuType === "NVIDIA" ? ["nvidia-smi", "--query-gpu=clocks.sm,clocks.mem,power.draw,memory.used,memory.total,fan.speed,driver_version", "--format=csv,noheader,nounits"] : ["echo"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (root.gpuType !== "NVIDIA")
+                    return;
+                const parts = text.trim().split(",").map(s => s.trim());
+                root.gpuClockSm = parseFloat(parts[0]) || 0;
+                root.gpuClockMem = parseFloat(parts[1]) || 0;
+                root.gpuPower = parseFloat(parts[2]) || 0;
+                root.gpuVramUsed = parseFloat(parts[3]) || 0;
+                root.gpuVramTotal = parseFloat(parts[4]) || 0;
+                root.gpuFan = parseFloat(parts[5]) || 0;
+                root.gpuDriver = parts[6] || "";
             }
         }
     }
