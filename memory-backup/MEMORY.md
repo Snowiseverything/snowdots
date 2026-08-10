@@ -79,4 +79,16 @@
 - test in home dir
 
 ## 2026-08-01
+
 - verify system works
+
+## 2026-08-09 — skwd-wall paper engine + skwd-paper compat libs
+
+- skwd-wall was using `awww` engine; switched to `skwd-paper` for shader transitions.
+- `skwd-paper` binary needs FFmpeg 6.x libs: `libavutil.so.60`, `libavcodec.so.62`, `libavformat.so.62`, `libavdevice.so.62`, `libswscale.so.9`, `libswresample.so.6`.
+- System only has FFmpeg 7.x/4.4; assembled compat libs from PCSX2/Steam Proton into `~/.local/lib/skwd-paper/`.
+- Created wrapper `~/.local/bin/skwd-paper` with `LD_LIBRARY_PATH=/home/snow/.local/lib/skwd-paper`.
+- Set `paper.engine = skwd-paper` + `paper.transition.enabled = true` in `~/.config/skwd-wall/config.json`.
+- Wired daemon via systemd override: `~/.config/systemd/user/skwd-daemon.service.d/override.conf` with `SKWD_PAPER_BIN=/home/snow/.local/bin/skwd-paper`.
+- Removed duplicate `skwd.service` and broken `/home/snow/shell.qml` test harness that was causing wall-ui launch failures.
+- Verified: wall-ui launches with `/usr/share/skwd-wall/shell.qml`, 334 wallpapers loaded, transitions work from GUI.
