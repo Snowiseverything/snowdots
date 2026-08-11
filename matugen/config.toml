@@ -54,7 +54,7 @@ output_path = '/home/snow/.config/BraveSoftware/Brave-Browser/current-theme.css'
 
 [templates.brave-site]
 input_path = '/home/snow/Dotfiles/matugen/templates/brave-site.css'
-output_path = '/home/snow/.cache/skwd-wall/brave-theme.css'
+output_path = '/home/snow/.cache/skwd-wall/theme.css'
 
 [templates.gtk3]
 input_path = '/home/snow/Dotfiles/matugen/templates/gtk.css'

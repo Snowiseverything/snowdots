@@ -61,7 +61,7 @@ Located at `~/.config/matugen/config.toml` (source: `~/Dotfiles/matugen/config.t
 | steam_experimental | `~/.../experimental-import.css`                         | Steam header                   |
 | vencord            | `~/.config/Vencord/themes/matugen.theme.css`            | Discord (Vencord)              |
 | brave              | `~/.config/BraveSoftware/.../current-theme.css`         | Brave browser                  |
-| brave-site         | `~/.cache/skwd-wall/brave-theme.css`                    | Brave new tab                  |
+| brave-site         | `~/.cache/skwd-wall/theme.css`                          | Brave new tab                  |
 | gtk3               | `~/.config/gtk-3.0/gtk.css`                             | GTK3 apps                      |
 | gtk4               | `~/.config/gtk-4.0/gtk.css`                             | GTK4 apps                      |
 | luatools           | `~/.cache/skwd-wall/luatools-colors.json`               | Luatools (post_hook applies)   |
