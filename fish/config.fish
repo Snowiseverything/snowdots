@@ -69,3 +69,8 @@ alias umount-hdd="sudo /usr/local/bin/umount-hdd"
 # >>> railway initialize >>>
 source "$HOME/.railway/env.fish"
 # <<< railway initialize <<<
+
+# Sync project docs repos -> vault on shell init
+if [ -f /home/snow/scripts/projects-sync.sh ]
+    /home/snow/scripts/projects-sync.sh >/dev/null 2>&1 &
+end
