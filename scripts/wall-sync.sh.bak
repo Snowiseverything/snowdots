@@ -150,13 +150,12 @@ echo "$WALLPAPER" >"$HOME/.local/state/caelestia/wallpaper/path.txt"
 ln -sf "$WALLPAPER" "$CACHE_DIR/current-wallpaper"
 
 # Generate colors from wallpaper palette
-# Skip if skwd already ran matugen within the last 2s (avoids
-# redundant work and cuts RGB-sync delay after wallpaper apply).
-COLORS_JSON="$CACHE_DIR/colors.json"
-if [ -f "$COLORS_JSON" ] && [ $(($(date +%s) - $(stat -c %Y "$COLORS_JSON" 2>/dev/null || echo 0))) -lt 2 ]; then
-	log "matugen already ran recently, skipping redundant matugen"
-else
-	matugen image "$WALLPAPER" --source-color-index 0 2>>"$LOG_FILE" || log_error "matugen failed"
+matugen image "$WALLPAPER" --source-color-index 0 2>>"$LOG_FILE" || log_error "matugen failed"
+
+# ── Wallpaper change notification (immediate, before slow theme updates) ──
+WALL_NAME=$(basename "$WALLPAPER")
+if command -v notify-send &>/dev/null; then
+	notify-send -i "$WALLPAPER" "Wallpaper Changed" "Applied: $WALL_NAME" 2>/dev/null || true
 fi
 
 # ── RGB sync (immediate, before UI updates to minimize color delay) ──────
@@ -181,7 +180,6 @@ fi
 # matugen + UI updates always run; RGB sync debounces so rapid wallpaper
 # cycling only triggers sync for the FINAL wallpaper in a burst.
 
-RGB_SYNC_STATUS="ok"
 LAST_ACCENT=$(cat "$CACHE_DIR/last_synced_accent" 2>/dev/null)
 CURRENT_ACCENT=$(jq -r '.accent' "$CACHE_DIR/colors.json" 2>/dev/null)
 
@@ -197,10 +195,7 @@ if [ -f "$CACHE_DIR/rgb-sync-debounce" ]; then
 	else
 		if [ "$CURRENT_ACCENT" != "$LAST_ACCENT" ] && [ -n "$CURRENT_ACCENT" ] && [ "$CURRENT_ACCENT" != "null" ]; then
 			log "Accent changed, syncing RGB"
-			bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || {
-				log_error "rgb-sync failed"
-				RGB_SYNC_STATUS="failed"
-			}
+			bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
 			echo "$CURRENT_ACCENT" >"$CACHE_DIR/last_synced_accent"
 		else
 			log "Accent unchanged ($CURRENT_ACCENT), skipping RGB sync"
@@ -209,10 +204,7 @@ if [ -f "$CACHE_DIR/rgb-sync-debounce" ]; then
 else
 	if [ "$CURRENT_ACCENT" != "$LAST_ACCENT" ] && [ -n "$CURRENT_ACCENT" ] && [ "$CURRENT_ACCENT" != "null" ]; then
 		log "Accent changed, syncing RGB"
-		bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || {
-			log_error "rgb-sync failed"
-			RGB_SYNC_STATUS="failed"
-		}
+		bash "$HOME/Dotfiles/scripts/rgb-sync.sh" >>"$LOG_FILE" 2>&1 || log_error "rgb-sync failed"
 		echo "$CURRENT_ACCENT" >"$CACHE_DIR/last_synced_accent"
 	else
 		log "Accent unchanged ($CURRENT_ACCENT), skipping RGB sync"
@@ -361,7 +353,7 @@ if [ -f "$KITTY_CACHE" ]; then
     { "type": "title", "format": "{user-name-colored}@{host-name-colored}" },
     { "type": "custom", "format": " \u001b[90m─────── Software ───────" },
     { "type": "os", "key": "󰣇", "keyColor": "$C1" },
-    { "type": "command", "key": "󰄉", "keyColor": "$C9", "text": "echo \$(( (\$(date +%s) - \$(date -d "2026-03-25" +%s)) / 86400 )) days", "shell": "/bin/sh" },
+    { "type": "command", "key": "󰄉", "keyColor": "$C9", "text": "birth_install=\$(stat -c %W / | tr -d '-'); now=\$(date +%s); echo \$(( (now - birth_install) / 86400 )) days", "shell": "/bin/sh" },
     { "type": "localip", "key": "󰩟", "keyColor": "$C2", "compact": true },
     { "type": "custom", "format": " \u001b[90m─────── Hardware ───────" },
     { "type": "cpu", "key": "󰻠", "keyColor": "$C1" },
@@ -432,14 +424,5 @@ if [ -x "$HOME/Dotfiles/scripts/toofan-theme.sh" ]; then
 fi
 
 # Notification after all syncs complete
-WALL_NAME=$(basename "$WALLPAPER")
-if command -v notify-send &>/dev/null; then
-	if [ "$RGB_SYNC_STATUS" = "ok" ]; then
-		notify-send -i "$WALLPAPER" "Wallpaper synced" "Colors applied: $WALL_NAME" 2>/dev/null || true
-	else
-		notify-send -i "$WALLPAPER" "Wallpaper sync failed" "RGB sync failed for: $WALL_NAME" 2>/dev/null || true
-	fi
-fi
-
 echo "Sync successful: $WALL_NAME"
 log "=== Wall-sync completed successfully ==="

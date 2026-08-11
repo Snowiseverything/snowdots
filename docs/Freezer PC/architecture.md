@@ -8,7 +8,7 @@
 | **DE/WM**      | Hyprland + Wayland                                                   |
 | **Shell**      | Fish + Starship prompt                                               |
 | **Config dir** | `~/Dotfiles/` (bare git repo at `~/.dotfiles`, managed by `dotsync`) |
-| **Hostname**   | Freezer (<local-ip>)                                              |
+| **Hostname**   | Freezer (<local-ip>)                                                 |
 | **GPU**        | NVIDIA (proprietary)                                                 |
 | **Keyboard**   | MAD68 HE (PID 0x1058, 32-byte HID reports)                           |
 
@@ -85,8 +85,7 @@ Located at `~/.config/matugen/config.toml` (source: `~/Dotfiles/matugen/config.t
 | Component       | Role                                                                                                |
 | --------------- | --------------------------------------------------------------------------------------------------- |
 | **skwd-daemon** | Wallpaper picker, browser, downloader. Runs as systemd user service (`systemctl --user start skwd`) |
-| **skwd-wall**   | GUI frontend for skwd. Config at `~/.config/skwd-wall/config.json`                                  |
-| **awww-daemon** | Wallpaper setter (Wayland). Sets image with fade transitions                                        |
+| **skwd-paper**  | Wallpaper renderer/transition engine (Wayland). Sets image with `chromatic-bloom` transition        |
 | **matugen**     | Color extraction from wallpaper image. Runs on each wallpaper change                                |
 
 ### Trigger chain
@@ -95,14 +94,14 @@ Located at `~/.config/matugen/config.toml` (source: `~/Dotfiles/matugen/config.t
 Super+W → skwd wall toggle
                 │
                 ▼
-skwd-daemon changes wallpaper via awww
+skwd-daemon changes wallpaper via skwd-paper
                 │
                 ▼
 skwd-wall postProcessing: wall-sync.sh (debounced 5s)
                 │
-                ├─ awww img <wall> --fade 0.3s         (already set by skwd, just ensures)
-                ├─ matugen image <wall>                 (generates all color files)
-                ├─ rgb-sync.sh                          (OpenRGB + keyboard)
+                ├─ skwd-paper <wallpaper> --shader chromatic-bloom  ← wallpaper transition
+                ├─ matugen image <wallpaper>                 (generates all color files)
+                ├─ rgb-sync.sh                          ← OpenRGB + keyboard
                 ├─ hyprctl reload + border update
                 ├─ app/UI color reloads...
                 └─ notify-send "Wallpaper Changed"
@@ -111,7 +110,7 @@ skwd-wall postProcessing: wall-sync.sh (debounced 5s)
 ### skwd-wall config.json key settings
 
 - `pickOnlyMode: true` — picker closes after selection
-- `paper.engine: "skwd-paper"` — but awww is used directly for transition
+- `paper.engine: "skwd-paper"` — skwd-paper handles transitions
 - `animations: false` — no animations
 - `ExternalMatugenCommand: "matugen image %path% --source-color-index 0"` — redundant with post_processing in matugen config
 - `postProcessing: [wall-sync.sh, rename-wallpapers.sh]`
@@ -485,7 +484,7 @@ Browser UI → WebSocket → server.js → stdin → rgb_engine.py → HID → K
 
 **Checks**:
 
-1. Wallpaper set? Check `awww query`
+1. Wallpaper set? Check `skwd wall outputs`
 2. matugen succeeded? `cat ~/.local/share/wall-sync/logs/wall-sync.log`
 3. `hyprctl reload` needed? Run manually
 4. Run manually: `bash ~/Dotfiles/scripts/wall-reset.sh`
@@ -536,7 +535,7 @@ Run `chmod a+wr /opt/spotify/Apps -R && spicetify backup apply` (sudo needed). F
 | Service                       | Status                           | Purpose                                     |
 | ----------------------------- | -------------------------------- | ------------------------------------------- |
 | `skwd-daemon`                 | user service                     | Wallpaper daemon                            |
-| `awww-daemon`                 | user (~/.xprofile)               | Wallpaper setter                            |
+| `skwd-paper`                  | wallpaper renderer               | Wallpaper setter/transitions                |
 | `openrgb --server`            | user (exec-once)                 | RGB controller server                       |
 | `caelestia`                   | user (qs -d)                     | Desktop shell                               |
 | `hypridle`                    | user (exec-once)                 | Idle management                             |
@@ -570,10 +569,10 @@ Run `chmod a+wr /opt/spotify/Apps -R && spicetify backup apply` (sudo needed). F
 
 ## 14. Network
 
-| Device  | IP            | Tailscale      |
-| ------- | ------------- | -------------- |
-| Freezer | <local-ip> | <tailscale-ip>   |
-| Snowpi  | <local-ip>  | <tailscale-ip> |
+| Device  | IP         | Tailscale      |
+| ------- | ---------- | -------------- |
+| Freezer | <local-ip> | <tailscale-ip> |
+| Snowpi  | <local-ip> | <tailscale-ip> |
 
 ---
 
@@ -646,9 +645,11 @@ snapper -c root delete <num>                  # delete snapshot (auto-cleanup ha
 ## 17. skwd-wall Paper Engine
 
 ### Problem
+
 `skwd-paper` binary requires FFmpeg 6.x libraries (`libavutil.so.60`, `libavcodec.so.62`, etc.) which are not available on the current system (has FFmpeg 7.x/4.4).
 
 ### Solution
+
 - **Compat libs**: `~/.local/lib/skwd-paper/` contains FFmpeg 6.x libs from PCSX2/Steam Proton:
   - `libavutil.so.60`, `libavcodec.so.62`, `libavformat.so.62`, `libavdevice.so.62`
   - `libswscale.so.9`, `libswresample.so.6`, `libx264.so.163`
@@ -657,5 +658,6 @@ snapper -c root delete <num>                  # delete snapshot (auto-cleanup ha
 - **Systemd override**: `~/.config/systemd/user/skwd-daemon.service.d/override.conf` sets `SKWD_PAPER_BIN=/home/snow/.local/bin/skwd-paper`
 
 ### Cleanup
+
 - Removed duplicate `skwd.service` (was conflicting with `skwd-daemon.service`)
 - Removed broken `/home/snow/shell.qml` test harness that caused `qs.services` import failures in wall-ui
