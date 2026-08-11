@@ -92,3 +92,13 @@
 - Wired daemon via systemd override: `~/.config/systemd/user/skwd-daemon.service.d/override.conf` with `SKWD_PAPER_BIN=/home/snow/.local/bin/skwd-paper`.
 - Removed duplicate `skwd.service` and broken `/home/snow/shell.qml` test harness that was causing wall-ui launch failures.
 - Verified: wall-ui launches with `/usr/share/skwd-wall/shell.qml`, 334 wallpapers loaded, transitions work from GUI.
+
+## 2026-08-09 — Revert boot/shutdown animation
+
+- Removed `govee-boot-anim.py` and `govee-boot-anim.service`
+- Removed `__pycache__` for boot anim
+- Disabled boot animation systemd unit
+- Kept `govee-fast.service` for runtime LED control
+- `fade-rgb.py` and `rgb-bridge.py` unchanged
+- Reason: boot animation does not stop when desktop is ready
+- Will revisit with more reliable desktop-ready signal
