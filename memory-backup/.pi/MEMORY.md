@@ -373,3 +373,12 @@ sudo journalctl --vacuum-size=100M
 - 2026-08-06: ScriptCat AI Agent provider config (works): Provider=openai (default), API Base URL=`https://opencode.ai/zen/go/v1` (opencode-go gateway, key from `~/.local/share/opencode/auth.json`), Default Model=`qwen3.7-plus`/`minimax-m3`/`kimi-k2.7-code`. GOTCHA: trailing space/slash in base URL → `${base}/models` 404s → ScriptCat's Fetch Models has NO error catch (silent fail, dropdown stays stale). Also: opencode local serve (4096) is native REST (sessions/PTY), NOT OpenAI-compatible — can't be used as ScriptCat base URL.
 - 2026-08-06: VRR on Microstep G274QPF E2 (Freezer): works. Requires (1) monitor OSD Adaptive Sync ON — driver reports `vrr_capable:0` until enabled (this was the silent killer), (2) Hyprland 0.56 Lua config `misc.vrr = 2` (2=fullscreen-only, 1=always, 0=off) in ~/Dotfiles/hypr/hyprland.lua. Runtime: `hyprctl eval 'hl.monitor({ output = "DP-3", mode = "2560x1440@180", position = "0x0", scale = 1, vrr = 2 })'` — NOT hyprctl keyword (0.55+ needs Lua). Verify: `hyprctl monitors -j` → vrr true only in fullscreen. Game setting: RE9 FrameRate=Variable + VSync=False (uncapped, VRR handles 70-110fps; Max120 was the no-VRR fallback).
 - 2026-08-06: viymess deploy = GitLab integration only. Project linked to gitlab sn0wman/viymess (productionBranch main, rootDirectory apps/storefront). NO `.gitlab-ci.yml`, NO snowpi build — the double-build was Vercel git integration (source:git on push) PLUS manual `vercel deploy --yes` (source:cli) in the same command chain. DECISION: Option A — stop CLI deploys, push to origin only; Vercel auto-builds per branch. Git-push failures (lockfile/standalone ENOENT) fixed in 462fb82+b17eaef so git builds pass. Single-push config: push.default=simple, remote.pushDefault=origin, main tracks origin/main. Snowpi stays fetch-only mirror. Landing+analytics work on dev-sprint1; main untouched (old Georgia build).
+
+## Bafra Swarm — Workspace Rules
+
+- **Repos:** `swarm-core`, `swarm-mobile`, `swarm-dashboard`
+- **Workstations:** Joseph (CachyOS desktop), Mahamad (CachyOS Dell laptop)
+- **Branching:** All development starts on and targets `dev`; never commit directly to `main` or production branches.
+- **Editor:** `nano` only; never `micro`.
+- **Tracking:** Update `Progress.md` when task state changes.
+- **Mandatory Testing Rule:** Never commit or push code without testing it first—either run by the local agent, Joseph, or Mahamad. Code must be verified functional before merging into `dev` or `main`.
