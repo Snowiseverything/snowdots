@@ -1,17 +1,12 @@
 #!/bin/bash
-# Caelestia restart — kill ALL qs instances, clean locks, start one fresh
+# Caelestia restart — kill ALL caelestia qs instances, clean locks, start one fresh
+set -euo pipefail
+
 QS_RUNDIR="/run/user/$(id -u)/quickshell"
 
-PIDS=$(pgrep -x "qs" 2>/dev/null)
-if [ -n "$PIDS" ]; then
-    kill -TERM $PIDS 2>/dev/null
-    sleep 0.3
-    PIDS=$(pgrep -x "qs" 2>/dev/null)
-    if [ -n "$PIDS" ]; then
-        kill -KILL $PIDS 2>/dev/null
-        sleep 0.3
-    fi
-fi
+# Match both `qs` and `quickshell` invocations for the caelestia config
+pkill -f ' -c caelestia' 2>/dev/null || true
+sleep 0.5
 
 rm -rf "$QS_RUNDIR" 2>/dev/null
 mkdir -p "$QS_RUNDIR"
