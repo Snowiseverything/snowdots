@@ -15,7 +15,8 @@ ColumnLayout {
     required property string title
     required property NexusState nState
     property bool isSubPage
-    readonly property int cappedWidth: Math.min(800, width)
+    readonly property int cappedWidth: Math.min(Tokens.sizes.nexus.maxContentWidth, width)
+    readonly property alias flickable: flickable
 
     default property Item contentChild
 
@@ -26,6 +27,7 @@ ColumnLayout {
         implicitWidth: header.implicitWidth
         implicitHeight: header.implicitHeight - Layout.bottomMargin
         Layout.bottomMargin: -flickable.topMargin // Extra height to block clicks on flickable top margin
+        onClicked: focus = true
 
         RowLayout {
             id: header
@@ -68,5 +70,9 @@ ColumnLayout {
 
         contentHeight: root.contentChild?.implicitHeight ?? 0
         contentItem.children: [root.contentChild]
+
+        TapHandler {
+            onTapped: flickable.focus = true
+        }
     }
 }

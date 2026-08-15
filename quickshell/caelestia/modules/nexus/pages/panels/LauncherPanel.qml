@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
-import qs.components
 import qs.modules.nexus.common
 
 PageBase {
@@ -25,7 +24,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             first: true
             text: qsTr("Enabled")
             checked: Config.launcher.enabled
@@ -33,12 +31,32 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
-            last: true
             text: qsTr("Show on hover")
             subtext: qsTr("Reveal when the cursor reaches the screen edge")
             checked: Config.launcher.showOnHover
             onToggled: GlobalConfig.launcher.showOnHover = checked
+        }
+
+        TextFieldRow {
+            id: prefixRow
+
+            last: true
+            label: qsTr("Action prefix")
+            subtext: qsTr("Prefix used to run actions in the launcher")
+            errorText: qsTr("Prefix must not be alphanumeric")
+            value: GlobalConfig.launcher.actionPrefix === ">" ? "" : GlobalConfig.launcher.actionPrefix // TODO: replace with empty only when not loaded once loaded state is exposed
+            placeholderText: ">"
+            maximumLength: 1
+            smallField: true
+            validate: /^[^a-zA-Z0-9\s]$/
+            onEditingFinished: value => {
+                if (!field.valid)
+                    return;
+                /// TODO: replace with GlobalConfig.launcher.resetOption("actionPrefix") on empty commit when reset is fixed
+                GlobalConfig.launcher.actionPrefix = value || ">";
+                if (GlobalConfig.launcher.actionPrefix === ">")
+                    clear();
+            }
         }
 
         // Display
@@ -47,7 +65,6 @@ PageBase {
         }
 
         StepperRow {
-            Layout.fillWidth: true
             first: true
             label: qsTr("Max items shown")
             value: Config.launcher.maxShown
@@ -58,7 +75,6 @@ PageBase {
         }
 
         StepperRow {
-            Layout.fillWidth: true
             label: qsTr("Max wallpapers")
             value: Config.launcher.maxWallpapers
             from: 1
@@ -68,7 +84,6 @@ PageBase {
         }
 
         StepperRow {
-            Layout.fillWidth: true
             last: true
             label: qsTr("Drag threshold")
             subtext: qsTr("Pixels dragged before the launcher opens")
@@ -85,7 +100,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             first: true
             text: qsTr("Vim keybinds")
             subtext: qsTr("Navigate results with Ctrl+hjkl")
@@ -94,7 +108,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             last: true
             text: qsTr("Enable dangerous actions")
             subtext: qsTr("Allow actions that shut down or log out")
@@ -108,7 +121,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             first: true
             text: qsTr("Apps")
             checked: GlobalConfig.launcher.useFuzzy.apps
@@ -116,28 +128,24 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             text: qsTr("Actions")
             checked: GlobalConfig.launcher.useFuzzy.actions
             onToggled: GlobalConfig.launcher.useFuzzy.actions = checked
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             text: qsTr("Schemes")
             checked: GlobalConfig.launcher.useFuzzy.schemes
             onToggled: GlobalConfig.launcher.useFuzzy.schemes = checked
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             text: qsTr("Variants")
             checked: GlobalConfig.launcher.useFuzzy.variants
             onToggled: GlobalConfig.launcher.useFuzzy.variants = checked
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             last: true
             text: qsTr("Wallpapers")
             checked: GlobalConfig.launcher.useFuzzy.wallpapers

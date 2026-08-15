@@ -23,7 +23,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             first: true
             text: qsTr("Persistent")
             subtext: qsTr("Keep the bar visible at all times")
@@ -32,7 +31,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             text: qsTr("Show on hover")
             subtext: qsTr("Reveal the bar when the cursor reaches the screen edge")
             checked: Config.bar.showOnHover
@@ -40,7 +38,6 @@ PageBase {
         }
 
         StepperRow {
-            Layout.fillWidth: true
             last: true
             label: qsTr("Drag threshold")
             subtext: qsTr("Pixels dragged before the bar reveals")
@@ -59,38 +56,38 @@ PageBase {
         NavRow {
             first: true
             icon: "workspaces"
-            label: qsTr("Workspaces")
-            status: qsTr("Indicators, window icons")
-            onClicked: root.nState.openSubPage(5)
-        }
-
-        NavRow {
-            icon: "web_asset"
-            label: qsTr("Active window")
-            status: qsTr("Title display, popout")
+            text: qsTr("Workspaces")
+            subtext: qsTr("Indicators, window icons")
             onClicked: root.nState.openSubPage(6)
         }
 
         NavRow {
-            icon: "widgets"
-            label: qsTr("Tray")
-            status: qsTr("System tray icons")
+            icon: "web_asset"
+            text: qsTr("Active window")
+            subtext: qsTr("Title display, popout")
             onClicked: root.nState.openSubPage(7)
         }
 
         NavRow {
-            icon: "signal_cellular_alt"
-            label: qsTr("Status icons")
-            status: qsTr("Visible indicators")
+            icon: "widgets"
+            text: qsTr("Tray")
+            subtext: qsTr("System tray icons")
             onClicked: root.nState.openSubPage(8)
+        }
+
+        NavRow {
+            icon: "signal_cellular_alt"
+            text: qsTr("Status icons")
+            subtext: qsTr("Visible indicators")
+            onClicked: root.nState.openSubPage(9)
         }
 
         NavRow {
             last: true
             icon: "schedule"
-            label: qsTr("Clock")
-            status: qsTr("Date, icon, background")
-            onClicked: root.nState.openSubPage(9)
+            text: qsTr("Clock")
+            subtext: qsTr("Date, icon, background")
+            onClicked: root.nState.openSubPage(10)
         }
 
         // Scroll actions
@@ -99,7 +96,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             first: true
             text: qsTr("Workspaces")
             subtext: qsTr("Scroll over the workspace indicator to switch workspaces")
@@ -108,7 +104,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             text: qsTr("Volume")
             subtext: qsTr("Scroll on the top half of the bar to adjust volume")
             checked: Config.bar.scrollActions.volume
@@ -116,7 +111,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             last: true
             text: qsTr("Brightness")
             subtext: qsTr("Scroll on the bottom half of the bar to adjust brightness")

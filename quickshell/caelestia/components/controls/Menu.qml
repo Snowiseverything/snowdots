@@ -41,6 +41,8 @@ MouseArea {
     anchors.fill: parent
 
     enabled: expanded
+    hoverEnabled: expanded
+    cursorShape: expanded ? Qt.ArrowCursor : undefined
     onClicked: expanded = false
 
     opacity: expanded ? 1 : 0
@@ -92,6 +94,12 @@ MouseArea {
             Behavior on yScale {
                 Anim {}
             }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            onWheel: e => e.accepted = true
         }
 
         StyledRect {

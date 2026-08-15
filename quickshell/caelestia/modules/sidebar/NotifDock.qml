@@ -16,7 +16,7 @@ Item {
     id: root
 
     required property Props props
-    required property DrawerVisibilities visibilities
+    required property ScreenState screenState
     readonly property int notifCount: Notifs.list.reduce((acc, n) => n.closed ? acc : acc + 1, 0)
 
     anchors.fill: parent
@@ -82,7 +82,7 @@ Item {
         anchors.topMargin: Tokens.spacing.medium
 
         radius: Tokens.rounding.medium
-        color: Colours.palette.m3surfaceContainerLow
+        color: "transparent"
 
         Loader {
             asynchronous: true
@@ -138,7 +138,7 @@ Item {
                 id: notifList
 
                 props: root.props
-                visibilities: root.visibilities
+                screenState: root.screenState
                 container: view
             }
         }

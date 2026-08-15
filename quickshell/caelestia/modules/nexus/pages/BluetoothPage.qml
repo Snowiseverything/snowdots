@@ -26,7 +26,6 @@ PageBase {
         spacing: Tokens.spacing.extraSmall / 2
 
         ToggleRow {
-            Layout.fillWidth: true
             first: true
             text: qsTr("Bluetooth")
             font: Tokens.font.body.medium
@@ -99,7 +98,7 @@ PageBase {
                             anchors.centerIn: parent
                             text: Icons.getBluetoothIcon(device.modelData?.icon ?? "")
                             color: device.connected ? Colours.palette.m3onPrimary : Colours.palette.m3onSecondaryContainer
-                            font: Tokens.font.icon.medium
+                            fontStyle: Tokens.font.icon.medium
                             fill: device.connected ? 1 : 0
                             opacity: device.textOpacity
 
@@ -169,53 +168,21 @@ PageBase {
             }
         }
 
-        ConnectedRect {
-            Layout.fillWidth: true
-            implicitHeight: pairLayout.implicitHeight + pairLayout.anchors.margins * 2
+        RowButton {
             last: true
-
-            StateLayer {
-                disabled: !root.btEnabled
-                onClicked: root.nState.openSubPage(2)
-            }
-
-            RowLayout {
-                id: pairLayout
-
-                anchors.fill: parent
-                anchors.margins: Tokens.padding.medium
-                anchors.leftMargin: Tokens.padding.largeIncreased
-                anchors.rightMargin: Tokens.padding.largeIncreased
-                spacing: Tokens.spacing.medium
-                opacity: root.btEnabled ? 1 : 0.5
-
-                Behavior on opacity {
-                    Anim {}
-                }
-
-                MaterialIcon {
-                    text: "add"
-                    font: Tokens.font.icon.medium
-                }
-
-                StyledText {
-                    Layout.fillWidth: true
-                    text: qsTr("Pair new device")
-                    font: Tokens.font.body.small
-                    elide: Text.ElideRight
-                }
-            }
+            icon: "add"
+            text: qsTr("Pair new device")
+            disabled: !root.btEnabled
+            onClicked: root.nState.openSubPage(2)
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             Layout.topMargin: Tokens.spacing.large - parent.spacing
 
             first: true
             text: qsTr("Discoverable")
             subtext: qsTr("Allow nearby devices to find this one")
-            enabled: root.btEnabled
-            opacity: root.btEnabled ? 1 : 0.5
+            disabled: !root.btEnabled
             checked: root.adapter?.discoverable ?? false
             onToggled: {
                 if (root.adapter)
@@ -228,12 +195,10 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             last: true
             text: qsTr("Pairable")
             subtext: qsTr("Allow nearby devices to pair with this one")
-            enabled: root.btEnabled
-            opacity: root.btEnabled ? 1 : 0.5
+            disabled: !root.btEnabled
             checked: root.adapter?.pairable ?? false
             onToggled: {
                 if (root.adapter)

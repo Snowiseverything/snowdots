@@ -7,21 +7,6 @@ import qs.services
 Item {
     id: root
 
-    function ampm(time: string): string {
-        if (!time || time === "--:--") return "";
-        const h = parseInt(time.split(":")[0]);
-        return h >= 12 ? "PM" : "AM";
-    }
-
-    function hour12(time: string): string {
-        if (!time || time === "--:--") return time;
-        const parts = time.split(":");
-        let h = parseInt(parts[0]);
-        const m = parts[1];
-        h = h % 12 || 12;
-        return h + ":" + m;
-    }
-
     readonly property var today: Weather.forecast && Weather.forecast.length > 0 ? Weather.forecast[0] : null
 
     implicitWidth: layout.implicitWidth > 800 ? layout.implicitWidth : 840
@@ -204,113 +189,14 @@ Item {
 
                         StyledText {
                             Layout.alignment: Qt.AlignHCenter
-                            text: forecastItem.modelData.maxTempC + "° / " + forecastItem.modelData.minTempC + "°"
+                            text: {
+                                const min = Weather.formatTemp(forecastItem.modelData.minTempC).slice(0, -1);
+                                const max = Weather.formatTemp(forecastItem.modelData.maxTempC).slice(0, -1);
+                                return `${min} / ${max}`;
+                            }
                             font: Tokens.font.body.builders.small.weight(Font.DemiBold).build()
                             color: Colours.palette.m3tertiary
                         }
-                    }
-                }
-            }
-        }
-
-        StyledText {
-            Layout.topMargin: Tokens.spacing.medium
-            Layout.leftMargin: Tokens.padding.medium
-            visible: Weather.fajr !== "--:--"
-            text: qsTr("Prayer Times")
-            font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
-            color: Colours.palette.m3onSurface
-        }
-
-        GridLayout {
-            Layout.fillWidth: true
-            Layout.bottomMargin: Tokens.padding.large
-            visible: Weather.fajr !== "--:--"
-            columns: 3
-            rowSpacing: Tokens.spacing.medium
-            columnSpacing: Tokens.spacing.medium
-
-            PrayerTimeCard {
-                label: "Fajr"
-                value: Weather.fajr
-                colour: Colours.palette.m3tertiary
-            }
-            PrayerTimeCard {
-                label: "Sunrise"
-                value: Weather.sunriseTime
-                colour: Colours.palette.m3primary
-            }
-            PrayerTimeCard {
-                label: "Dhuhr"
-                value: Weather.dhuhr
-                colour: Colours.palette.m3secondary
-            }
-            PrayerTimeCard {
-                label: "Asr"
-                value: Weather.asr
-                colour: Colours.palette.m3tertiary
-            }
-            PrayerTimeCard {
-                label: "Maghrib"
-                value: Weather.maghrib
-                colour: Colours.palette.m3primary
-            }
-            PrayerTimeCard {
-                label: "Isha"
-                value: Weather.isha
-                colour: Colours.palette.m3secondary
-            }
-        }
-    }
-
-    component PrayerTimeCard: StyledRect {
-        id: prayerRoot
-
-        property string label
-        property string value
-        property color colour
-
-        Layout.fillWidth: true
-        Layout.preferredHeight: 48
-        radius: Tokens.rounding.medium
-        color: Colours.tPalette.m3surfaceContainer
-
-        Row {
-            anchors.centerIn: parent
-            spacing: Tokens.spacing.small
-
-            MaterialIcon {
-                text: "mosque"
-                color: prayerRoot.colour
-                fontStyle: Tokens.font.icon.medium
-                anchors.verticalCenter: parent.verticalCenter
-            }
-
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 0
-
-                StyledText {
-                    text: prayerRoot.label
-                    font: Tokens.font.body.small
-                    opacity: 0.7
-                    horizontalAlignment: Text.AlignLeft
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-                Row {
-                    spacing: 2
-                    StyledText {
-                        text: root.hour12(prayerRoot.value)
-                        font: Tokens.font.body.builders.small.weight(Font.DemiBold).build()
-                        horizontalAlignment: Text.AlignLeft
-                        color: prayerRoot.colour
-                    }
-                    StyledText {
-                        text: root.ampm(prayerRoot.value).toUpperCase()
-                        font: Tokens.font.body.builders.small.weight(Font.DemiBold).scale(1.1).build()
-                        horizontalAlignment: Text.AlignLeft
-                        color: prayerRoot.colour
-                        opacity: 0.8
                     }
                 }
             }

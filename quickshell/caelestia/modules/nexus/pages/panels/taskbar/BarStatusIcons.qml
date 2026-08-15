@@ -7,6 +7,16 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
+    readonly property var builtinIcons: ({
+            lockStatus: qsTr("Lock keys"),
+            kbLayout: qsTr("Keyboard layout"),
+            audio: qsTr("Speakers"),
+            microphone: qsTr("Microphone"),
+            network: qsTr("Network"),
+            bluetooth: qsTr("Bluetooth"),
+            battery: qsTr("Battery")
+        })
+
     title: qsTr("Status icons")
     isSubPage: true
 
@@ -22,62 +32,53 @@ PageBase {
             text: qsTr("Visible icons")
         }
 
-        ToggleRow {
-            Layout.fillWidth: true
+        ListEditor {
+            function labelFor(item: var): string {
+                const prettyName = root.builtinIcons[item.id];
+                if (prettyName)
+                    return prettyName;
+                const label = item.id.replace(/([A-Z])/g, " $1");
+                return label.charAt(0).toUpperCase() + label.slice(1).toLowerCase();
+            }
+
+            function toggledFor(item: var): bool {
+                return item.enabled;
+            }
+
+            z: 1
             first: true
-            text: qsTr("Speakers")
-            checked: Config.bar.status.showAudio
-            onToggled: GlobalConfig.bar.status.showAudio = checked
+            values: Config.bar.statusIcons.values
+            onItemMoved: (from, to) => GlobalConfig.bar.statusIcons.move(from, to)
+            onItemRemoved: index => GlobalConfig.bar.statusIcons.remove(index)
+            onItemToggled: (index, checked) => GlobalConfig.bar.statusIcons.at(index).enabled = checked
         }
 
-        ToggleRow {
-            Layout.fillWidth: true
-            text: qsTr("Microphone")
-            checked: Config.bar.status.showMicrophone
-            onToggled: GlobalConfig.bar.status.showMicrophone = checked
-        }
+        DialogSelectButton {
+            id: addItemContainer
 
-        ToggleRow {
-            Layout.fillWidth: true
-            text: qsTr("Keyboard layout")
-            checked: Config.bar.status.showKbLayout
-            onToggled: GlobalConfig.bar.status.showKbLayout = checked
-        }
+            rootParent: root.flickable
+            icon: "add"
+            label: qsTr("Add entry")
+            header: qsTr("Add new entry")
+            acceptLabel: qsTr("Add")
 
-        ToggleRow {
-            Layout.fillWidth: true
-            text: qsTr("Network")
-            checked: Config.bar.status.showNetwork
-            onToggled: GlobalConfig.bar.status.showNetwork = checked
-        }
+            model: {
+                const builtins = Object.keys(root.builtinIcons).map(k => ({
+                            id: k,
+                            label: root.builtinIcons[k]
+                        }));
+                return builtins;
+            }
 
-        ToggleRow {
-            Layout.fillWidth: true
-            text: qsTr("Wi-Fi")
-            checked: Config.bar.status.showWifi
-            onToggled: GlobalConfig.bar.status.showWifi = checked
-        }
+            onAccepted: {
+                if (!selectedItem) // Should never happen but just in case
+                    return;
 
-        ToggleRow {
-            Layout.fillWidth: true
-            text: qsTr("Bluetooth")
-            checked: Config.bar.status.showBluetooth
-            onToggled: GlobalConfig.bar.status.showBluetooth = checked
-        }
-
-        ToggleRow {
-            Layout.fillWidth: true
-            text: qsTr("Battery")
-            checked: Config.bar.status.showBattery
-            onToggled: GlobalConfig.bar.status.showBattery = checked
-        }
-
-        ToggleRow {
-            Layout.fillWidth: true
-            last: true
-            text: qsTr("Caps lock")
-            checked: Config.bar.status.showLockStatus
-            onToggled: GlobalConfig.bar.status.showLockStatus = checked
+                GlobalConfig.bar.statusIcons.insert({
+                    id: selectedItem,
+                    enabled: true
+                });
+            }
         }
 
         // Behaviour
@@ -86,7 +87,6 @@ PageBase {
         }
 
         ToggleRow {
-            Layout.fillWidth: true
             first: true
             last: true
             text: qsTr("Popout on hover")

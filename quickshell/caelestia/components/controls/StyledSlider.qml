@@ -16,6 +16,8 @@ Slider {
     property real waveFrequency: 6
     property int waveDuration: 1000
     property int radius: Tokens.rounding.medium
+    property bool interactionOnMove: true
+    readonly property bool dragging: mouse.pressed
 
     property color fgColour: enabled ? Colours.palette.m3primary : Qt.alpha(Colours.palette.m3onSurface, 0.38)
     property color bgColour: enabled ? Colours.palette.m3secondaryContainer : Qt.alpha(Colours.palette.m3onSurface, 0.1)
@@ -171,10 +173,13 @@ Slider {
         }
         onPositionChanged: e => {
             dragMovement = (e.x - pressStartX) / width;
-            root.interaction(posBinding.value);
+            if (root.interactionOnMove)
+                root.interaction(posBinding.value);
         }
         onReleased: e => {
-            root.interaction(posBinding.value);
+            const clickPos = e.x / width;
+            const finalPos = mouse.dragMovement !== 0 ? posBinding.value : CUtils.clamp(clickPos, 0, 1);
+            root.interaction(finalPos);
             widthBehavior.enabled = true;
             dragMovement = 0;
         }

@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Caelestia
 import Caelestia.Config
+import Caelestia.Services
 import qs.components
 import qs.components.controls
 import qs.services
@@ -12,7 +13,7 @@ import qs.utils
 Column {
     id: root
 
-    required property DrawerVisibilities visibilities
+    required property ScreenState screenState
 
     padding: Tokens.padding.large
     rightPadding: CUtils.clamp(padding - Config.border.thickness, 0, padding)
@@ -30,11 +31,11 @@ Column {
 
         Connections {
             function onLauncherChanged(): void {
-                if (!root.visibilities.launcher)
+                if (!root.screenState.launcher)
                     logout.forceActiveFocus();
             }
 
-            target: root.visibilities
+            target: root.screenState
         }
     }
 
@@ -45,7 +46,7 @@ Column {
         command: Config.session.commands.shutdown
 
         KeyNavigation.up: logout
-        KeyNavigation.down: sleep
+        KeyNavigation.down: hibernate
     }
 
     AnimatedImage {
@@ -61,10 +62,10 @@ Column {
     }
 
     SessionButton {
-        id: sleep
+        id: hibernate
 
-        icon: "sleep"
-        command: ["systemctl", "suspend"]
+        icon: Config.session.icons.hibernate
+        command: Config.session.commands.hibernate
 
         KeyNavigation.up: shutdown
         KeyNavigation.down: reboot
@@ -76,13 +77,18 @@ Column {
         icon: Config.session.icons.reboot
         command: Config.session.commands.reboot
 
-        KeyNavigation.up: sleep
+        KeyNavigation.up: hibernate
     }
 
     component SessionButton: IconButton {
         id: button
 
         required property list<string> command
+
+        function exec(): void {
+            if (!SessionManager.exec(command))
+                Quickshell.execDetached(command);
+        }
 
         implicitWidth: Tokens.sizes.session.button
         implicitHeight: Tokens.sizes.session.button
@@ -91,11 +97,11 @@ Column {
         inactiveOnColour: activeFocus ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurface
         radius: pressed ? Tokens.rounding.medium : activeFocus ? Tokens.rounding.extraLarge : Tokens.rounding.largeIncreased
         font: Tokens.font.icon.builders.large.scale(1.3).build()
-        onClicked: Quickshell.execDetached(button.command)
+        onClicked: exec()
 
-        Keys.onEnterPressed: Quickshell.execDetached(button.command)
-        Keys.onReturnPressed: Quickshell.execDetached(button.command)
-        Keys.onEscapePressed: root.visibilities.session = false
+        Keys.onEnterPressed: exec()
+        Keys.onReturnPressed: exec()
+        Keys.onEscapePressed: root.screenState.session = false
         Keys.onPressed: event => {
             if (!Config.session.vimKeybinds)
                 return;

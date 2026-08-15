@@ -96,23 +96,12 @@ StyledClippingRect {
             anchors.fill: layout
             onClicked: event => {
                 const ws = (layout.childAt(event.x, event.y) as Workspace)?.ws;
+                if (!ws)
+                    return;
                 if (Hypr.activeWsId !== ws)
-                    Hypr.dispatch(`workspace ${ws}`);
+                    Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ workspace = "${ws}" })` : `workspace ${ws}`);
                 else
-                    Hypr.dispatch("togglespecialworkspace special");
-            }
-        }
-
-        // Wheel handler covers the full workspace widget area, not just the dot layout
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.NoButton
-            onWheel: event => {
-                if (event.angleDelta.y > 0)
-                    Hypr.dispatch("workspace r-1");
-                else
-                    Hypr.dispatch("workspace r+1");
-                event.accepted = true;
+                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.workspace.toggle_special("special")' : "togglespecialworkspace special");
             }
         }
 

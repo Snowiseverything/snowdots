@@ -21,10 +21,6 @@ StyledRect {
         service: Memory
     }
 
-    // Keep the SystemUsage timer alive (swap/available/cached data)
-    Component.onCompleted: SystemUsage.refCount += 1
-    Component.onDestruction: SystemUsage.refCount -= 1
-
     ColumnLayout {
         id: layout
 
@@ -88,135 +84,10 @@ StyledRect {
         StyledText {
             Layout.alignment: Qt.AlignHCenter
             text: {
-                const used = SystemUsage.formatKib(Memory.used);
-                const total = SystemUsage.formatKib(Memory.total);
-                return `${used.value.toFixed(1)} / ${Math.floor(total.value)} ${total.unit}`;
+                const fmt = UsageFmt.formatKib(Memory.used, Memory.total);
+                return `${+fmt.value.toFixed(1)} / ${+fmt.total.toFixed(1)} ${fmt.unit}`;
             }
             font: Tokens.font.body.medium
-        }
-
-        // Detail grid: Available | Cached / Swap | Speed
-        GridLayout {
-            Layout.topMargin: Tokens.spacing.large
-            columns: 2
-            columnSpacing: Tokens.spacing.large
-            rowSpacing: Tokens.spacing.small
-
-            // Available
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.small
-
-                MaterialIcon {
-                    text: "check_circle"
-                    color: root.accent
-                    fontStyle: Tokens.font.icon.builders.small.weight(Font.DemiBold).build()
-                    fill: 1
-                }
-
-                StyledText {
-                    text: qsTr("Available")
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                StyledText {
-                    text: SystemUsage.memAvailable > 0 ? `${SystemUsage.formatKib(SystemUsage.memAvailable).value.toFixed(1)} ${SystemUsage.formatKib(SystemUsage.memAvailable).unit}` : "—"
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-            }
-
-            // Cached
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.small
-
-                MaterialIcon {
-                    text: "cached"
-                    color: root.accent
-                    fontStyle: Tokens.font.icon.builders.small.weight(Font.DemiBold).build()
-                    fill: 1
-                }
-
-                StyledText {
-                    text: qsTr("Cached")
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                StyledText {
-                    text: SystemUsage.memCached > 0 ? `${SystemUsage.formatKib(SystemUsage.memCached).value.toFixed(1)} ${SystemUsage.formatKib(SystemUsage.memCached).unit}` : "—"
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-            }
-
-            // Swap
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.small
-
-                MaterialIcon {
-                    text: "swap_vert"
-                    color: root.accent
-                    fontStyle: Tokens.font.icon.builders.small.weight(Font.DemiBold).build()
-                    fill: 1
-                }
-
-                StyledText {
-                    text: qsTr("Swap")
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                StyledText {
-                    text: SystemUsage.swapTotal > 0 ? `${Math.round(SystemUsage.swapPerc * 100)}%` : "—"
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-            }
-
-            // Speed (env QS_RAM_SPEED_MHZ — SPD/dmidecode need root)
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.small
-
-                MaterialIcon {
-                    text: "bolt"
-                    color: root.accent
-                    fontStyle: Tokens.font.icon.builders.small.weight(Font.DemiBold).build()
-                    fill: 1
-                }
-
-                StyledText {
-                    text: qsTr("Speed")
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-
-                StyledText {
-                    text: SystemUsage.ramSpeedMhz > 0 ? `${SystemUsage.ramSpeedMhz} MT/s` : "—"
-                    font: Tokens.font.body.small
-                    color: Colours.palette.m3onSurfaceVariant
-                }
-            }
         }
     }
 }

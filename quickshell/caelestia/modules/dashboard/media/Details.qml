@@ -10,6 +10,8 @@ import qs.services
 ColumnLayout {
     id: root
 
+    readonly property bool hasUnknownLength: (Players.active?.length ?? 0) > 2147483647
+
     function lengthStr(length: int): string {
         if (length < 0)
             return "-1:-1";
@@ -67,11 +69,13 @@ ColumnLayout {
         TextMetrics {
             id: timeMetrics
 
-            text: Players.active ? root.lengthStr(Math.max(Players.active.position, Players.active.length)).replace(/[1-9]/g, "0") : "00:00"
+            text: Players.active ? root.lengthStr(Math.max(Players.active.position, root.hasUnknownLength ? 0 : Players.active.length)).replace(/[1-9]/g, "0") : "00:00"
             font: Tokens.font.label.medium
         }
 
         StyledText {
+            id: positionLabel
+
             Layout.preferredWidth: timeMetrics.width
             text: root.lengthStr(Players.active?.position ?? -1)
             color: Colours.palette.m3onSurfaceVariant
@@ -80,23 +84,33 @@ ColumnLayout {
         }
 
         StyledSlider {
+            id: positionSlider
+
             Layout.fillWidth: true
             value: Players.active ? Players.active.position / (Players.active.length || 1) : 0
-            enabled: Players.active?.canSeek ?? false
+            enabled: (Players.active?.canSeek ?? false) && !root.hasUnknownLength
             wavy: true
             animateWave: Players.active?.isPlaying ?? false
             waveFrequency: 5
             waveDuration: 2000
+            interactionOnMove: false
             onInteraction: value => {
                 const active = Players.active;
                 if (active?.canSeek && active?.positionSupported)
                     active.position = value * active.length;
             }
+
+            Binding {
+                target: positionLabel
+                property: "text"
+                value: root.lengthStr(positionSlider.pos * (Players.active?.length ?? 0))
+                when: positionSlider.dragging
+            }
         }
 
         StyledText {
             Layout.preferredWidth: timeMetrics.width
-            text: root.lengthStr(Players.active?.length ?? -1)
+            text: root.hasUnknownLength ? "--:--" : root.lengthStr(Players.active?.length ?? -1)
             color: Colours.palette.m3onSurfaceVariant
             font: timeMetrics.font
             horizontalAlignment: Text.AlignHCenter
