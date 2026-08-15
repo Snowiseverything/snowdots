@@ -71,7 +71,7 @@ hl.env("QT_WAYLAND_FORCE_DPI", "physical")
 hl.env("QT_AUTO_SCREEN_SCALE_FACTOR", 1)
 
 -- Toolkits
-hl.env("QT_QPA_PLATFORMTHEME", "qt5ct")
+hl.env("QT_QPA_PLATFORMTHEME", "kde")
 hl.env("GDK_BACKEND", "wayland,x11")
 hl.env("SDL_VIDEODRIVER", "wayland")
 hl.env("CLUTTER_BACKEND", "wayland")
@@ -247,11 +247,6 @@ hl.config({
 -- #####################################################################
 
 -- Workspace assignments
-hl.window_rule({
-    name  = "discord-forkgram-ws2",
-    match = { class = "^(discord|io.github.forkgram.tdesktop)$" },
-    workspace = "2",
-})
 -- hl.window_rule({ name = "steam-ws3", match = { class = "^(steam)$" }, workspace = "3 silent" })
 
 -- Float + center (apps)
@@ -329,6 +324,20 @@ hl.window_rule({
     name  = "steam-notifications",
     match = { title = "^(Steam Notifications)$" },
     float = true,
+})
+
+-- Prevent Spotify focus steal on shell/media restarts
+hl.window_rule({
+    name  = "spotify-no-focus",
+    match = { class = "^(spotify|Spotify)$" },
+    no_focus = true,
+})
+
+-- Prevent Spotify focus steal on shell/media restarts
+hl.window_rule({
+    name  = "spotify-no-focus",
+    match = { class = "^(spotify|Spotify)$" },
+    no_focus = true,
 })
 
 

@@ -190,7 +190,7 @@ open_folders() {
 search_open() {
 	declare -A paths
 	paths=(
-		["hyprland.conf"]="$DOT_DIR/hypr/hyprland.conf"
+		["hyprland.lua"]="$DOT_DIR/hypr/hyprland.lua"
 		["config.fish"]="$DOT_DIR/fish/config.fish"
 		["kitty.conf"]="$DOT_DIR/kitty/kitty.conf"
 		["starship.toml"]="$DOT_DIR/starship/starship.toml"
@@ -200,7 +200,7 @@ search_open() {
 	LIST=$(
 		for f in "${!paths[@]}"; do
 			case "$f" in
-			hyprland.conf) printf ' ' ;;
+			hyprland.lua) printf ' ' ;;
 			config.fish) printf '󰈺 ' ;;
 			kitty.conf) printf '󰄛 ' ;;
 			starship.toml) printf ' ' ;;
@@ -292,7 +292,7 @@ show_scripts() {
 show_configs() {
 	declare -A paths
 	paths=(
-		["hyprland.conf"]="$DOT_DIR/hypr/hyprland.conf"
+		["hyprland.lua"]="$DOT_DIR/hypr/hyprland.lua"
 		["config.fish"]="$DOT_DIR/fish/config.fish"
 		["kitty.conf"]="$DOT_DIR/kitty/kitty.conf"
 		["starship.toml"]="$DOT_DIR/starship/starship.toml"
@@ -300,7 +300,7 @@ show_configs() {
 
 	LIST=$(for f in "${!paths[@]}"; do
 		case "$f" in
-		hyprland.conf) printf ' ' ;;
+		hyprland.lua) printf ' ' ;;
 		config.fish) printf '󰈺 ' ;;
 		kitty.conf) printf '󰄛 ' ;;
 		starship.toml) printf ' ' ;;

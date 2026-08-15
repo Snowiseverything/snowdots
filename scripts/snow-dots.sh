@@ -223,7 +223,7 @@ SYMLINKS=(
 	"fish:$REPO_DIR/fish"
 	"kitty:$REPO_DIR/kitty"
 	"fastfetch:$REPO_DIR/fastfetch"
-	"hypr/hyprland.conf:$REPO_DIR/hypr/hyprland.conf"
+	"hypr/hyprland.lua:$REPO_DIR/hypr/hyprland.lua"
 	"hypr/hypridle.conf:$REPO_DIR/hypr/hypridle.conf"
 	"starship.toml:$REPO_DIR/starship/starship.toml"
 	"wlogout:$REPO_DIR/wlogout"

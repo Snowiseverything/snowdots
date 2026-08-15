@@ -19,6 +19,7 @@ export SDKMAN_DIR="$HOME/.sdkman"
 [[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
 export PATH="$HOME/.local/bin:$PATH"
 
+export PATH="$HOME/.npm-global/bin:$PATH"
+
 # SLSsteam: Add wrapper to PATH
 export PATH="$HOME/.local/share/SLSsteam/path:$PATH"
-export PATH="$HOME/.npm-global/bin:$PATH"
