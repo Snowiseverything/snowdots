@@ -374,6 +374,22 @@ sudo journalctl --vacuum-size=100M
 - 2026-08-06: VRR on Microstep G274QPF E2 (Freezer): works. Requires (1) monitor OSD Adaptive Sync ON — driver reports `vrr_capable:0` until enabled (this was the silent killer), (2) Hyprland 0.56 Lua config `misc.vrr = 2` (2=fullscreen-only, 1=always, 0=off) in ~/Dotfiles/hypr/hyprland.lua. Runtime: `hyprctl eval 'hl.monitor({ output = "DP-3", mode = "2560x1440@180", position = "0x0", scale = 1, vrr = 2 })'` — NOT hyprctl keyword (0.55+ needs Lua). Verify: `hyprctl monitors -j` → vrr true only in fullscreen. Game setting: RE9 FrameRate=Variable + VSync=False (uncapped, VRR handles 70-110fps; Max120 was the no-VRR fallback).
 - 2026-08-06: viymess deploy = GitLab integration only. Project linked to gitlab sn0wman/viymess (productionBranch main, rootDirectory apps/storefront). NO `.gitlab-ci.yml`, NO snowpi build — the double-build was Vercel git integration (source:git on push) PLUS manual `vercel deploy --yes` (source:cli) in the same command chain. DECISION: Option A — stop CLI deploys, push to origin only; Vercel auto-builds per branch. Git-push failures (lockfile/standalone ENOENT) fixed in 462fb82+b17eaef so git builds pass. Single-push config: push.default=simple, remote.pushDefault=origin, main tracks origin/main. Snowpi stays fetch-only mirror. Landing+analytics work on dev-sprint1; main untouched (old Georgia build).
 
+## 2026-08-14
+
+### viymess Railway deployment status
+
+- Pushed commit `5b8cee2` to GitLab `dev-sprint1` with deployment fixes: `.dockerignore` excludes backend `.env`; `apps/medusa-backend/docker-entrypoint.sh` copies `.medusa/client` → `.medusa/admin` and writes a minimal runtime `.env` from container env.
+- Railway redeploy `ef0ea154-441d-4073-87d0-a0961e1d4c6c` succeeded, but live backend `https://medusa-backend-production-012c.up.railway.app` still returns `502`.
+- Root cause: Railway appears to be using a stale cached snapshot rather than the newly pushed GitLab source; runtime logs show no new entrypoint behavior and still crash with `Could not find index.html in the admin build directory`.
+- Local Docker testing proved the fixes work in principle: `.dockerignore` excludes `.env`, admin build copy works, runtime `.env` generation works, and the container can start when given proper env.
+- Railway env already has required secrets: `DATABASE_URL` (Neon pooler), `COOKIE_SECRET`, `JWT_SECRET`.
+- Next actions: reconnect GitLab source in Railway web UI, or use `railway up` for a local-direct deploy; do not assume `--from-source` refreshes from GitLab.
+
+### Docker disk pressure
+
+- Docker build cache on `/home/docker-data` is ~24.54 GB; `/home` is at 88% used. `docker run` failed with `no space left on device` despite root `/` showing 36 GB free.
+- Fix: `docker system prune -f` to reclaim ~19.8 GB from unused build cache.
+
 ## Bafra Swarm — Workspace Rules
 
 - **Repos:** `swarm-core`, `swarm-mobile`, `swarm-dashboard`
