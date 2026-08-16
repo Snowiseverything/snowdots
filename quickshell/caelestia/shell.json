@@ -1,12 +1,12 @@
 {
   "appearance": {
     "font": {
-      "body": { "family": "Noto Sans" },
+      "body": { "family": "Inter" },
       "clock": "JetBrainsMono Nerd Font",
-      "headline": { "family": "Noto Sans" },
-      "label": { "family": "Noto Sans" },
+      "headline": { "family": "Inter" },
+      "label": { "family": "Inter" },
       "mono": { "family": "JetBrainsMono Nerd Font" },
-      "title": { "family": "Noto Sans" }
+      "title": { "family": "Inter" }
     },
     "transparency": { "enabled": false }
   },

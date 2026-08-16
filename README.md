@@ -4,20 +4,34 @@ Hyprland dotfiles for Arch Linux. Snow-themed, material-you colored, multi-machi
 
 ```
 OS: CachyOS / Arch x86_64
-WM: Hyprland
-Shell: fish + starship
+WM: Hyprland (Lua config)
+Shell: caelestia — quickshell/QML desktop shell (bar, nexus, lock, rgb)
 Terminal: kitty
+Prompt: fish + starship
 Fetch: fastfetch
-Launcher: fuzzel / rofi
-Colors: matugen (Material You)
-Bar: waybar
-Notifications: swaync
+Launcher: fuzzel + app-launcher
+Colors: matugen (Material You, wallpaper-driven)
+Wallpaper: skwd + wall-sync
+RGB: OpenRGB + MAD68 + Govee (wallpaper-synced)
+```
+
+## Fonts
+
+| Where | Font |
+| ------- | ------ |
+| Shell UI (caelestia body/label/title) | **Inter** |
+| Shell mono / clock | **JetBrainsMono Nerd Font** |
+| Terminal (kitty) | **JetBrainsMono Nerd Font** 13 |
+| Power menu (wlogout) | **JetBrainsMono Nerd Font Propo** 16 |
+
+```bash
+sudo pacman -S --needed ttf-inter ttf-jetbrains-mono-nerd
 ```
 
 ## Quick Start
 
 ```bash
-curl -sL https://raw.githubusercontent.com/Snowiseverything/snowdots/main/scripts/install.sh | bash
+curl -sL https://raw.githubusercontent.com/sn0wmann1/snowdots/main/scripts/install.sh | bash
 ```
 
 This clones the repo to `~/Dotfiles` and launches the interactive installer.
@@ -26,7 +40,7 @@ No git? The script installs it. No dependencies? You pick what to install.
 Or clone and run manually:
 
 ```bash
-git clone https://github.com/Snowiseverything/snowdots.git ~/Dotfiles
+git clone https://github.com/sn0wmann1/snowdots.git ~/Dotfiles
 bash ~/Dotfiles/scripts/snow-dots install
 ```
 
@@ -38,89 +52,63 @@ curl -sL https://gitlab.com/sn0wman/snowdots/-/raw/main/scripts/install.sh | bas
 
 ## Features
 
-- **Hyprland** — Dynamic tiling, smooth animations, material-you colors
-- **fish** — Auto-complete, autopair, pure prompt, fuzzy file nav with fzf
-- **kitty** — GPU-accelerated terminal with material-you theme
-- **starship** — Minimal, fast prompt
-- **waybar** — Status bar with workspaces, volume, brightness, network, clock
-- **fuzzel** — Fuzzy app launcher with material-you colors
-- **swaync** — Notification center
-- **dunst** — Lightweight notifications
-- **matugen** — Material You theme generator from wallpaper
-- **wall-sync** — Automatically generate theme from wallpaper
-- **dotsync** — Unified git sync across machines
+- **caelestia** — quickshell/QML shell: top bar (workspaces, clock, tray, popouts), Nexus dashboard (apps / network / services), lock screen, RGB control panel, background visualiser
+- **Hyprland** — Lua config (`hypr/hyprland.lua`), smooth animations, material-you colors
+- **matugen** — Material You theme regenerated from wallpaper (kitty, hypr, GTK, QML, shell)
+- **RGB sync** — wallpaper accent → case LEDs (OpenRGB), keyboard (MAD68), Govee strip; bridge preserves per-device brightness, boot sync waits for full device enumeration
+- **kitty** — GPU terminal, 92% opacity, material-you theme
+- **fish + starship** — autocomplete, fzf, minimal prompt
+- **fuzzel** — fuzzy launcher + app launcher menu
+- **wlogout** — power menu with wallpaper-accented icons
+- **wall-sync** — skwd wallpaper daemon + theme regen on change
+- **dotsync** — unified git sync across machines (GitLab + sanitized GitHub + Snowpi)
+- **swaync** — notification center
 
 ## Structure
 
 ```
 ~/
-├── Dotfiles/          ← This repo
-│   ├── scripts/       ← dotsync, snow-dots, audit, publish, etc.
-│   ├── fish/          ← config.fish, functions, conf.d/
-│   ├── hypr/          ← hyprland.conf, hypridle.conf, keybinds
-│   ├── kitty/         ← kitty.conf + material-you theme
-│   ├── starship/      ← starship.toml
-│   ├── fastfetch/     ← config.jsonc, logo
-│   ├── waybar/        ← style.css, config
-│   ├── swaync/        ← notification config
-│   ├── dunst/         ← dunstrc
-│   ├── wofi/          ← wofi style
-│   ├── wallpaper/     ← current wallpaper + themes
-│   ├── matugen/       ← material-you templates
-│   ├── ssh/           ← authorized_keys placeholder
-│   ├── README.md      ← This file
-│   └── README-SETUP.md ← Legacy (content merged here)
+├── Dotfiles/            ← This repo
+│   ├── scripts/         ← dotsync, snow-dots, rgb-sync, wall-sync, etc.
+│   ├── quickshell/      ← caelestia shell (QML + shell.json config)
+│   ├── wlogout/         ← power menu (style.css + recolored icons)
+│   ├── fish/            ← config.fish, functions, conf.d/
+│   ├── hypr/            ← hyprland.lua, hypridle.conf
+│   ├── kitty/           ← kitty.conf
+│   ├── matugen/         ← material-you templates
+│   ├── starship/        ← starship.toml
+│   ├── fastfetch/       ← config.jsonc, logo
+│   └── README.md        ← This file
 ```
 
 ## Setup
 
-### 1. Interactive Installer (Recommended)
+### Interactive Installer (Recommended)
 
 ```bash
-bash <(curl -sL https://raw.githubusercontent.com/Snowiseverything/snowdots/main/scripts/snow-dots.sh)
-```
-
-Or clone and run locally:
-
-```bash
-git clone https://github.com/Snowiseverything/snowdots.git ~/Dotfiles
-bash ~/Dotfiles/scripts/snow-dots.sh
+bash <(curl -sL https://raw.githubusercontent.com/sn0wmann1/snowdots/main/scripts/snow-dots.sh)
 ```
 
 **What it does:**
-- Detects your distro (Arch, Debian, Fedora)
-- **Backs up your current config** to `~/.dotfiles-backup-*` before touching anything
-- Installs packages (Hyprland, fish, kitty, waybar, fonts, etc.)
-- Detects if you use bash/fish/zsh and adjusts PATH setup accordingly
+
+- Backs up current config to `~/.dotfiles-backup-*` before touching anything
+- Installs packages (Hyprland, fish, kitty, quickshell, fonts, etc.)
 - Sets up symlinks for all configs
 - Installs fisher + plugins (if fish is installed)
 - Sets fish as default shell (optional)
-- Shows restore instructions at the end
 
 **Want to undo?** Run `snow-dots restore` and pick your backup.
 
-### snow-dots CLI
-
-After install, `snow-dots` is available as a command:
-
-| Command | Description |
-|---------|-------------|
-| `snow-dots help` | Show help |
-| `snow-dots install` | Run interactive installer |
-| `snow-dots backup` | Backup current dotfiles |
-| `snow-dots restore` | Restore from a backup |
-| `snow-dots list` | List available backups |
-
-### 2. Manual Setup
+### Manual setup
 
 ```bash
 # Symlink configs
 ln -sf ~/Dotfiles/fish ~/.config/fish
 ln -sf ~/Dotfiles/kitty ~/.config/kitty
+ln -sf ~/Dotfiles/quickshell ~/.config/quickshell
+ln -sf ~/Dotfiles/wlogout ~/.config/wlogout
 ln -sf ~/Dotfiles/fastfetch ~/.config/fastfetch
-ln -sf ~/Dotfiles/hypr/hyprland.conf ~/.config/hypr/hyprland.conf
-ln -sf ~/Dotfiles/hypr/hypridle.conf ~/.config/hypr/hypridle.conf
-ln -sf ~/Dotfiles/starship/starship.toml ~/.config/starship.toml
+ln -sf ~/Dotfiles/hypr/hyprland.lua ~/.config/hypr/hyprland.lua
 
 # Link scripts
 mkdir -p ~/.local/bin
@@ -130,24 +118,14 @@ done
 ln -sf ~/Dotfiles/scripts/dotsync ~/.local/bin/dotsync
 ```
 
-### 3. Package Dependencies
+### Package dependencies (Arch)
 
-**Arch:**
 ```bash
-sudo pacman -S --needed hyprland fish kitty waybar wofi fuzzel swaync \
-  dunst wlogout starship fastfetch grim slurp swappy wl-clipboard \
-  polkit-kde-agent xdg-desktop-portal-hyprland \
-  ttf-jetbrains-mono-nerd ttf-meslo-nerd noto-fonts-emoji
-
-# AUR
-yay -S matugen-bin hyprland-guiutils
-```
-
-**Debian/Ubuntu:**
-```bash
-sudo apt install fish kitty starship fastfetch grim slurp wl-clipboard \
-  fonts-jetbrains-mono fonts-noto-color-emoji
-# Hyprland must be built from source or use the hyprland repo
+sudo pacman -S --needed hyprland fish kitty starship fastfetch fuzzel \
+  swaync wlogout quickshell hyprlock matugen grim slurp swappy \
+  wl-clipboard polkit-kde-agent xdg-desktop-portal-hyprland \
+  ttf-inter ttf-jetbrains-mono-nerd noto-fonts-emoji \
+  openrgb python-openrgb python-hid python-requests
 ```
 
 ## Sync
@@ -156,68 +134,68 @@ sudo apt install fish kitty starship fastfetch grim slurp wl-clipboard \
 dotsync
 ```
 
-On Freezer: pulls from GitLab, pushes to GitLab + optionally to GitHub (sanitized).
-On SnowPi: pulls from GitLab, pushes to GitLab + optionally to peer.
+On Freezer: pulls from GitLab, pushes to GitLab + optionally GitHub (sanitized) + Snowpi.
+On SnowPi: pulls from GitLab, pushes to GitLab.
 
-### GitHub Publish
+`boot-sync` (user timer, once at boot): dotsync, dot-mirror to `/mnt/backups`, session DB rsync to Snowpi.
 
-After `dotsync`, you'll be asked:
+### GitHub publish
 
-```
-📢 Publish sanitized version to GitHub? [y/N]
-```
+`dotsync` asks to publish a sanitized copy (`scripts/publish-public.sh`):
 
-This runs `scripts/publish-public.sh` which:
-1. Clones the repo to a temp directory
-2. Strips personal info (SSH keys, IPs, `.opencode/`)
-3. Asks confirmation
-4. Force-pushes sanitized copy to GitHub
-
-This keeps private info on GitLab and only polished, public-safe content on GitHub.
+1. Clones to a temp dir, strips personal info (SSH keys, IPs, `.opencode/`)
+2. Force-pushes the public-safe copy to GitHub
 
 ## Remotes
 
-**Freezer (desktop)**
 ```
 gitlab → git@gitlab.com:sn0wman/snowdots.git
-github → git@github.com:Snowiseverything/snowdots.git
-```
-
-**SnowPi (RPi4)**
-```
-origin → git@gitlab.com:sn0man/snowpi-dotfiles.git
+github → git@github.com:sn0wmann1/snowdots.git (sanitized)
+snowpi → snow@100.83.33.67:/home/snow/git-vault/Dotfiles.git
 ```
 
 ## Keybinds
 
 | Key | Action |
-|-----|--------|
-| Super + Return | kitty |
-| Super + D | fuzzel launcher |
-| Super + Q | Close window |
-| Super + F | Toggle fullscreen |
-| Super + V | Toggle floating |
-| Super + 1-9 | Switch workspace |
-| Super + Shift + 1-9 | Move window to workspace |
-| Super + Shift + C | Kill window |
-| Super + Shift + S | Screenshot region |
-| Super + L | Lock screen |
-| Super + Space | Toggle layout |
-| Super + arrows | Move focus |
-| Super + Print | Screenshot full |
-| Ctrl + T | fzf (files) |
-| Ctrl + R | fzf (history) |
-| Alt + C | fzf (dirs + cd) |
+| ----- | -------- |
+| Super + Q | kitty |
+| Super + Return | fuzzel launcher |
+| Super + Space | app launcher |
+| Super + Escape | wlogout |
+| Super + L | lock (caelestia) |
+| Super + D | discord |
+| Super + F | thunar |
+| Super + R | RGB panel (quickshell) |
+| Super + B | brave |
+| Super + T | trayscale |
+| Super + V | clipse (clipboard) |
+| Super + C | close window |
+| Super + Shift + C | force-kill |
+| Super + Shift + R | restart caelestia |
+| Super + Shift + M | logout (hyprctl exit) |
+| Super + W | toggle wallpaper |
+| Super + Shift + W | reset wallpaper + theme |
+| Super + N | Nexus sidebar |
+| Super + Shift + B | brave incognito |
 
 ## Wallpaper & Themes
 
-Place wallpapers in `~/Dotfiles/wallpaper/` and run:
+Place wallpapers in `~/Pictures/Wallpapers/` and switch with `Super + W` or:
 
 ```bash
 bash ~/Dotfiles/scripts/wall-sync.sh
 ```
 
-This runs matugen on the current wallpaper and updates kitty, waybar, fuzzel, and hyprland colors.
+This runs matugen on the current wallpaper and updates kitty, hypr, GTK, caelestia tokens, and RGB LEDs.
+
+## RGB sync
+
+`rgb-sync.sh` reads the wallpaper accent → converts to a unified LED color → applies via:
+
+- `rgb-bridge` (REST API, preserves per-device brightness) → OpenRGB + MAD68 + Govee
+- Direct fallback: `fade-rgb.py` (smooth fade) + `govee-led.py`
+
+At boot it waits for OpenRGB to enumerate **all** devices (motherboard controller registers ~7s after server start) and for the wallpaper accent before animating.
 
 ## License
 
