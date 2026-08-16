@@ -122,4 +122,10 @@ mem "thing" --global              # force write to ~/.opencode/MEMORY.md
 
 ## Sync
 
-Bidirectional sync to Snowpi via `oc-sync.sh` (runs every 30 min via `oc-fast-sync.timer`). Pushes `.opencode/` + `.pi/` + session DB.
+Sync to Snowpi + external backup via `boot-sync.sh` (user timer, once at boot) + user timers: `projects-sync` (5 min), `snowpi-backup-pull` (2 h), `backup-snowpi` (Sun 03:00 weekly). `dot-mirror.sh` mirrors Dotfiles/root configs/Projects → `/mnt/backups` + Snowpi.
+
+## Skill usage (preferences)
+
+- Default to `mp-*` (mattpocock/skills, ~/.agents/skills) for: tdd, code-review, diagnosing-bugs, research, handoff, to-spec/to-tickets, grill-me, wayfinder
+- Keep `snow-commit` for commit messages (area: imperative, multi-remote)
+- Keep `ui-ux-audit` for UI/UX design reviews (no mp-* equivalent)
