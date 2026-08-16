@@ -21,6 +21,13 @@ Singleton {
     property bool citiesLoaded: false
     property string pendingCoords
 
+    property list<var> prayerTimes
+    property string nextPrayer
+    property string nextPrayerTime
+    property string nextPrayerCountdown
+    property var erbilPrayerTimes: ({})
+    property var notifiedPrayers: ({})
+
     readonly property string icon: cc ? Icons.getWeatherIcon(cc.weatherCode) : "cloud_alert"
     readonly property string description: cc?.weatherDesc ?? qsTr("No weather")
     readonly property string temp: formatTemp(cc?.tempC)
@@ -282,6 +289,119 @@ Singleton {
         return celsius * 9 / 5 + 32;
     }
 
+    function fetchPrayerTimes(): void {
+        // Prefer fixed per-day times for Erbil — same source as the "My Prayers"
+        // Android app (muslim-data db, authoritative local timings).
+        const isErbil = city && city.toLowerCase().includes("erbil");
+        const today = new Date();
+        const mmdd = `${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+        if (isErbil && erbilPrayerTimes[mmdd]) {
+            applyPrayerTimings(erbilPrayerTimes[mmdd]);
+            return;
+        }
+
+        if (!loc || loc.indexOf(",") === -1)
+            return;
+
+        const [lat, lon] = loc.split(",").map(s => s.trim());
+        // method 4 = Umm al-Qura (Makkah) — the default My Prayers uses for calculated cities
+        const url = `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=4&school=0`;
+
+        Requests.get(url, text => {
+            let json;
+            try {
+                json = JSON.parse(text);
+            } catch (error) {
+                console.warn(lc, `Unable to parse prayer times: ${error}`);
+                return;
+            }
+            if (json.code !== 200 || !json.data?.timings)
+                return;
+
+            applyPrayerTimings(json.data.timings);
+        }, error => {
+            console.warn(lc, `Prayer times request failed: ${error}`);
+        });
+    }
+
+    function prayerName(name: string): string {
+        if (GlobalConfig.services.prayerLanguage === "english")
+            return name;
+        const kurdish = {
+            "Fajr": "بەیانی",
+            "Dhuhr": "نیوەڕۆ",
+            "Asr": "عەسر",
+            "Maghrib": "مەغریب",
+            "Isha": "عیشا"
+        };
+        return kurdish[name] ?? name;
+    }
+
+    function applyPrayerTimings(timings: var): void {
+        const names = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+        const now = new Date();
+        const list = [];
+
+        for (const name of names) {
+            const hm = (timings[name] ?? timings[name.toLowerCase()] ?? "").split(":").map(Number);
+            if (hm.length < 2 || isNaN(hm[0]) || isNaN(hm[1]))
+                continue;
+
+            const t = new Date(now);
+            t.setHours(hm[0], hm[1], 0, 0);
+            const timeLabel = Qt.formatDateTime(t, GlobalConfig.services.useTwelveHourClock ? "h:mm A" : "h:mm");
+            list.push({ name: prayerName(name), timeLabel, timestamp: t.getTime() });
+        }
+
+        prayerTimes = list;
+        updateNextPrayer();
+    }
+
+    function updateNextPrayer(): void {
+        const now = new Date();
+        let next = null;
+
+        for (const p of prayerTimes) {
+            if (p.timestamp > now.getTime()) {
+                next = p;
+                break;
+            }
+        }
+        // Past all today's prayers -> next is Fajr tomorrow
+        if (!next && prayerTimes.length > 0) {
+            const t = new Date(prayerTimes[0].timestamp);
+            t.setDate(t.getDate() + 1);
+            next = { name: prayerTimes[0].name, timeLabel: prayerTimes[0].timeLabel, timestamp: t.getTime() };
+        }
+
+        if (next) {
+            nextPrayer = next.name;
+            nextPrayerTime = next.timeLabel;
+            const diffMs = next.timestamp - now.getTime();
+            const hours = Math.floor(diffMs / 3600000);
+            const mins = Math.floor((diffMs % 3600000) / 60000);
+            nextPrayerCountdown = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+        }
+
+        // Fire a notification when a prayer time arrives (within a 2-minute window)
+        for (const p of prayerTimes) {
+            const elapsed = now.getTime() - p.timestamp;
+            if (elapsed >= 0 && elapsed < 300000 && !notifiedPrayers[p.timestamp]) {
+                notifiedPrayers[p.timestamp] = true;
+                const icon = `${Paths.home}/Dotfiles/quickshell/caelestia/assets/adhan.png`;
+                const kurdish = GlobalConfig.services.prayerLanguage !== "english";
+                const title = kurdish ? `ئەزان — ${p.name}` : `${p.name} Adhan`;
+                const body = kurdish
+                    ? `کاتی نوێژی ${p.name} گەیشت · ${p.timeLabel}`
+                    : `It's time for the ${p.name} prayer · ${p.timeLabel}`;
+                Quickshell.execDetached([
+                    "notify-send", "-a", "caelestia-prayer", "-i", icon,
+                    "-u", "normal", title, body
+                ]);
+            }
+        }
+    }
+
     function getWeatherUrl(): string {
         if (!loc || loc.indexOf(",") === -1)
             return "";
@@ -327,7 +447,11 @@ Singleton {
         return conditions[code] || "Unknown";
     }
 
-    onLocChanged: fetchWeatherData()
+    onLocChanged: {
+        fetchWeatherData();
+        fetchPrayerTimes();
+    }
+    onCityChanged: fetchPrayerTimes()
     onCitiesLoadedChanged: {
         if (!citiesLoaded || !pendingCoords)
             return;
@@ -349,7 +473,17 @@ Singleton {
         interval: 3600000 // 1 hour
         running: true
         repeat: true
-        onTriggered: fetchWeatherData()
+        onTriggered: {
+            fetchWeatherData();
+            fetchPrayerTimes();
+        }
+    }
+
+    Timer {
+        interval: 60000 // 1 minute — keep next-prayer countdown fresh
+        running: true
+        repeat: true
+        onTriggered: updateNextPrayer()
     }
 
     Timer {
@@ -410,6 +544,29 @@ Singleton {
                 Qt.callLater(() => setText("{}"));
             else
                 console.warn(lc, `Unable to load cached cities: ${err}`);
+        }
+    }
+
+    FileView {
+        id: erbilTimesStorage
+
+        printErrors: false
+        path: `${Paths.home}/Dotfiles/quickshell/caelestia/assets/prayer-times/erbil.json`
+        onLoaded: {
+            try {
+                const data = JSON.parse(text());
+                const map = {};
+                for (const entry of data)
+                    map[entry.date] = entry;
+                root.erbilPrayerTimes = map;
+                root.fetchPrayerTimes();
+            } catch (error) {
+                console.warn(lc, `Unable to parse Erbil prayer times: ${error}`);
+            }
+        }
+        onLoadFailed: err => {
+            if (err !== FileViewError.FileNotFound)
+                console.warn(lc, `Unable to load Erbil prayer times: ${err}`);
         }
     }
 

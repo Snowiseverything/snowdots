@@ -131,6 +131,62 @@ Item {
         StyledText {
             Layout.topMargin: Tokens.spacing.medium
             Layout.leftMargin: Tokens.padding.medium
+            visible: Weather.prayerTimes.length > 0
+            text: qsTr("Prayer Times")
+            font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
+            color: Colours.palette.m3onSurface
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: Weather.prayerTimes.length > 0
+            spacing: Tokens.spacing.medium
+
+            Repeater {
+                model: Weather.prayerTimes
+
+                StyledRect {
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    implicitHeight: 64
+
+                    radius: Tokens.rounding.large
+                    color: modelData.name === Weather.nextPrayer ? Colours.tPalette.m3primaryContainer : Colours.tPalette.m3surfaceContainer
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        spacing: 0
+
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: modelData.name
+                            font: Tokens.font.body.small
+                            color: modelData.name === Weather.nextPrayer ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
+                        }
+                        StyledText {
+                            Layout.alignment: Qt.AlignHCenter
+                            text: modelData.timeLabel
+                            font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()
+                            color: modelData.name === Weather.nextPrayer ? Colours.palette.m3primary : Colours.palette.m3onSurface
+                        }
+                    }
+                }
+            }
+        }
+
+        StyledText {
+            Layout.topMargin: Tokens.spacing.small
+            Layout.leftMargin: Tokens.padding.medium
+            visible: Weather.nextPrayer !== ""
+            text: "Next: " + Weather.nextPrayer + "  ·  " + Weather.nextPrayerTime + "  ·  in " + Weather.nextPrayerCountdown
+            font: Tokens.font.body.builders.small.weight(Font.DemiBold).build()
+            color: Colours.palette.m3tertiary
+        }
+
+        StyledText {
+            Layout.topMargin: Tokens.spacing.medium
+            Layout.leftMargin: Tokens.padding.medium
             visible: forecastRepeater.count > 0
             text: qsTr("7-Day Forecast")
             font: Tokens.font.body.builders.medium.weight(Font.DemiBold).build()

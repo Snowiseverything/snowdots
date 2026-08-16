@@ -12,6 +12,9 @@ ColumnLayout {
     property string snowpi: "?"
     property string internet: "?"
     property string dns: "?"
+    property string diskRoot: "?"
+    property string diskHome: "?"
+    property string gpu: "?"
 
     function cap(v: string): string {
         if (v === "up") return "UP";
@@ -37,12 +40,35 @@ ColumnLayout {
         }
     }
 
+    Process {
+        id: sysReader
+        command: ["bash", "-c", "$HOME/Dotfiles/scripts/sys-stats.sh"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                for (const line of text.trim().split('\n')) {
+                    const eq = line.indexOf('=');
+                    if (eq < 0)
+                        continue;
+                    const key = line.slice(0, eq);
+                    const val = line.slice(eq + 1);
+                    if (key === 'disk_/') root.diskRoot = val + "%";
+                    else if (key === 'disk_/home') root.diskHome = val + "%";
+                    else if (key === 'gpu') root.gpu = val;
+                }
+            }
+        }
+    }
+
     Timer {
         interval: 5000
         running: true
         repeat: true
         triggeredOnStart: false
-        onTriggered: reader.running = true
+        onTriggered: {
+            reader.running = true
+            sysReader.running = true
+        }
     }
 
     StyledText {
@@ -55,5 +81,13 @@ ColumnLayout {
 
     StyledText {
         text: qsTr("Internet: %1").arg(cap(root.internet))
+    }
+
+    StyledText {
+        text: qsTr("Disk /: %1  ·  /home: %2").arg(root.diskRoot).arg(root.diskHome)
+    }
+
+    StyledText {
+        text: qsTr("GPU: %1").arg(root.gpu)
     }
 }

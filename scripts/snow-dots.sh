@@ -1,7 +1,7 @@
 #!/bin/bash
 # -----------------------------------------------------------------------
 # ❄️  snow-dots.sh — Interactive Dotfiles Installer
-#     https://github.com/Snowiseverything/snowdots
+#     https://github.com/sn0wmann1/snowdots
 # -----------------------------------------------------------------------
 set -e
 
@@ -13,6 +13,7 @@ WHITE=$'\033[0;37m'
 GREEN=$'\033[0;32m'
 YELLOW=$'\033[1;33m'
 RED=$'\033[0;31m'
+DIM=$'\033[2m'
 NC=$'\033[0m'
 
 # ── ASCII ────────────────────────────────────────────────────────────
@@ -21,19 +22,89 @@ LOGO="
 ${CYAN}   ▄▄▄▄▄▄▄▄▄▄▄  ${WHITE}╷${NC}
 ${CYAN}  █           █ ${WHITE}│${NC}
 ${CYAN} █   ${BOLD}SNOWDOTS${NC}${CYAN}  █ ${WHITE}│${NC}  ${BLUE}Hyprland dotfiles${NC}
-${CYAN}  █           █ ${WHITE}│${NC}  ${BLUE}Arch / fish / kitty${NC}
+${CYAN}  █           █ ${WHITE}│${NC}  ${BLUE}Arch / fish / kitty / caelestia${NC}
 ${CYAN}   ▀▀▀▀▀▀▀▀▀▀▀  ${WHITE}╵${NC}
 "
 
 DISTRO=""
 PKG_CMD=""
+AUR_CMD=""
 USER_SHELL=""
+STEP=0
 
 # ── Helpers ─────────────────────────────────────────────────────────
 info() { echo -e "  ${CYAN}${SNOWFLAKE}${NC} $1"; }
 ok() { echo -e "  ${GREEN}✓${NC} $1"; }
 warn() { echo -e "  ${YELLOW}⚠${NC} $1"; }
 fail() { echo -e "  ${RED}✗${NC} $1"; }
+
+step() {
+	STEP=$((STEP + 1))
+	echo ""
+	echo -e "  ${BOLD}${SNOWFLAKE}  Step ${STEP} — $1${NC}"
+	echo -e "  ${DIM}──────────────────────────────────────────────${NC}"
+}
+
+# ── Animation: snowfall banner (3 falling frames) ────────────────────
+animate_snowfall() {
+	local cols
+	cols=$(tput cols 2>/dev/null || echo 80)
+	[ "$cols" -gt 120 ] && cols=120
+
+	for frame in 1 2 3; do
+		clear
+		echo -e "$LOGO"
+		echo ""
+		for row in $(seq 1 6); do
+			line=""
+			for ((c = 0; c < cols; c++)); do
+				r=$((RANDOM % 100))
+				if [ $r -lt 5 ]; then
+					line+="${WHITE}·${NC}"
+				elif [ $r -lt 8 ]; then
+					line+="${CYAN}❄${NC}"
+				else
+					line+=" "
+				fi
+			done
+			echo -e "$line"
+		done
+		sleep 0.18
+	done
+}
+
+# ── Animation: spinner while a command runs ──────────────────────────
+SPIN_FRAMES=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+
+run_spinner() {
+	local msg=$1
+	shift
+	local logfile pid result i=0
+	logfile=$(mktemp)
+	"$@" >"$logfile" 2>&1 &
+	pid=$!
+
+	while kill -0 "$pid" 2>/dev/null; do
+		printf "\r  ${CYAN}%s${NC} %s  " "${SPIN_FRAMES[$i]}" "$msg"
+		i=$(((i + 1) % ${#SPIN_FRAMES[@]}))
+		sleep 0.08
+	done
+
+	set +e
+	wait "$pid"
+	result=$?
+	set -e
+
+	if [ "$result" -eq 0 ]; then
+		printf "\r  ${GREEN}✓${NC} %s\n" "$msg"
+	else
+		printf "\r  ${RED}✗${NC} %s (exit %s)\n" "$msg" "$result"
+		echo "  ${DIM}last output:${NC}"
+		tail -5 "$logfile" | sed 's/^/    /'
+	fi
+	rm -f "$logfile"
+	return "$result"
+}
 
 press_enter() {
 	echo ""
@@ -73,8 +144,7 @@ detect_shell() {
 }
 
 # ── Main ────────────────────────────────────────────────────────────
-clear
-echo -e "$LOGO"
+animate_snowfall
 echo -e "  ${BOLD}${SNOWFLAKE} Interactive Dotfiles Installer${NC}"
 echo ""
 echo "  This will set up my Hyprland dotfiles on your system."
@@ -82,6 +152,7 @@ echo "  You'll choose what to install at each step."
 echo ""
 
 # ── 1. Prerequisites check ────────────────────────────────────────
+step "System Check"
 info "Checking system..."
 detect_distro
 detect_shell
@@ -89,22 +160,20 @@ ok "Detected: $DISTRO | Shell: $USER_SHELL"
 echo ""
 
 # ── 2. Backup ────────────────────────────────────────────────────
-echo "  ${BOLD}${SNOWFLAKE} Backup Current Config${NC}"
+step "Backup Current Config"
 echo "  Before making changes, SnowDots will backup your current"
 echo "  dotfiles so you can restore if you don't like the setup."
 echo ""
 read -rp "  Backup current config before proceeding? [Y/n] " do_backup
 if [[ ! "$do_backup" =~ ^[nN] ]]; then
-	bash "$REPO_DIR/scripts/backup-dots.sh" 2>/dev/null || {
-		SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-		bash "$SCRIPT_DIR/backup-dots.sh"
-	}
+	run_spinner "Backing up current dotfiles..." bash "$(dirname "$0")/backup-dots.sh"
 else
 	warn "Skipping backup. You won't have a restore point."
 	echo ""
 fi
 
 # ── 3. Clone repo ─────────────────────────────────────────────────
+step "Repository"
 REPO_DIR="$HOME/Dotfiles"
 INSTALL_REPO=true
 
@@ -120,56 +189,55 @@ if [ -d "$REPO_DIR" ]; then
 fi
 
 if $INSTALL_REPO; then
-	info "Cloning repo..."
-	git clone https://github.com/Snowiseverything/snowdots.git "$REPO_DIR" 2>/dev/null ||
-		git clone https://gitlab.com/sn0wman/snowdots.git "$REPO_DIR"
+	run_spinner "Cloning snowdots..." git clone -q https://github.com/sn0wmann1/snowdots.git "$REPO_DIR" ||
+		run_spinner "Cloning from GitLab mirror..." git clone -q https://gitlab.com/sn0wman/snowdots.git "$REPO_DIR"
 	ok "Cloned to $REPO_DIR"
 fi
 echo ""
 
 # ── 4. Package selection ──────────────────────────────────────────
-echo "  ${BOLD}${SNOWFLAKE} Package Selection${NC}"
+step "Package Selection"
 echo "  (you can skip any group, install later with pacman)"
 echo ""
 
 case "$DISTRO" in
 arch)
-	read -rp "  ${SNOWFLAKE} Install core WM components? (hyprland, fish, kitty, waybar) [Y/n] " choice
+	read -rp "  ${SNOWFLAKE} Install core stack? (hyprland, fish, kitty, quickshell, wlogout, matugen...) [Y/n] " choice
 	if [[ ! "$choice" =~ ^[nN] ]]; then
-		$PKG_CMD hyprland fish kitty waybar wofi fuzzel swaync dunst wlogout \
-			starship fastfetch grim slurp swappy wl-clipboard \
+		run_spinner "Installing core packages..." $PKG_CMD hyprland fish kitty quickshell wlogout hyprlock \
+			swaync fuzzel starship fastfetch grim slurp swappy wl-clipboard \
 			polkit-kde-agent xdg-desktop-portal-hyprland \
-			ttf-jetbrains-mono-nerd ttf-meslo-nerd noto-fonts-emoji
+			ttf-inter ttf-jetbrains-mono-nerd noto-fonts-emoji
 		ok "Core packages installed"
 	fi
 
 	if [ -n "$AUR_CMD" ]; then
-		read -rp "  ${SNOWFLAKE} Install AUR extras? (matugen-bin, hyprland-guiutils) [Y/n] " choice
+		read -rp "  ${SNOWFLAKE} Install AUR extras? (matugen-bin, openrgb, python-openrgb) [Y/n] " choice
 		if [[ ! "$choice" =~ ^[nN] ]]; then
-			$AUR_CMD matugen-bin hyprland-guiutils 2>&1 | tail -1
+			run_spinner "Installing AUR extras..." $AUR_CMD matugen-bin openrgb python-openrgb python-hid python-requests
 			ok "AUR extras installed"
 		fi
 	else
-		warn "No AUR helper found (yay/paru). Install matugen-bin manually."
+		warn "No AUR helper found (yay/paru). Install matugen-bin + openrgb manually."
 	fi
 
 	read -rp "  ${SNOWFLAKE} Install extra fonts? (cascadia-code, fantasque-nerd) [Y/n] " choice
 	if [[ ! "$choice" =~ ^[nN] ]]; then
-		$PKG_CMD ttf-cascadia-code-nerd ttf-fantasque-nerd ttf-material-design-icons-desktop-git
+		run_spinner "Installing extra fonts..." $PKG_CMD ttf-cascadia-code-nerd ttf-fantasque-nerd ttf-material-design-icons-desktop-git
 		ok "Fonts installed"
 	fi
 
-	read -rp "  ${SNOWFLAKE} Install apps? (thunar, firefox, rofi) [y/N] " choice
+	read -rp "  ${SNOWFLAKE} Install apps? (thunar, brave, discord) [y/N] " choice
 	if [[ "$choice" =~ ^[yY] ]]; then
-		$PKG_CMD thunar firefox rofi 2>&1 | tail -1
+		run_spinner "Installing apps..." $PKG_CMD thunar brave discord
 		ok "Apps installed"
 	fi
 	;;
 
 debian | fedora)
 	warn "Limited package support for $DISTRO. Installing essentials..."
-	$PKG_CMD fish kitty starship fastfetch grim slurp wl-clipboard \
-		fonts-jetbrains-mono fonts-noto-color-emoji 2>&1 | tail -1
+	run_spinner "Installing available packages..." $PKG_CMD fish kitty starship fastfetch grim slurp wl-clipboard \
+		fonts-inter fonts-jetbrains-mono fonts-noto-color-emoji
 	ok "Available packages installed"
 	warn "Hyprland must be installed manually on $DISTRO"
 	;;
@@ -180,7 +248,7 @@ debian | fedora)
 esac
 
 # ── 5. Shell setup ────────────────────────────────────────────────
-echo "  ${BOLD}${SNOWFLAKE} Shell Setup${NC}"
+step "Shell Setup"
 if command -v fish &>/dev/null; then
 	read -rp "  Set fish as default shell? [y/N] " choice
 	if [[ "$choice" =~ ^[yY] ]]; then
@@ -215,7 +283,7 @@ fi
 echo ""
 
 # ── 6. Symlinks ──────────────────────────────────────────────────
-echo "  ${BOLD}${SNOWFLAKE} Config Symlinks${NC}"
+step "Config Symlinks"
 echo "  Linking $REPO_DIR configs to ~/.config/"
 echo ""
 
@@ -223,10 +291,11 @@ SYMLINKS=(
 	"fish:$REPO_DIR/fish"
 	"kitty:$REPO_DIR/kitty"
 	"fastfetch:$REPO_DIR/fastfetch"
+	"quickshell:$REPO_DIR/quickshell"
+	"wlogout:$REPO_DIR/wlogout"
 	"hypr/hyprland.lua:$REPO_DIR/hypr/hyprland.lua"
 	"hypr/hypridle.conf:$REPO_DIR/hypr/hypridle.conf"
 	"starship.toml:$REPO_DIR/starship/starship.toml"
-	"wlogout:$REPO_DIR/wlogout"
 )
 
 link_config() {
@@ -272,7 +341,7 @@ ok "Scripts linked to ~/.local/bin"
 echo ""
 
 # ── 7. Done ───────────────────────────────────────────
-echo "  ${BOLD}${SNOWFLAKE}${BOLD} Setup Complete${NC}"
+step "Setup Complete"
 echo ""
 echo -e "  ${GREEN}══════════════════════════════════════${NC}"
 echo -e "  ${GREEN}  Reload your shell:${NC}"
@@ -289,7 +358,6 @@ echo "    ${CYAN}•${NC} Run ${BOLD}snow-dots backup${NC} to backup current con
 echo "    ${CYAN}•${NC} Run ${BOLD}snow-dots restore${NC} to restore from backup"
 echo "    ${CYAN}•${NC} Run ${BOLD}dotsync${NC} to pull latest"
 echo "    ${CYAN}•${NC} Edit configs in ~/Dotfiles/"
-echo "    ${CYAN}•${NC} Read the README for keybinds"
+echo "    ${CYAN}•${NC} Read the README for keybinds + prayer times"
 echo ""
-
-echo "  ${SNOWFLAKE} Enjoy!"
+echo -e "  ${CYAN}❄${WHITE}·${CYAN}❄${WHITE}·${CYAN}❄${NC}  ${BOLD}Enjoy!${NC}"

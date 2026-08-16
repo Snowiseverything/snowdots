@@ -69,7 +69,8 @@
     "maxVolume": 1,
     "useFahrenheit": false,
     "useFahrenheitPerformance": false,
-    "weatherLocation": "Erbil"
+    "weatherLocation": "Erbil",
+    "prayerLanguage": "kurdish"
   },
   "utilities": { "toasts": { "nowPlaying": true } }
 }

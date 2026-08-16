@@ -17,12 +17,12 @@ RGB: OpenRGB + MAD68 + Govee (wallpaper-synced)
 
 ## Fonts
 
-| Where | Font |
-| ------- | ------ |
-| Shell UI (caelestia body/label/title) | **Inter** |
-| Shell mono / clock | **JetBrainsMono Nerd Font** |
-| Terminal (kitty) | **JetBrainsMono Nerd Font** 13 |
-| Power menu (wlogout) | **JetBrainsMono Nerd Font Propo** 16 |
+| Where                                 | Font                                 |
+| ------------------------------------- | ------------------------------------ |
+| Shell UI (caelestia body/label/title) | **Inter**                            |
+| Shell mono / clock                    | **JetBrainsMono Nerd Font**          |
+| Terminal (kitty)                      | **JetBrainsMono Nerd Font** 13       |
+| Power menu (wlogout)                  | **JetBrainsMono Nerd Font Propo** 16 |
 
 ```bash
 sudo pacman -S --needed ttf-inter ttf-jetbrains-mono-nerd
@@ -61,6 +61,7 @@ curl -sL https://gitlab.com/sn0wman/snowdots/-/raw/main/scripts/install.sh | bas
 - **fuzzel** — fuzzy launcher + app launcher menu
 - **wlogout** — power menu with wallpaper-accented icons
 - **wall-sync** — skwd wallpaper daemon + theme regen on change
+- **Prayer times** — Erbil uses fixed daily timings from the MuslimData DB (the same source as the "My Prayers" app), other cities fall back to Aladhan Umm al-Qura; live next-prayer countdown in the Weather tab
 - **dotsync** — unified git sync across machines (GitLab + sanitized GitHub + Snowpi)
 - **swaync** — notification center
 
@@ -91,6 +92,7 @@ bash <(curl -sL https://raw.githubusercontent.com/sn0wmann1/snowdots/main/script
 
 **What it does:**
 
+- Animated installer — snowfall banner + live spinner progress on every step
 - Backs up current config to `~/.dotfiles-backup-*` before touching anything
 - Installs packages (Hyprland, fish, kitty, quickshell, fonts, etc.)
 - Sets up symlinks for all configs
@@ -156,27 +158,27 @@ snowpi → snow@100.83.33.67:/home/snow/git-vault/Dotfiles.git
 
 ## Keybinds
 
-| Key | Action |
-| ----- | -------- |
-| Super + Q | kitty |
-| Super + Return | fuzzel launcher |
-| Super + Space | app launcher |
-| Super + Escape | wlogout |
-| Super + L | lock (caelestia) |
-| Super + D | discord |
-| Super + F | thunar |
-| Super + R | RGB panel (quickshell) |
-| Super + B | brave |
-| Super + T | trayscale |
-| Super + V | clipse (clipboard) |
-| Super + C | close window |
-| Super + Shift + C | force-kill |
-| Super + Shift + R | restart caelestia |
-| Super + Shift + M | logout (hyprctl exit) |
-| Super + W | toggle wallpaper |
+| Key               | Action                  |
+| ----------------- | ----------------------- |
+| Super + Q         | kitty                   |
+| Super + Return    | fuzzel launcher         |
+| Super + Space     | app launcher            |
+| Super + Escape    | wlogout                 |
+| Super + L         | lock (caelestia)        |
+| Super + D         | discord                 |
+| Super + F         | thunar                  |
+| Super + R         | RGB panel (quickshell)  |
+| Super + B         | brave                   |
+| Super + T         | trayscale               |
+| Super + V         | clipse (clipboard)      |
+| Super + C         | close window            |
+| Super + Shift + C | force-kill              |
+| Super + Shift + R | restart caelestia       |
+| Super + Shift + M | logout (hyprctl exit)   |
+| Super + W         | toggle wallpaper        |
 | Super + Shift + W | reset wallpaper + theme |
-| Super + N | Nexus sidebar |
-| Super + Shift + B | brave incognito |
+| Super + N         | Nexus sidebar           |
+| Super + Shift + B | brave incognito         |
 
 ## Wallpaper & Themes
 
