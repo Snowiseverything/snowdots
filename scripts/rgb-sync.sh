@@ -6,10 +6,38 @@
 
 COLORS_FILE="$HOME/.cache/skwd-wall/colors.json"
 
-ACCENT=$(jq -r '.accent' "$COLORS_FILE" 2>/dev/null)
+# ── Boot wait: wallpaper accent (skwd/matugen may still be generating) ──
+for _ in $(seq 1 90); do
+    ACCENT=$(jq -r '.accent' "$COLORS_FILE" 2>/dev/null)
+    if [ -n "$ACCENT" ] && [ "$ACCENT" != "null" ] && [ "$ACCENT" != "#000000" ]; then
+        break
+    fi
+    sleep 1
+done
 if [ -z "$ACCENT" ] || [ "$ACCENT" = "null" ] || [ "$ACCENT" = "#000000" ]; then
-	exit 0
+    exit 0
 fi
+
+# ── Boot wait: OpenRGB full enumeration. The ASUS TUF controller
+#    registers ~7s after server start (DRAM ~0.3s), so a naive 2s
+#    boot sync only catches RAM. At runtime devices are already up and
+#    this returns on the first poll. ──
+timeout 45 python3 - <<'PYEOF' 2>/dev/null || true
+import time
+try:
+    from openrgb import OpenRGBClient
+except Exception:
+    raise SystemExit(0)
+for _ in range(45):
+    try:
+        c = OpenRGBClient()
+        names = [d.name for d in c.devices]
+        if len(names) >= 3 or any('TUF' in n or 'ASUS' in n for n in names):
+            break
+        time.sleep(1)
+    except Exception:
+        time.sleep(1)
+PYEOF
 
 LED_COLOR=$(python3 -c "
 import colorsys
@@ -35,9 +63,9 @@ print('%02x%02x%02x' % (int(r_l*255), int(g_l*255), int(b_l*255)))
 #    passing LED_COLOR here is only for the direct-fallback path.
 resp=$(curl -sf -m 3 -X POST http://localhost:5070/sync 2>/dev/null)
 if [ -n "$resp" ] && echo "$resp" | jq -e '.ok' >/dev/null 2>&1; then
-	msg=$(echo "$resp" | jq -r '.message // "Colors synced to wallpaper"')
-	logger -t rgb-sync "$msg" 2>/dev/null || true
-	exit 0
+    msg=$(echo "$resp" | jq -r '.message // "Colors synced to wallpaper"')
+    logger -t rgb-sync "$msg" 2>/dev/null || true
+    exit 0
 fi
 
 # ── Bridge unreachable — fall back to direct fades at brightness 80 ─────
