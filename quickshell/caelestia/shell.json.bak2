@@ -1,0 +1,23 @@
+{
+  "bar": {
+    "persistent": true,
+    "entries": [
+      {"id": "logo", "enabled": true},
+      {"id": "workspaces", "enabled": true},
+      {"id": "spacer", "enabled": true},
+      {"id": "activeWindow", "enabled": true},
+      {"id": "spacer", "enabled": true},
+      {"id": "tray", "enabled": true},
+      {"id": "clock", "enabled": true},
+      {"id": "statusIcons", "enabled": true},
+      {"id": "power", "enabled": true}
+    ],
+    "statusIcons": [
+      {"id": "lockStatus", "enabled": true},
+      {"id": "audio", "enabled": true},
+      {"id": "network", "enabled": true},
+      {"id": "bluetooth", "enabled": true},
+      {"id": "battery", "enabled": true}
+    ]
+  }
+}
