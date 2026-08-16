@@ -36,6 +36,12 @@ Item {
                 enabled: Config.dashboard.showPerformance
             },
             {
+                component: rgbComponent,
+                iconName: "palette",
+                text: qsTr("RGB"),
+                enabled: true
+            },
+            {
                 component: weatherComponent,
                 iconName: "cloud",
                 text: qsTr("Weather"),
@@ -173,6 +179,12 @@ Item {
                 id: performanceComponent
 
                 Performance {}
+            }
+
+            Component {
+                id: rgbComponent
+
+                RGB {}
             }
 
             Component {

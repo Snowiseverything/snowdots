@@ -43,6 +43,11 @@ Scope {
                 root.lock.lock.locked = true;
         }
 
+        function onResumed(): void {
+            if (IdleInhibitor.enabled)
+                IdleInhibitor.enabled = true;
+        }
+
         function onLockRequested(): void {
             root.lock.lock.locked = true;
         }

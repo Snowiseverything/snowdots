@@ -8,7 +8,7 @@ import qs.services
 Item {
     id: root
 
-    implicitWidth: 760
+    implicitWidth: layout.implicitWidth > 800 ? layout.implicitWidth : 840
     implicitHeight: layout.implicitHeight
 
     // ── state ──────────────────────────────────────────────────────────────
@@ -236,10 +236,7 @@ Item {
         // color picker
         SectionContainer {
             Layout.fillWidth: true
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.medium
+            contentSpacing: Tokens.spacing.medium
 
                 SectionHeader {
                     title: qsTr("Color Picker")
@@ -398,16 +395,12 @@ Item {
                         }
                     }
                 }
-            }
         }
 
         // recent colors
         SectionContainer {
             Layout.fillWidth: true
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.medium
+            contentSpacing: Tokens.spacing.medium
 
                 SectionHeader {
                     title: qsTr("Recent Colors")
@@ -441,16 +434,12 @@ Item {
                         }
                     }
                 }
-            }
         }
 
         // per-device brightness
         SectionContainer {
             Layout.fillWidth: true
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.medium
+            contentSpacing: Tokens.spacing.medium
 
                 SectionHeader {
                     title: qsTr("Brightness per device")
@@ -488,7 +477,6 @@ Item {
                     accent: Colours.palette.m3secondary
                     onMoved: (v) => { root.kbBrightness = Math.round(v * 100); kbBriDebounce.restart(); }
                 }
-            }
         }
 
         // actions
@@ -519,10 +507,7 @@ Item {
         SectionContainer {
             Layout.fillWidth: true
             Layout.bottomMargin: Tokens.padding.medium
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Tokens.spacing.small
+            contentSpacing: Tokens.spacing.small
 
                 SectionHeader {
                     title: qsTr("Current Wallpaper")
@@ -551,11 +536,53 @@ Item {
                         }
                     }
                 }
-            }
         }
     }
 
     // ── local components ──────────────────────────────────────────────────
+    component SectionContainer: StyledRect {
+        default property alias content: contentColumn.data
+        property real contentSpacing: Tokens.spacing.large
+        property bool alignTop: false
+
+        Layout.fillWidth: true
+        implicitHeight: contentColumn.implicitHeight + Tokens.padding.extraLargeIncreased
+
+        radius: Tokens.rounding.large
+        color: Colours.transparency.enabled ? Colours.layer(Colours.palette.m3surfaceContainer, 2) : Colours.palette.m3surfaceContainerHigh
+
+        ColumnLayout {
+            id: contentColumn
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: root.alignTop ? parent.top : undefined
+            anchors.verticalCenter: root.alignTop ? undefined : parent.verticalCenter
+            anchors.margins: Tokens.padding.large
+
+            spacing: root.contentSpacing
+        }
+    }
+
+    component SectionHeader: ColumnLayout {
+        required property string title
+        property string description: ""
+
+        spacing: 0
+
+        StyledText {
+            Layout.topMargin: Tokens.spacing.largeIncreased
+            text: root.title
+            font: Tokens.font.title.builders.medium.weight(Font.Medium).build()
+        }
+
+        StyledText {
+            visible: root.description !== ""
+            text: root.description
+            color: Colours.palette.m3outline
+        }
+    }
+
     component DeviceBriRow: RowLayout {
         id: briRow
 
