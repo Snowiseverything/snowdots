@@ -6,11 +6,8 @@
 DEST="/mnt/backups/System-Mirror"
 SNOWPI="snow@100.83.33.67"
 
-# Ensure backup directory ownership
-if [ ! -d "$DEST" ]; then
-    sudo mkdir -p "$DEST"
-    sudo chown -R $USER:$USER /mnt/backups
-fi
+# Ensure backup directory exists (owned by user — no sudo needed)
+mkdir -p "$DEST" 2>/dev/null || { echo "⚠ cannot create $DEST"; exit 1; }
 
 echo "💾 SnowDots System Mirror — $(date)"
 
@@ -23,7 +20,8 @@ for f in /etc/fstab /etc/default/grub /etc/mkinitcpio.conf /etc/pacman.conf /etc
   [ -e "$f" ] && ROOT_CONFS+="$f "
 done
 if [ -n "$ROOT_CONFS" ]; then
-  sudo rsync -av --delete $ROOT_CONFS "$DEST/root-configs/"
+  # /etc sources are world-readable; dest is user-owned — no sudo
+  rsync -av --delete $ROOT_CONFS "$DEST/root-configs/"
 fi
 
 # 3. Local scripts & bins

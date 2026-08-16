@@ -1,0 +1,10 @@
+[Unit]
+Description=Backup Snowpi system to /mnt/backups
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/scripts/backup-snowpi.sh
+StandardOutput=journal
+StandardError=journal
