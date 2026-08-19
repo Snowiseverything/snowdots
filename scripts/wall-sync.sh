@@ -361,7 +361,7 @@ if [ -f "$KITTY_CACHE" ]; then
     { "type": "title", "format": "{user-name-colored}@{host-name-colored}" },
     { "type": "custom", "format": " \u001b[90m─────── Software ───────" },
     { "type": "os", "key": "󰣇", "keyColor": "$C1" },
-    { "type": "command", "key": "󰄉", "keyColor": "$C9", "text": "echo \$(( (\$(date +%s) - \$(date -d "2026-03-25" +%s)) / 86400 )) days", "shell": "/bin/sh" },
+    { "type": "command", "key": "󰄉", "keyColor": "$C9", "text": "echo \$(( (\$(date +%s) - \$(cat /home/snow/.local/share/fastfetch/install-date)) / 86400 )) days", "shell": "/bin/sh" },
     { "type": "localip", "key": "󰩟", "keyColor": "$C2", "compact": true },
     { "type": "custom", "format": " \u001b[90m─────── Hardware ───────" },
     { "type": "cpu", "key": "󰻠", "keyColor": "$C1" },
