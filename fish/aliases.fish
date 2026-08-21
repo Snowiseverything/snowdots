@@ -38,6 +38,12 @@ abbr -a cache 'du -sh /var/cache/pacman/pkg .cache/yay'
 #to open ani cli
 abbr -a ac ani-cli
 
+# AVA Media live stream
+abbr -a ava '/home/snow/scripts/ava-media-stream.sh'
+abbr -a ava-toggle '/home/snow/scripts/ava-media-control.sh toggle'
+abbr -a ava-back '/home/snow/scripts/ava-media-control.sh back'
+abbr -a ava-live '/home/snow/scripts/ava-media-control.sh live'
+
 #modified commands
 abbr -a cp 'cp -i'
 abbr -a mv 'mv -i'
@@ -141,7 +147,7 @@ alias launcher='app-launcher.sh'
 alias wall='wall-sync.sh'
 alias wall-r='wall-reset.sh'
 
-function scripts --description "List all SnowDots script aliases with descriptions"
+function _scripts --description "List all SnowDots script aliases with descriptions"
     set -l b (set_color -o)
     set -l bl (set_color 2563eb)
     set -l d (set_color 555555)
@@ -174,8 +180,7 @@ function scripts --description "List all SnowDots script aliases with descriptio
         "steam|steam-launch.sh|Launch Steam with optimizations" \
         "block|toggle-adult-block.sh|Toggle adult content blocking" \
         "snow-ctl|fuzzel-control.sh|Control panel via fuzzel" \
-        "launcher|app-launcher.sh|App launcher helper" \
-
+        "launcher|app-launcher.sh|App launcher helper"
     for entry in $entries
         set -l parts (string split "|" $entry)
         printf '  │  %s%-12s%s %s%-24s%s %s\n' $bl $parts[1] $r $d $parts[2] $r $parts[3]

@@ -380,14 +380,14 @@ Weather: Erbil, Celsius via wttr.in, cached 1hr in `/tmp/weather-cache`.
 
 ### hypridle.conf
 
-| Listener         | Action                          |
-| ---------------- | ------------------------------- |
-| lock_cmd         | `caelestia shell lock lock`     |
-| before_sleep_cmd | `caelestia shell lock lock`     |
-| after_sleep_cmd  | `hyprctl dispatch dpms on`      |
-| Evening 19:00    | `hyprsunset --temperature 4500` |
-| Night 22:00      | `hyprsunset --temperature 3000` |
-| Morning 07:00    | `pkill hyprsunset`              |
+| Listener         | Action                                                               |
+| ---------------- | -------------------------------------------------------------------- |
+| lock_cmd         | `caelestia shell lock lock`                                          |
+| before_sleep_cmd | ``                                                                   |
+| after_sleep_cmd  | `hyprctl dispatch dpms on && sleep 0.5 && caelestia shell lock lock` |
+| Evening 19:00    | `hyprsunset --temperature 4500`                                      |
+| Night 22:00      | `hyprsunset --temperature 3000`                                      |
+| Morning 07:00    | `pkill hyprsunset`                                                   |
 
 ---
 

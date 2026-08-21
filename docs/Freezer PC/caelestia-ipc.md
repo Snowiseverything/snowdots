@@ -23,19 +23,19 @@ caelestia shell <target> <function> [args...]
 
 ### All IPC targets (from `caelestia shell -s`)
 
-| target      | functions                                                     |
-|-------------|---------------------------------------------------------------|
-| lock        | lock(), unlock(), isLocked()                                  |
-| audio       | cycleOutput()                                                 |
-| brightness  | get(), getFor(), set(), setFor()                              |
-| drawers     | toggle(), list()                                              |
-| hypr        | refreshDevices(), cycleSpecialWorkspace(), listSpecialWorkspaces() |
-| mpris       | list(), play(), pause(), playPause(), previous(), next(), stop() |
-| nexus       | open()                                                        |
-| notifs      | disableDnd(), toggleDnd(), isDndEnabled(), clear(), enableDnd() |
-| picker      | open(), openFreeze(), openClip(), openFreezeClip()            |
-| toaster     | info(), success(), error(), warn()                            |
-| wallpaper   | set(), get(), list()                                          |
+| target     | functions                                                          |
+| ---------- | ------------------------------------------------------------------ |
+| lock       | lock(), unlock(), isLocked()                                       |
+| audio      | cycleOutput()                                                      |
+| brightness | get(), getFor(), set(), setFor()                                   |
+| drawers    | toggle(), list()                                                   |
+| hypr       | refreshDevices(), cycleSpecialWorkspace(), listSpecialWorkspaces() |
+| mpris      | list(), play(), pause(), playPause(), previous(), next(), stop()   |
+| nexus      | open()                                                             |
+| notifs     | disableDnd(), toggleDnd(), isDndEnabled(), clear(), enableDnd()    |
+| picker     | open(), openFreeze(), openClip(), openFreezeClip()                 |
+| toaster    | info(), success(), error(), warn()                                 |
+| wallpaper  | set(), get(), list()                                               |
 
 ### Keybind + hypridle
 
@@ -44,5 +44,6 @@ bind = $mainMod, L, exec, caelestia shell lock lock
 
 # hypridle.conf
 lock_cmd = caelestia shell lock lock
-before_sleep_cmd = caelestia shell lock lock
+before_sleep_cmd =
+after_sleep_cmd = hyprctl dispatch dpms on && sleep 0.5 && caelestia shell lock lock
 ```
