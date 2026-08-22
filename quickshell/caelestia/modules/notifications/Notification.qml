@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Layouts
 import QtQuick.Shapes
 import Quickshell
 import Quickshell.Services.Notifications
@@ -11,7 +12,14 @@ import qs.components.controls
 import qs.components.effects
 import qs.services
 import qs.utils
+import qs.modules.notifications.components
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Notification card — original caelestia M3 implementation.
+// Effects: ambient blob background, typewriter reveal, inline action buttons.
+// Palette: Colours.palette (matugen) + Tokens.
+// Sub-parts in ./components/ (editable standalone).
+// ─────────────────────────────────────────────────────────────────────────────
 StyledRect {
     id: root
 
@@ -19,13 +27,21 @@ StyledRect {
     readonly property bool hasImage: modelData.image.length > 0
     readonly property bool hasAppIcon: modelData.appIcon.length > 0
     readonly property int bodyTextFormat: /[<*_`#\[\]]/.test(modelData.body) ? Text.MarkdownText : Text.PlainText
-    readonly property int nonAnimHeight: summary.implicitHeight + (root.expanded ? Tokens.spacing.extraSmall * 2 + appName.height + body.height + actions.height + actions.anchors.topMargin : bodyPreview.height) + inner.anchors.margins * 2
+    readonly property int nonAnimHeight: contentCol.implicitHeight + Tokens.padding.medium * 2
     property bool expanded: Config.notifs.openExpanded
 
-    color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3secondaryContainer : Colours.tPalette.m3surfaceContainer
+    // M3 palette alias (edit colours here or in matugen)
+    readonly property color cardBG: modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3secondaryContainer : Colours.tPalette.m3surfaceContainer
+    readonly property color primaryC: Colours.palette.m3primary
+    readonly property color secondaryC: Colours.palette.m3secondaryContainer
+    readonly property color onSurface: Colours.palette.m3onSurface
+    readonly property color onSurfaceVariant: Colours.palette.m3onSurfaceVariant
+    readonly property color onPrimaryC: Colours.palette.m3onPrimary
+
+    color: cardBG
     radius: Tokens.rounding.large
 
-    implicitHeight: inner.implicitHeight
+    implicitHeight: contentCol.implicitHeight
 
     x: implicitWidth
     Component.onCompleted: {
@@ -35,14 +51,24 @@ StyledRect {
     Component.onDestruction: modelData.unlock(this)
 
     Behavior on x {
-        Anim {
-            easing: Tokens.anim.emphasizedDecel
-        }
+        Anim {}
+    }
+
+    clip: true
+
+    // ── blob background decoration ─────────────────────────────────────────
+    BlobBackground {
+        anchors.fill: parent
+        primaryColor: root.primaryC
+        secondaryColor: root.secondaryC
+        tertiaryColor: Colours.palette.m3tertiary
+        baseColor: root.cardBG
     }
 
     MouseArea {
-        property int startY
+        id: dragArea
 
+        property int startY
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: root.expanded && body.hoveredLink ? Qt.PointingHandCursor : pressed ? Qt.ClosedHandCursor : undefined
@@ -67,7 +93,6 @@ StyledRect {
         onReleased: event => {
             if (!containsMouse)
                 root.modelData.timer.start();
-
             if (Math.abs(root.x) < root.implicitWidth * Config.notifs.clearThreshold)
                 root.x = 0;
             else
@@ -83,442 +108,149 @@ StyledRect {
         onClicked: event => {
             if (!GlobalConfig.notifs.actionOnClick || event.button !== Qt.LeftButton)
                 return;
-
             const actions = root.modelData.actions;
             if (actions.length === 1)
                 actions[0].invoke();
         }
 
-        Item {
-            id: inner
+        ColumnLayout {
+            id: contentCol
 
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.margins: Tokens.padding.medium
+            spacing: Tokens.spacing.extraSmall
 
-            implicitHeight: root.nonAnimHeight
+            // ── header row: app icon/image + name + time ────────────────────
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Tokens.spacing.medium
 
-            Behavior on implicitHeight {
-                Anim {}
-            }
+                Loader {
+                    id: iconLoader
+                    active: root.hasImage || root.hasAppIcon
+                    Layout.preferredWidth: TokenConfig.sizes.notifs.image
+                    Layout.preferredHeight: TokenConfig.sizes.notifs.image
 
-            Loader {
-                id: image
+                    sourceComponent: StyledClippingRect {
+                        radius: Tokens.rounding.full
+                        color: root.secondaryC
+                        implicitWidth: TokenConfig.sizes.notifs.image
+                        implicitHeight: TokenConfig.sizes.notifs.image
 
-                asynchronous: true
-                active: root.hasImage
-
-                anchors.left: parent.left
-                anchors.top: parent.top
-                width: TokenConfig.sizes.notifs.image
-                height: TokenConfig.sizes.notifs.image
-                visible: root.hasImage || root.hasAppIcon
-
-                sourceComponent: StyledClippingRect {
-                    radius: Tokens.rounding.full
-                    color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3error : root.modelData.urgency === NotificationUrgency.Low ? Colours.layer(Colours.palette.m3surfaceContainerHighest, 2) : Colours.palette.m3secondaryContainer
-                    implicitWidth: TokenConfig.sizes.notifs.image
-                    implicitHeight: TokenConfig.sizes.notifs.image
-
-                    Image {
-                        anchors.fill: parent
-                        source: Qt.resolvedUrl(root.modelData.image)
-                        fillMode: Image.PreserveAspectCrop
-                        sourceSize: {
-                            const size = TokenConfig.sizes.notifs.image * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1);
-                            return Qt.size(size, size);
-                        }
-                        cache: false
-                        asynchronous: true
-                    }
-                }
-            }
-
-            Loader {
-                id: appIcon
-
-                asynchronous: true
-                active: root.hasAppIcon || !root.hasImage
-
-                anchors.horizontalCenter: root.hasImage ? undefined : image.horizontalCenter
-                anchors.verticalCenter: root.hasImage ? undefined : image.verticalCenter
-                anchors.right: root.hasImage ? image.right : undefined
-                anchors.bottom: root.hasImage ? image.bottom : undefined
-
-                sourceComponent: StyledRect {
-                    radius: Tokens.rounding.full
-                    color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3error : root.modelData.urgency === NotificationUrgency.Low ? Colours.layer(Colours.palette.m3surfaceContainerHighest, 2) : Colours.palette.m3secondaryContainer
-                    implicitWidth: root.hasImage ? Tokens.sizes.notifs.badge : TokenConfig.sizes.notifs.image
-                    implicitHeight: root.hasImage ? Tokens.sizes.notifs.badge : TokenConfig.sizes.notifs.image
-
-                    Loader {
-                        id: icon
-
-                        asynchronous: true
-                        active: root.hasAppIcon
-
-                        anchors.centerIn: parent
-
-                        width: Math.round(parent.width * 0.6)
-                        height: Math.round(parent.width * 0.6)
-
-                        sourceComponent: ColouredIcon {
+                        Image {
                             anchors.fill: parent
-                            source: Quickshell.iconPath(root.modelData.appIcon)
-                            colour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : root.modelData.urgency === NotificationUrgency.Low ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
-                            layer.enabled: root.modelData.appIcon.endsWith("symbolic")
+                            source: Qt.resolvedUrl(root.modelData.image)
+                            fillMode: Image.PreserveAspectCrop
+                            cache: false
+                            asynchronous: true
+                            visible: root.hasImage
                         }
-                    }
-
-                    Loader {
-                        asynchronous: true
-                        active: !root.hasAppIcon
-                        anchors.centerIn: parent
-                        anchors.verticalCenterOffset: 1
-
-                        sourceComponent: MaterialIcon {
-                            text: Icons.getNotifIcon(root.modelData.summary, root.modelData.urgency)
-                            color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onError : root.modelData.urgency === NotificationUrgency.Low ? Colours.palette.m3onSurface : Colours.palette.m3onSecondaryContainer
-                            fontStyle: Tokens.font.icon.medium
+                        ColouredIcon {
+                            anchors.centerIn: parent
+                            width: parent.width * 0.6
+                            height: parent.height * 0.6
+                            source: Quickshell.iconPath(root.modelData.appIcon)
+                            colour: root.onSurfaceVariant
+                            visible: root.hasAppIcon && !root.hasImage
                         }
                     }
                 }
-            }
 
-            Shape {
-                id: progressIndicator
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
 
-                anchors.centerIn: appIcon
-                width: appIcon.implicitWidth + progressShape.strokeWidth * 2
-                height: appIcon.implicitHeight + progressShape.strokeWidth * 2
-                preferredRendererType: Shape.CurveRenderer
+                    StyledText {
+                        text: root.modelData.appName || "System"
+                        color: root.onSurfaceVariant
+                        font: Tokens.font.label.medium
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
 
-                ShapePath {
-                    id: progressShape
+                    StyledText {
+                        text: root.modelData.timeStr
+                        color: root.onSurfaceVariant
+                        font: Tokens.font.body.small
+                        Layout.fillWidth: true
+                    }
+                }
 
-                    capStyle: ShapePath.RoundCap
-                    fillColor: "transparent"
-                    strokeWidth: 2
-                    strokeColor: Colours.palette.m3primary
+                Item {
+                    Layout.preferredWidth: expandBtn.implicitWidth
+                    Layout.preferredHeight: expandBtn.implicitHeight
 
-                    PathAngleArc {
-                        id: progressArc
+                    StateLayer {
+                        id: expandBtn
+                        radius: Tokens.rounding.full
+                        color: root.onSurfaceVariant
+                        onClicked: root.expanded = !root.expanded
+                        anchors.fill: parent
 
-                        radiusX: progressIndicator.width / 2 - root.Tokens.padding.extraSmall / 2
-                        centerX: progressIndicator.width / 2
-                        radiusY: progressIndicator.height / 2 - root.Tokens.padding.extraSmall / 2
-                        centerY: progressIndicator.height / 2
+                        MaterialIcon {
+                            anchors.centerIn: parent
+                            text: "expand_more"
+                            fontStyle: Tokens.font.icon.medium
+                            rotation: root.expanded ? 180 : 0
+                            color: root.onSurface
 
-                        startAngle: -90
-                        sweepAngle: ((root.modelData.hints.value ?? 0) / 100) * 360
-
-                        Behavior on sweepAngle {
-                            Anim {
-                                easing: Tokens.anim.emphasizedDecel
+                            Behavior on rotation {
+                                Anim {}
                             }
                         }
                     }
                 }
             }
 
-            StyledText {
-                id: appName
-
-                anchors.top: parent.top
-                anchors.left: image.right
-                anchors.leftMargin: Tokens.spacing.medium
-
-                animate: true
-                text: appNameMetrics.elidedText
+            // ── summary (typewriter reveal on first appearance) ───────────
+            TypewriterText {
+                id: summaryTyper
+                Layout.fillWidth: true
+                fullText: root.modelData.summary
+                charsPerTick: 2
+                tickMs: 12
+                startDelay: 120
+                playing: !root.expanded
+                color: root.onSurface
+                font: Tokens.font.title.small
                 maximumLineCount: 1
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.label.medium
-
-                opacity: root.expanded ? 1 : 0
-
-                Behavior on opacity {
-                    Anim {
-                        type: Anim.DefaultEffects
-                    }
-                }
-            }
-
-            TextMetrics {
-                id: appNameMetrics
-
-                text: root.modelData.appName
-                font: appName.font
                 elide: Text.ElideRight
-                elideWidth: expandBtn.x - time.width - timeSep.width - summary.x - root.Tokens.spacing.small * 3
+                wrapMode: Text.NoWrap
             }
 
+            // ── body / body preview ─────────────────────────────────────────
             StyledText {
-                id: summary
-
-                anchors.top: parent.top
-                anchors.left: image.right
-                anchors.leftMargin: Tokens.spacing.medium
-
-                animate: true
-                text: summaryMetrics.elidedText
-                maximumLineCount: 1
-                height: implicitHeight
-
-                states: State {
-                    name: "expanded"
-                    when: root.expanded
-
-                    PropertyChanges {
-                        summary.maximumLineCount: undefined
-                        summary.anchors.topMargin: root.Tokens.spacing.extraSmall
-                        bodyPreview.anchors.topMargin: root.Tokens.spacing.extraSmall
-                        body.anchors.topMargin: root.Tokens.spacing.extraSmall
-                    }
-
-                    AnchorChanges {
-                        target: summary
-                        anchors.top: appName.bottom
-                    }
-                }
-
-                transitions: Transition {
-                    PropertyAction {
-                        target: summary
-                        property: "maximumLineCount"
-                    }
-                    Anim {
-                        property: "topMargin"
-                    }
-                    AnchorAnim {}
-                }
-
-                Behavior on height {
-                    Anim {}
-                }
-            }
-
-            TextMetrics {
-                id: summaryMetrics
-
-                text: root.modelData.summary
-                font: summary.font
-                elide: Text.ElideRight
-                elideWidth: expandBtn.x - time.width - timeSep.width - summary.x - root.Tokens.spacing.small * 3
-            }
-
-            StyledText {
-                id: timeSep
-
-                anchors.top: parent.top
-                anchors.left: summary.right
-                anchors.leftMargin: Tokens.spacing.small
-
-                text: "•"
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.body.small
-
-                states: State {
-                    name: "expanded"
-                    when: root.expanded
-
-                    AnchorChanges {
-                        target: timeSep
-                        anchors.left: appName.right
-                    }
-                }
-
-                transitions: Transition {
-                    AnchorAnim {}
-                }
-            }
-
-            StyledText {
-                id: time
-
-                anchors.top: parent.top
-                anchors.left: timeSep.right
-                anchors.leftMargin: Tokens.spacing.small
-
-                animate: true
-                horizontalAlignment: Text.AlignLeft
-                text: root.modelData.timeStr
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.body.small
-            }
-
-            Item {
-                id: expandBtn
-
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.topMargin: -Tokens.padding.extraSmall
-
-                implicitWidth: expandIcon.implicitHeight
-                implicitHeight: expandIcon.implicitHeight
-
-                StateLayer {
-                    radius: Tokens.rounding.full
-                    color: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurface
-                    onClicked: root.expanded = !root.expanded
-                }
-
-                MaterialIcon {
-                    id: expandIcon
-
-                    anchors.centerIn: parent
-                    anchors.verticalCenterOffset: root.expanded ? -1 : 1
-                    text: "expand_more"
-                    fontStyle: Tokens.font.icon.medium
-                    rotation: root.expanded ? 180 : 0
-
-                    Behavior on anchors.verticalCenterOffset {
-                        Anim {}
-                    }
-
-                    Behavior on rotation {
-                        Anim {}
-                    }
-                }
-            }
-
-            StyledText {
-                id: bodyPreview
-
-                anchors.left: summary.left
-                anchors.right: expandBtn.left
-                anchors.top: summary.bottom
-                anchors.rightMargin: Tokens.spacing.small
-
-                animate: true
-                textFormat: root.bodyTextFormat
-                text: bodyPreviewMetrics.elidedText
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.body.small
-
-                opacity: root.expanded ? 0 : 1
-
-                Behavior on opacity {
-                    Anim {
-                        type: Anim.DefaultEffects
-                    }
-                }
-            }
-
-            TextMetrics {
-                id: bodyPreviewMetrics
-
-                text: root.modelData.body
-                font: bodyPreview.font
-                elide: Text.ElideRight
-                elideWidth: bodyPreview.width
-            }
-
-            StyledText {
-                id: body
-
-                anchors.left: summary.left
-                anchors.right: expandBtn.left
-                anchors.top: summary.bottom
-                anchors.rightMargin: Tokens.spacing.small
-
-                animate: true
+                Layout.fillWidth: true
+                Layout.maximumWidth: parent.width
                 textFormat: root.bodyTextFormat
                 text: root.modelData.body
-                color: Colours.palette.m3onSurfaceVariant
-                font: Tokens.font.body.small
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                height: text ? implicitHeight : 0
+                maximumLineCount: root.expanded ? undefined : 2
+                elide: root.expanded ? Text.ElideNone : Text.ElideRight
+                color: root.onSurfaceVariant
+                font: Tokens.font.body.small
+                visible: root.modelData.body.length > 0
+                clip: true
 
                 onLinkActivated: link => {
-                    if (!root.expanded)
-                        return;
-
                     Qt.openUrlExternally(link);
                     root.modelData.popup = false;
                 }
-
-                opacity: root.expanded ? 1 : 0
-
-                Behavior on opacity {
-                    Anim {
-                        type: Anim.DefaultEffects
-                    }
-                }
             }
 
-            ButtonRow {
-                id: actions
-
-                anchors.left: body.left
-                anchors.right: body.right
-                anchors.top: body.bottom
-                anchors.topMargin: Tokens.spacing.small
-
-                spacing: Tokens.spacing.extraSmall
-                opacity: root.expanded ? 1 : 0
-
-                Behavior on opacity {
-                    Anim {
-                        type: Anim.DefaultEffects
-                    }
-                }
-
-                IconButton {
-                    isRound: true
-                    shapeMorph: true
-                    fillWidth: root.modelData.actions.length === 0
-                    inactiveColour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3secondary : Colours.layer(Colours.palette.m3surfaceContainerHighest, 2)
-                    inactiveOnColour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onSecondary : Colours.palette.m3onSurfaceVariant
-                    icon: "close"
-                    padding: Tokens.padding.extraSmall
-                    onClicked: root.modelData.close()
-                }
-
-                Repeater {
-                    model: root.modelData.actions
-
-                    TextButton {
-                        required property var modelData
-
-                        isRound: true
-                        shapeMorph: true
-                        fillWidth: true
-                        inactiveColour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3secondary : Colours.layer(Colours.palette.m3surfaceContainerHighest, 2)
-                        inactiveOnColour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onSecondary : Colours.palette.m3onSurfaceVariant
-                        text: modelData.text
-                        onClicked: modelData.invoke()
-
-                        label.horizontalAlignment: Text.AlignHCenter
-                        label.anchors.left: left
-                        label.anchors.right: right
-                        label.anchors.verticalCenter: verticalCenter
-                        label.anchors.centerIn: undefined
-                        label.anchors.margins: Tokens.padding.medium
-                        label.elide: Text.ElideRight
-                    }
-                }
-
-                IconButton {
-                    isRound: true
-                    shapeMorph: true
-                    fillWidth: root.modelData.actions.length === 0
-                    inactiveColour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3secondary : Colours.layer(Colours.palette.m3surfaceContainerHighest, 2)
-                    inactiveOnColour: root.modelData.urgency === NotificationUrgency.Critical ? Colours.palette.m3onSecondary : Colours.palette.m3onSurfaceVariant
-                    icon: copyTimer.running ? "inventory" : "content_copy"
-                    padding: Tokens.padding.extraSmall
-                    onClicked: {
-                        Quickshell.clipboardText = root.modelData.body;
-                        copyTimer.restart();
-                    }
-                    label.animate: true
-
-                    Timer {
-                        id: copyTimer
-
-                        interval: 3000
-                    }
-                }
+            // ── inline action buttons ───────────────────────────────────────
+            ActionButtons {
+                Layout.fillWidth: true
+                Layout.topMargin: root.modelData.actions.length > 0 ? Tokens.spacing.small : 0
+                actions: root.modelData.actions
+                primaryColor: root.secondaryC
+                onPrimaryColor: root.onPrimaryC
+                surfaceColor: Colours.layer(Colours.palette.m3surfaceContainerHighest, 2)
+                surfaceHighColor: root.onSurfaceVariant
+                onSurfaceColor: root.onSurface
+                visible: root.modelData.actions.length > 0
             }
         }
     }

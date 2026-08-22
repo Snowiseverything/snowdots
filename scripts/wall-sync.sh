@@ -46,7 +46,7 @@ log_error() {
 # Log script start with environment info for boot debugging
 log "=== Wall-sync started ==="
 log "USER=$USER HOME=$HOME XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR DISPLAY=$DISPLAY WAYLAND_DISPLAY=$WAYLAND_DISPLAY"
-log "Args: $@"
+log "Args: ${*}"
 
 # Ensure XDG_RUNTIME_DIR is set
 [ -z "$XDG_RUNTIME_DIR" ] && export XDG_RUNTIME_DIR="/run/user/$(id -u)"
@@ -369,6 +369,7 @@ if [ -f "$KITTY_CACHE" ]; then
     { "type": "disk", "key": "Root", "keyColor": "$C9", "folders": ["/"] },
     { "type": "disk", "key": "Home", "keyColor": "$C4", "folders": ["/home"] },
     { "type": "memory", "key": "󰑭", "keyColor": "$C8" },
+    { "type": "swap", "key": "󰟴", "keyColor": "$C8" },
     { "type": "uptime", "key": "󰅐", "keyColor": "$C2" },
     { "type": "command", "key": "󰔄", "keyColor": "$C9", "text": "if [ -f /sys/class/thermal/thermal_zone0/temp ]; then echo \"\$((\$(cat /sys/class/thermal/thermal_zone0/temp) / 1000))°C\"; else echo \"N/A\"; fi", "shell": "/bin/sh" },
     { "type": "custom", "format": " \u001b[90m────────────────────────────────────" },
