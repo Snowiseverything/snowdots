@@ -398,3 +398,22 @@ sudo journalctl --vacuum-size=100M
 - **Editor:** `nano` only; never `micro`.
 - **Tracking:** Update `Progress.md` when task state changes.
 - **Mandatory Testing Rule:** Never commit or push code without testing it first—either run by the local agent, Joseph, or Mahamad. Code must be verified functional before merging into `dev` or `main`.
+
+## 2026-08-22 — Snowpi architecture doc + DNSSEC fix
+
+### Committed (local bare repo only — not public)
+
+- Created `~/Dotfiles/docs/Snowpi/architecture.md` — Snowpi services, compose projects, Caddy vhosts, DNS chain, ports, Tailscale mesh, gotchas, plus full DNSSEC writeup.
+- Committed `58274c8` ("docs: add Snowpi architecture and DNSSEC reference"), pushed ONLY to `snowpi` local bare repo (`snow@100.83.33.67:/home/snow/git-vault/Dotfiles.git`). GitHub/GitLab untouched.
+- Doc is in `~/Dotfiles/docs/` Obsidian vault, mirrors `Freezer PC/architecture.md`.
+
+### DNSSEC fix (Snowpi) — root cause + resolution
+
+- **Symptom:** slow/failing lookups via Pi-Hole.
+- **Root cause:** double DNSSEC validation. FTL (dnsmasq) `dnssec` flag AND Unbound already validating = duplicate crypto, extra chain-of-trust lookups, bigger responses (TCP fallback), SERVFAIL storms (RPi has no RTC — clock skew before NTP sync makes sigs verify as expired).
+- **Fix:** validate ONCE at Unbound only. `/etc/pihole/pihole.toml` → `dnssec = false` (was `true ### CHANGED`); `/etc/pihole/dnsmasq.conf` → `dnssec` line commented. Restart `pihole-FTL`. Verified `dig @192.168.1.35 google.com` → NOERROR ~15ms.
+- **Rule going forward:** FTL DNSSEC stays OFF; Unbound does validation. Toggle via `sudo pihole -a dnssec`.
+
+### Snowpi SSH gotcha
+
+- Snowpi default shell is **fish**. Inline bash `for` loops and `$var` in `ssh "..."` strings fail. Use a script: `scp` it over then `ssh ... 'bash /tmp/script.sh'`.

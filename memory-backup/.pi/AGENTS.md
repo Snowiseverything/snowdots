@@ -57,7 +57,21 @@ Rootfs btrfs: compress=zstd:1, ssd, space_cache=v2, noatime
 
 ## Dotfiles
 
-Bare git repo at `~/.Dotfiles`. Remotes: GitHub (sn0wmann1/snowdots), GitLab (sn0wman/snowdots), Snowpi (git-vault). Managed via `~/scripts/dotsync`.
+Dotfiles git repo at `~/Dotfiles` (regular repo, `main`). Remotes: GitHub (sn0wmann1/snowdots) + GitLab (sn0wman/snowdots) are **public — do NOT push without approval**. Local-only sync target: `snowpi` remote → bare repo `snow@100.83.33.67:/home/snow/git-vault/Dotfiles.git`. Managed via `~/scripts/dotsync`.
+
+## Reference Docs (architecture)
+
+When stuck on either machine or need service/architecture reference, **check the Obsidian vault docs before re-discovering**:
+
+- **Freezer**: `~/Dotfiles/docs/Freezer PC/architecture.md`
+- **Snowpi**: `~/Dotfiles/docs/Snowpi/architecture.md` (added 2026-08-22 — services, compose projects, Caddy vhosts, DNS chain, ports, Tailscale mesh, gotchas, and full DNSSEC writeup)
+- Both in the `~/Dotfiles/docs/` Obsidian vault. These are the canonical machine references.
+
+Key Snowpi facts to remember:
+
+- RPi4, Debian (DietPi), headless. LAN 192.168.1.35 / Tailscale 100.83.33.67
+- **DNS chain**: FTL (Pi-hole) :53 → Unbound validating :5335. **DNSSEC validates ONCE at Unbound; FTL `dnssec` must stay `false`** (double-validation caused slow/failing lookups, fixed 2026-08)
+- SSH: `ssh snow@100.83.33.67`. **Snowpi default shell is fish — no inline bash `for`/`$var` in ssh strings; use a script via `bash /tmp/x.sh`**
 
 ## Services
 
