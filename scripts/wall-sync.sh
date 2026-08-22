@@ -156,8 +156,14 @@ COLORS_JSON="$CACHE_DIR/colors.json"
 if [ -f "$COLORS_JSON" ] && [ $(($(date +%s) - $(stat -c %Y "$COLORS_JSON" 2>/dev/null || echo 0))) -lt 2 ]; then
 	log "matugen already ran recently, skipping redundant matugen"
 else
+	# serpantinum replaced matugen config -> output goes to qs_colors.json, not skwd-wall.
+	# Keep writing the legacy skwd-wall colors.json expected by the RGB pipeline.
 	matugen image "$WALLPAPER" --source-color-index 0 2>>"$LOG_FILE" || log_error "matugen failed"
 fi
+
+# ── Bridge serpantinum matugen colors into the skwd-wall RGB pipeline ──
+log "Bridge serpantinum qs_colors -> skwd-wall accent + RGB sync"
+bash "$HOME/.config/hypr/scripts/quickshell/wallpaper/qs-to-rgb.sh" >>"$LOG_FILE" 2>&1 || log_error "qs-to-rgb bridge failed"
 
 # ── RGB sync (immediate, before UI updates to minimize color delay) ──────
 # (the trailing-edge debounce section continues below)

@@ -57,16 +57,16 @@ print('%02x%02x%02x' % (int(r_l*255), int(g_l*255), int(b_l*255)))
 
 [ -z "$LED_COLOR" ] && exit 0
 
-# ── Prefer the bridge /sync: it preserves each device's brightness and
-#    silently updates color for off devices (no flash, no reset).
-# ── The bridge's trigger_sync reads the SAME colors.json accent, so
-#    passing LED_COLOR here is only for the direct-fallback path.
-resp=$(curl -sf -m 3 -X POST http://localhost:5070/sync 2>/dev/null)
-if [ -n "$resp" ] && echo "$resp" | jq -e '.ok' >/dev/null 2>&1; then
-    msg=$(echo "$resp" | jq -r '.message // "Colors synced to wallpaper"')
-    logger -t rgb-sync "$msg" 2>/dev/null || true
-    exit 0
-fi
+# # ── Prefer the bridge /sync: it preserves each device's brightness and
+# #    silently updates color for off devices (no flash, no reset).
+# # ── The bridge's trigger_sync reads the SAME colors.json accent, so
+# #    passing LED_COLOR here is only for the direct-fallback path.
+# resp=$(curl -sf -m 3 -X POST http://localhost:5070/sync 2>/dev/null)
+# if [ -n "$resp" ] && echo "$resp" | jq -e '.ok' >/dev/null 2>&1; then
+#     msg=$(echo "$resp" | jq -r '.message // "Colors synced to wallpaper"')
+#     logger -t rgb-sync "$msg" 2>/dev/null || true
+#     exit 0
+# fi
 
 # ── Bridge unreachable — fall back to direct fades at brightness 80 ─────
 # Run PC and Govee fades in parallel with matching step timing

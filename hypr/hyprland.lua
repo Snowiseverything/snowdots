@@ -351,7 +351,7 @@ hl.bind(mainMod .. " + SHIFT + W",      hl.dsp.exec_cmd("~/Dotfiles/scripts/wall
 
 -- ── System ────────────────────────────────────────────────────────────
 hl.bind(mainMod .. " + SHIFT + M",      hl.dsp.exit())
-hl.bind(mainMod .. " + SHIFT + R",      hl.dsp.exec_cmd("~/Dotfiles/scripts/caelestia-restart.sh"))
+hl.bind(mainMod .. " + SHIFT + R",      hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/reload.sh"))
 hl.bind(mainMod .. " + SHIFT + B",      hl.dsp.exec_cmd("brave --incognito"))
 hl.bind(mainMod .. " + C",              hl.dsp.window.close())
 hl.bind(mainMod .. " + SHIFT + C",      hl.dsp.exec_cmd("~/Dotfiles/scripts/force-kill.sh"))
