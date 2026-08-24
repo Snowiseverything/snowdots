@@ -1,3 +1,10 @@
+# ⚠️ OLD — ARCHIVED
+
+> **This repository is archived.** The caelestia shell described below is **no longer the active setup** on Freezer.
+>
+> 🔗 **Current shell: [Avalanche Shell](https://github.com/sn0wmann1/avalanche-shell)** — a custom Quickshell shell (evolved from serpantinum).
+> See [README-OLD.md](README-OLD.md) for details. Kept for reference only.
+
 # ❄️ SnowDots
 
 Hyprland dotfiles for Arch Linux. Snow-themed, material-you colored, multi-machine.
